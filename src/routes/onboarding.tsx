@@ -1,17 +1,27 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { setNickname } from "@/utils/auth.functions";
+import { getCurrentPlayer, setPlayerSession } from "@/utils/session.functions";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
+  loader: async () => {
+    const session = await getCurrentPlayer();
+    if (!session) {
+      throw redirect({ to: "/login" });
+    }
+    return { playerId: session.playerId, msisdnLast4: session.msisdnLast4 };
+  },
   head: () => ({
     meta: [{ title: "Choose Nickname — WinamGames" }],
   }),
 });
 
 function OnboardingPage() {
+  const { playerId, msisdnLast4 } = Route.useLoaderData();
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState("");
+  const [nickname, setNicknameValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,8 +43,17 @@ function OnboardingPage() {
 
     setLoading(true);
     try {
-      // TODO: Save nickname to winam_players
-      console.log("Setting nickname:", trimmed);
+      const result = await setNickname({ data: { playerId, nickname: trimmed } });
+      if (!result.success) {
+        setError(result.error || "Something went wrong");
+        return;
+      }
+
+      // Update session with nickname
+      await setPlayerSession({
+        data: { playerId, msisdnLast4: msisdnLast4 ?? "", nickname: trimmed },
+      });
+
       navigate({ to: "/" });
     } catch {
       setError("Something went wrong. Try again.");
@@ -61,7 +80,7 @@ function OnboardingPage() {
             <input
               type="text"
               value={nickname}
-              onChange={(e) => { setNickname(e.target.value); setError(""); }}
+              onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
               placeholder="e.g. NaijaChamp"
               className="w-full h-14 px-4 rounded-xl bg-surface-1 border border-glass-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               autoFocus

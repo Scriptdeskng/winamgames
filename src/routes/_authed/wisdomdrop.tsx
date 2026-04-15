@@ -3,15 +3,18 @@ import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
+import { getCurrentPlayer } from "@/utils/session.functions";
 import { BookOpen, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// TODO: Replace with actual player ID from auth context
-const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
-
-export const Route = createFileRoute("/wisdomdrop")({
+export const Route = createFileRoute("/_authed/wisdomdrop")({
   component: WisdomDropPage,
-  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
+  loader: async () => {
+    const session = await getCurrentPlayer();
+    const playerId = session!.playerId;
+    const playerData = await getPlayerData({ data: { playerId } });
+    return { playerId, playerData };
+  },
   head: () => ({
     meta: [
       { title: "WisdomDrop — WinamGames" },
@@ -21,10 +24,10 @@ export const Route = createFileRoute("/wisdomdrop")({
 });
 
 function WisdomDropPage() {
-  const loaderData = Route.useLoaderData();
-  const coinBalance = loaderData.success ? loaderData.player.coinBalance : 0;
+  const { playerId, playerData } = Route.useLoaderData();
+  const coinBalance = playerData.success ? playerData.player.coinBalance : 0;
 
-  const session = useGameSession("wisdomdrop", PLAYER_ID);
+  const session = useGameSession("wisdomdrop", playerId);
 
   // Pre-game screen
   if (!session.sessionId) {

@@ -17,7 +17,7 @@ const resultsSearchSchema = z.object({
   missions: fallback(z.string(), "").default(""),
 });
 
-export const Route = createFileRoute("/results")({
+export const Route = createFileRoute("/_authed/results")({
   component: ResultsPage,
   validateSearch: zodValidator(resultsSearchSchema),
   head: () => ({

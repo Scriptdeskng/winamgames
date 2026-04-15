@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Award, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute("/winners")({
+export const Route = createFileRoute("/_authed/winners")({
   component: WinnersPage,
   head: () => ({
     meta: [

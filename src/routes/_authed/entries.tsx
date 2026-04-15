@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Ticket, ArrowLeft, ChevronRight } from "lucide-react";
 
-export const Route = createFileRoute("/entries")({
+export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
   head: () => ({
     meta: [

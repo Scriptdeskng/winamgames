@@ -1,31 +1,50 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award } from "lucide-react";
+import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award, LogOut } from "lucide-react";
 import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
+import { getCurrentPlayer, clearPlayerSession } from "@/utils/session.functions";
 import type { RankTier } from "@/components/profile/RankBadge";
+import { useNavigate } from "@tanstack/react-router";
 
-// TODO: Replace with actual player ID from auth context
-const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
-
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/_authed/profile")({
   component: ProfilePage,
   head: () => ({
     meta: [{ title: "Profile — WinamGames" }],
   }),
-  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
+  loader: async () => {
+    const session = await getCurrentPlayer();
+    const playerId = session!.playerId;
+    const playerData = await getPlayerData({ data: { playerId } });
+    return playerData;
+  },
 });
 
 function ProfilePage() {
   const result = Route.useLoaderData();
+  const navigate = useNavigate();
 
   const player = result.success ? result.player : null;
   const weekTotal = result.success ? result.weekTotal : 0;
 
+  const handleLogout = async () => {
+    await clearPlayerSession();
+    navigate({ to: "/login" });
+  };
+
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <div className="px-4 pt-6 pb-24 space-y-5">
-        <h1 className="text-xl font-bold">Profile</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">Profile</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
 
         {/* Avatar & Name */}
         <div className="rounded-2xl bg-glass border border-glass-border p-5 flex items-center gap-4 shadow-card">

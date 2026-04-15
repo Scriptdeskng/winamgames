@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
-export const Route = createFileRoute("/leaderboard")({
+export const Route = createFileRoute("/_authed/leaderboard")({
   component: LeaderboardPage,
   head: () => ({
     meta: [

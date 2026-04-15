@@ -2,18 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Timer, Flame, Trophy, ChevronRight, Swords, BookOpen, Check } from "lucide-react";
 import { getPlayerData, getDailyMissions, getLeaderboard } from "@/utils/mission.functions";
+import { getCurrentPlayer } from "@/utils/session.functions";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
 
-// TODO: Replace with actual player ID from auth context
-const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
-
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authed/")({
   component: HomePage,
   loader: async () => {
+    const session = await getCurrentPlayer();
+    const playerId = session!.playerId;
     const [playerResult, missionsResult, leaderboardResult] = await Promise.all([
-      getPlayerData({ data: { playerId: PLAYER_ID } }),
-      getDailyMissions({ data: { playerId: PLAYER_ID } }),
+      getPlayerData({ data: { playerId } }),
+      getDailyMissions({ data: { playerId } }),
       getLeaderboard({ data: { limit: 5 } }),
     ]);
     return { playerResult, missionsResult, leaderboardResult };

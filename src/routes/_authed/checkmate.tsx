@@ -5,14 +5,17 @@ import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
+import { getCurrentPlayer } from "@/utils/session.functions";
 import { Swords, Check, X } from "lucide-react";
 
-// TODO: Replace with actual player ID from auth context
-const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
-
-export const Route = createFileRoute("/checkmate")({
+export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
-  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
+  loader: async () => {
+    const session = await getCurrentPlayer();
+    const playerId = session!.playerId;
+    const playerData = await getPlayerData({ data: { playerId } });
+    return { playerId, playerData };
+  },
   head: () => ({
     meta: [
       { title: "CheckMate — WinamGames" },
@@ -22,20 +25,16 @@ export const Route = createFileRoute("/checkmate")({
 });
 
 function CheckMatePage() {
-  const loaderData = Route.useLoaderData();
-  const coinBalance = loaderData.success ? loaderData.player.coinBalance : 0;
+  const { playerId, playerData } = Route.useLoaderData();
+  const coinBalance = playerData.success ? playerData.player.coinBalance : 0;
 
-  const session = useGameSession("checkmate", PLAYER_ID);
+  const session = useGameSession("checkmate", playerId);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
 
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
 
     if (selectedSquare) {
-      // Second click = submit move as algebraic-ish (simplified: just destination for now)
-      // In a real implementation we'd construct full algebraic notation
-      // For mock puzzles, we match against solutionMove which could be like "Qxf7"
-      // We'll submit the move as the destination square for simplicity
       const move = square;
       session.submit(move);
       setSelectedSquare(null);
