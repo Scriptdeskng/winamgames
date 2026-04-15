@@ -1,70 +1,110 @@
 
+## You’re right to be frustrated
 
-# Fix End-to-End Auth Flow and Prototype Sessions
+This is not a “your phone number isn’t in the DB” issue. The prototype auth flow is still broken because the session is not being persisted after OTP verification.
 
-## Root Cause
-The `useSession`/`updateSession` from `@tanstack/react-start/server` silently fails to persist cookies in the Worker sandbox environment. `setPlayerSession` returns `{ success: true }` but the cookie is never actually set. When the app navigates to `/onboarding` or `/`, `getCurrentPlayer` returns null, and `_authed.tsx` redirects back to `/login`.
+## Do I know what the issue is?
 
-## What Gets Fixed
+Yes.
 
-### 1. Replace iron-session with plain cookie persistence
-Rewrite `src/utils/session.functions.ts` to use raw `Set-Cookie`/`Cookie` headers via TanStack Start's `getWebRequest()` and `setResponseHeader()` instead of `useSession`/`updateSession`/`clearSession`. For the prototype, use a simple base64-encoded JSON cookie (no encryption needed — this is a prototype with no real auth secrets). Mark with `// TODO: sign/encrypt before go-live`.
+## What the problem actually is
 
-### 2. Auto-renew expired subscriptions on `/renew` (prototype mode)
-Update `src/routes/renew.tsx` to call a new server function `renewSubscription` that creates a new active subscription row in `winam_subscriptions` for the selected plan. This lets the prototype flow work end-to-end without carrier billing. The button currently just does `console.log` — it will now actually activate the subscription and redirect to `/`.
+From the current code and runtime evidence:
 
-### 3. Handle returning players with expired subscriptions
-In `verifyOtp` (`src/utils/auth.functions.ts`), for existing players whose subscription has expired, auto-create a fresh daily subscription so they don't immediately land on `/renew` every time. This keeps the prototype smooth.
+- `sendOtp` succeeds
+- `verifyOtp` succeeds
+- `setPlayerSession` returns `{ success: true }`
+- the very next `getCurrentPlayer()` call returns `null`
+- `_authed.tsx` then redirects to `/login`
 
-### 4. Ensure onboarding → home flow works
-The onboarding page reads session via `getCurrentPlayer()`. With the cookie fix, this will work. No additional changes needed beyond the session fix.
+So the failure is not OTP, not your number, and not player creation. It is session persistence.
 
-## Files Changed
+The key mismatch is that the approved fix was to switch to raw request/response cookie headers, but the current `src/utils/session.functions.ts` still uses:
 
-| File | Change |
-|------|--------|
-| `src/utils/session.functions.ts` | Replace `useSession`/`updateSession`/`clearSession` with raw cookie read/write using `getWebRequest()` and `setResponseHeader()` |
-| `src/utils/auth.functions.ts` | Auto-renew expired subscription for returning players in `verifyOtp` |
-| `src/routes/renew.tsx` | Add working `renewSubscription` server function; Subscribe button creates real subscription row and redirects to `/` |
+- `getCookie`
+- `setCookie`
+- `deleteCookie`
 
-## Technical Details
+That means the real cookie persistence fix was not fully applied. The runtime behavior confirms it.
 
-Session cookie approach:
-```typescript
-// Write: base64-encode JSON, set as cookie
-const payload = Buffer.from(JSON.stringify(data)).toString("base64");
-setResponseHeader("Set-Cookie", `winam-session=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+## Files involved
 
-// Read: parse cookie header, decode base64
-const cookies = getWebRequest().headers.get("cookie");
-// extract winam-session value, JSON.parse(atob(value))
-```
+- `src/utils/session.functions.ts` — main root cause
+- `src/routes/verify.tsx` — writes session then navigates
+- `src/routes/_authed.tsx` — redirects to `/login` when session is missing
+- `src/routes/onboarding.tsx` and `src/routes/renew.tsx` — both depend on session being readable
 
-Returning player auto-renew in `verifyOtp`:
-```typescript
-if (existingPlayer) {
-  // Check if subscription is expired, auto-create fresh daily if so
-  const { data: activeSub } = await supabaseAdmin
-    .from("winam_subscriptions")
-    .select("id")
-    .eq("player_id", existingPlayer.id)
-    .eq("status", "active")
-    .gte("valid_until", new Date().toISOString())
-    .limit(1)
-    .maybeSingle();
+## Fix plan
 
-  if (!activeSub) {
-    // Auto-renew daily subscription for prototype
-    // ... insert new daily sub with WAT expiry
-  }
-}
-```
+### 1. Replace the current cookie helpers with raw header-based session handling
+In `src/utils/session.functions.ts`:
 
-## Expected Flow After Fix
+- stop using `getCookie`, `setCookie`, `deleteCookie`
+- use request header parsing to read cookies
+- use explicit `Set-Cookie` response headers to write and clear the session
+- keep the simple prototype-safe payload for now
+
+This is the critical fix.
+
+### 2. Make session read/write debuggable
+While fixing `session.functions.ts`, add temporary logs for:
+
+- when session is written
+- whether request cookies are present on the next request
+- whether decode/parse succeeds
+
+That will let me verify the exact handoff instead of guessing again.
+
+### 3. Keep the prototype OTP flow dependency-free
+Retain the current prototype behavior:
+
+- any valid Nigerian number can request OTP
+- verification accepts `0000`
+- no real SMS provider
+- no real payment dependency
+
+### 4. Re-check every transition that depends on session
+After the session fix, verify these routes all use the same session successfully:
+
 ```text
-/login → enter phone → /verify → enter 0000 → session cookie set →
-  → new player: /onboarding → set nickname → / (home)
-  → returning player: / (home) directly
-  → expired sub: /renew → tap Subscribe → / (home)
+/login
+→ /verify
+→ /onboarding (new player)
+→ /   or /renew
+→ /profile
+→ logout → /login
 ```
 
+### 5. Tighten fallback UX so you don’t hit silent loops again
+If session is missing after verify, add clearer error handling instead of silently bouncing back to login. That way, if anything regresses, the app explains what failed.
+
+## Expected result after implementation
+
+```text
+Enter phone
+→ Get OTP
+→ Enter 0000
+→ Session persists
+→ New user goes to onboarding
+→ Returning user goes to home
+→ Inactive user can renew and continue
+→ Profile/logout also work
+```
+
+## Why I’m confident this is the right fix
+
+The network trace already proves the sequence:
+
+```text
+verifyOtp: success
+setPlayerSession: success
+getCurrentPlayer: null
+```
+
+That isolates the issue to session storage, not OTP, not DB seeding, not missing users.
+
+## What I will change once you approve
+
+- `src/utils/session.functions.ts` — implement raw cookie header session handling
+- `src/routes/verify.tsx` — keep navigation flow, add clearer failure handling if needed
+- optionally `src/routes/onboarding.tsx` / `src/routes/renew.tsx` / `src/routes/_authed.tsx` only if small follow-up adjustments are needed after the real session fix
