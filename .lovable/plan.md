@@ -1,41 +1,34 @@
 
+# Winners Page — Phone Format & Entry ID Display Fix
 
-# Winners Page — Redesign for Trust + Engagement
+## Changes needed
 
-## Layout (top to bottom)
+### 1. Phone number format
+Change from `***8231` to `080*****31` format (showing first 3 and last 2 digits with middle asterisked).
 
-### 1. Hero / Ad Card (replaces prize pool breakdown)
-Bold motivational card with emerald gradient accent:
-- "Real people. Real wins." headline
-- "78 winners every week — cash, airtime & data"
-- CTA button: "Play Now" linking to `/checkmate`
+Nigerian phone format: typically 11 digits starting with `080`, `081`, `070`, `090`, `091` etc.
+Pattern: `ABC*****XY` where ABC = first 3 digits, XY = last 2 digits, middle = 6 asterisks
 
-### 2. Draw Weeks — Each week is ONE collapsible card
-Each draw week becomes a single card with a collapsible trigger showing the date range and a summary line like "3 cash + 75 airtime winners". Collapsed by default (most recent open by default).
+### 2. Entry ID display
+Currently only cash winners show entry IDs. Need to add entry IDs to ALL airtime winners as well.
 
-Inside each card when expanded:
-- **Cash winners** (3 rows, always visible within the expanded card) with gold/silver/bronze badges
-- **Airtime tiers** nested inside a second collapsible within the card, showing tier summary counts: "5x ₦2k, 10x ₦1k, 60x ₦500"
-  - When expanded, winners grouped by tier in compact rows
+## Implementation
 
-This collapses ~80 rows per week into a single card header — far less intimidating.
+**File: `src/routes/_authed/winners.tsx`**
 
-### 3. Bottom CTA
-"Keep playing, keep winning" with a Link button back to home or games.
+1. Update all hardcoded phone numbers in `DRAW_WEEKS` data to use format `080*****31`, `081*****42`, etc.
+2. Modify `AirtimeSection` component to display entry IDs for all airtime winners (lines 150-154)
+   - Add entry ID display below or next to phone number
+   - Use same styling as cash winners: `text-[9px] text-muted-foreground tabular-nums` with `Hash` icon
+3. Update phone generation logic for ₦500 tier (lines 70-72, 114-116) to produce realistic Nigerian numbers
 
-## Visual de-cluttering ideas
-- Each draw week is a single `Collapsible` card (date as trigger)
-- Cash winners shown immediately on expand; airtime is a nested collapsible
-- Compact airtime rows: 2-column grid for ₦500 tier (60 winners in 30 rows instead of 60)
-- Summary counts on each collapsible trigger so users see scope without expanding
+Example airtime winner row (new layout):
+```
+080*****31  #D4E7F1A3  ₦2,000
+```
 
-## File: `src/routes/_authed/winners.tsx` — full rewrite
-
-- Remove the "Weekly Prize Pool" breakdown section
-- Add hero card with CTA (`Link` to `/checkmate`)
-- Wrap each `DrawWeek` in a single `Collapsible` card (first week open by default)
-- Inside: cash winners visible, airtime in nested `Collapsible` with tier grouping
-- ₦500 data tier uses 2-column grid layout
-- Bottom CTA card: "Keep playing, keep winning" with Link to `/`
-- Add `Link` import from `@tanstack/react-router`, add `Gamepad2` or `Play` icon from lucide
-
+Or stacked for better mobile fit:
+```
+080*****31
+#D4E7F1A3         ₦2,000
+```
