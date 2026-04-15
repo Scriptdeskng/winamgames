@@ -27,7 +27,7 @@ function parseCookieHeader(cookieHeader: string | null): Record<string, string> 
 
 function readSessionFromRequest(): SessionData | null {
   try {
-    const request = getWebRequest();
+    const request = getRequest();
     const cookieHeader = request.headers.get("cookie");
     const cookies = parseCookieHeader(cookieHeader);
     const raw = cookies[COOKIE_NAME];
