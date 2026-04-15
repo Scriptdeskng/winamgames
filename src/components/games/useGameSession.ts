@@ -93,13 +93,13 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
           timeMs,
           nextPuzzleId,
         },
-      });
+      }) as { correct: boolean; nextPuzzle: Record<string, string | string[]> | null };
 
       const newSolved = result.correct ? state.puzzlesSolved + 1 : state.puzzlesSolved;
       const newLives = result.correct ? state.lives : state.lives - 1;
       const isLastPuzzle = !result.nextPuzzle;
       const isDead = newLives <= 0;
-      const isGameOver = isDead || isLastPuzzle;
+      const isGameOver = isDead || (result.correct && isLastPuzzle);
 
       setState((s) => ({
         ...s,
@@ -109,7 +109,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
         lives: newLives,
         currentPuzzleIndex: result.correct ? nextIdx : s.currentPuzzleIndex,
         currentPuzzle: result.correct && result.nextPuzzle ? result.nextPuzzle : s.currentPuzzle,
-        currentHintTier: result.correct ? 0 : s.currentHintTier, // Reset hints for new puzzle
+        currentHintTier: result.correct ? 0 : s.currentHintTier,
         hintData: result.correct ? null : s.hintData,
         gameOver: isGameOver,
         running: !isGameOver,
@@ -119,10 +119,10 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
         puzzleStartRef.current = Date.now();
       }
 
-      // Auto-close if game over
       if (isGameOver) {
+        const finalHints = state.hintsUsed;
         setTimeout(() => {
-          endSession(newSolved, state.hintsUsed);
+          endSession(newSolved, finalHints);
         }, 1500);
       }
     } catch (err) {
