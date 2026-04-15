@@ -1,67 +1,59 @@
 
 
-# Switch Session to localStorage
+# Replace Bottom Nav with Hamburger Menu (StaySharp Style)
 
-## Problem
-Server-side cookie persistence keeps failing in the Worker SSR environment. Every fix attempt has failed because `Set-Cookie` headers from server functions and server routes are not reliably persisted by the browser in this runtime.
+## What changes
 
-## Solution
-Move session state to localStorage. Keep server functions for database operations only (player creation, nickname, subscriptions, games, missions). Session = client-side concern only.
+Remove the fixed bottom navigation bar and replace it with a top header bar on every authenticated page. The header will have:
+- **Left**: Profile avatar button (links to `/profile`)
+- **Center**: "WinamGames" logo/text
+- **Right**: Hamburger menu button that opens a bottom Sheet with navigation links
 
-## Architecture Change
-```text
-Before: server writes cookie → SSR reads cookie → route guard
-After:  client writes localStorage → client reads localStorage → client-side guard
-```
+This matches the StaySharp pattern: profile icon left, logo center, hamburger right, bottom sheet menu.
 
-## Files to create
+## UI styling patterns to adopt from StaySharp (not colors)
 
-**`src/lib/session.ts`** — localStorage session helpers
-- `getSession(): { playerId, msisdnLast4, nickname } | null`
-- `setSession(data)` 
-- `clearSession()`
-- `updateSessionNickname(nickname)`
+1. **Bottom Sheet menu** instead of bottom tab bar — slides up from bottom with rounded top corners (`rounded-t-3xl`), clean list of nav items with icons and optional count badges
+2. **Top bar layout**: profile button (left) — centered logo — menu button (right), all using `rounded-xl bg-card border border-border` button style
+3. **Full-height screens** (`h-[100dvh]`) with content centered vertically where appropriate (e.g. setup/home)
+4. **Compact stat cards** in a horizontal row with icon-in-colored-bg pattern (icon inside a tinted rounded square)
+5. **Motion transitions** on screen entries (fade + slide) — can add later
+6. **Pill-shaped option selectors** for toggles (difficulty, count) instead of dropdowns
+7. **`text-[10px] uppercase tracking-wider`** for section labels — you already use this
 
 ## Files to change
 
-**`src/routes/_authed.tsx`** — Remove server `beforeLoad`. Use client-side component that reads localStorage and redirects to `/login` if missing. Still call `getSubscriptionStatus` server function (DB query) but from client side.
+### Create: `src/components/layout/MenuSheet.tsx`
+- Hamburger button that opens a bottom Sheet
+- Nav items: Home `/`, Games `/checkmate`, Leaderboard `/leaderboard`, My Entries `/entries`, Winners `/winners`
+- Each item has icon, label, and closes sheet on tap then navigates via Link
+- Active route highlighted
 
-**`src/routes/verify.tsx`** — After `verifyOtp()` succeeds, store result in localStorage via `setSession()`, then `navigate()` to `/onboarding` or `/`. No fetch to `/api/auth-complete`.
+### Create: `src/components/layout/TopBar.tsx`
+- Reusable top bar component used across all authed pages
+- Left: profile avatar (first letter of nickname, links to `/profile`)
+- Center: "WinamGames" text
+- Right: MenuSheet hamburger
+- Reads session from `getSession()` for the avatar letter
 
-**`src/routes/onboarding.tsx`** — Read session from localStorage. After `setNickname()` succeeds, update localStorage and navigate to `/`.
+### Delete: `src/components/layout/BottomNav.tsx`
 
-**`src/routes/renew.tsx`** — Read session from localStorage instead of server `beforeLoad`. After `renewSubscription()` succeeds, navigate to `/`.
+### Update: `src/components/layout/AppShell.tsx`
+- Remove BottomNav import and usage
 
-**`src/routes/_authed/profile.tsx`** — Read from localStorage. Logout = `clearSession()` + navigate to `/login`.
+### Update all pages that use BottomNav:
+- `src/routes/_authed/index.tsx` — replace BottomNav with TopBar, remove `pb-24`
+- `src/routes/_authed/profile.tsx` — replace BottomNav with TopBar, remove header row (TopBar handles it)
+- `src/routes/_authed/leaderboard.tsx` — replace BottomNav with TopBar
+- `src/routes/_authed/entries.tsx` — replace BottomNav with TopBar
+- `src/routes/_authed/winners.tsx` — replace BottomNav with TopBar
 
-**`src/routes/_authed/index.tsx`** — Read playerId from localStorage instead of server session.
+### Update sub-pages with back buttons (entries, winners):
+- Keep the back arrow but integrate with TopBar pattern (back arrow replaces profile icon on left)
 
-**`src/routes/login.tsx`** — Check localStorage on mount; if session exists, redirect to `/`.
-
-**`src/utils/session.functions.ts`** — Remove `getCurrentPlayer` server function. Keep `getSubscriptionStatus` (needs DB).
-
-## Files to delete
-
-- `src/routes/api/auth-complete.ts`
-- `src/routes/api/auth-session-update.ts`  
-- `src/routes/api/auth-logout.ts`
-- `src/utils/session.server.ts`
-
-## What stays on the backend
-All database operations remain as server functions:
-- `verifyOtp`, `sendOtp`, `setNickname`, `renewSubscription` (auth.functions.ts)
-- `getSubscriptionStatus` (session.functions.ts)
-- All game/mission server functions (game.functions.ts, mission.functions.ts)
-
-## SSR handling
-Since localStorage is not available during SSR, `_authed.tsx` will render a loading state server-side and check auth client-side with `useEffect`. This avoids the cookie problem entirely.
-
-## Expected flow after fix
-```text
-/login → enter phone → /verify → enter 0000 
-→ verifyOtp() server call succeeds
-→ localStorage.setItem("winam-session", JSON.stringify({...}))
-→ navigate to /onboarding or /
-→ _authed reads localStorage → renders page
-```
+## Technical notes
+- Uses existing `Sheet` component from `src/components/ui/sheet.tsx` with `side="bottom"`
+- No new dependencies needed
+- `getSession()` from `src/lib/session` for avatar initial
+- Navigation via TanStack Router `Link` and `useNavigate`
 
