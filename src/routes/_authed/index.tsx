@@ -153,3 +153,31 @@ function HomePage() {
     </div>
   );
 }
+
+const TIPS = [
+  "Streaks of 3+ days earn a bonus entry each game",
+  "Solving puzzles without hints gives 2x coins",
+  "Complete all 3 daily missions for extra entries",
+  "Your rank tier upgrades as you earn more XP",
+  "Each correct answer earns entries into the weekly draw",
+  "Play both CheckMate and WisdomDrop to complete the game mix mission",
+];
+
+function DidYouKnow() {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const tip = TIPS[dayOfYear % TIPS.length];
+
+  return (
+    <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-start gap-3">
+      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+        <Lightbulb className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Did you know?</p>
+        <p className="text-sm text-foreground">{tip}</p>
+      </div>
+    </div>
+  );
+}
