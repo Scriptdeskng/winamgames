@@ -13,10 +13,10 @@ function normalizeMsisdn(raw: string): string {
   } else if (cleaned.startsWith("234")) {
     cleaned = "+" + cleaned;
   } else if (!cleaned.startsWith("+234")) {
-    throw new Error("Invalid Nigerian MSISDN");
+    throw new Error("Please enter a valid Nigerian mobile number");
   }
   if (!/^\+234[789]\d{9}$/.test(cleaned)) {
-    throw new Error("Invalid Nigerian MSISDN format");
+    throw new Error("Please enter a valid Nigerian mobile number (e.g. 0813 749 8991)");
   }
   return cleaned;
 }
