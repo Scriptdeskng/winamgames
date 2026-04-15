@@ -286,15 +286,15 @@ export const closeSession = createServerFn({ method: "POST" })
 
     // Mission bonus: check today's completed missions for this player
     const watDate = session.session_date_wat;
-    const { data: completedMissions } = await supabaseAdmin
+    const { data: priorCompletedMissions } = await supabaseAdmin
       .from("winam_player_missions")
       .select("entries_awarded")
       .eq("player_id", data.playerId)
       .eq("assigned_date_wat", watDate)
       .eq("status", "completed");
 
-    const missionBonus = completedMissions
-      ? completedMissions.reduce((sum, m) => sum + m.entries_awarded, 0)
+    const missionBonus = priorCompletedMissions
+      ? priorCompletedMissions.reduce((sum: number, m: { entries_awarded: number }) => sum + m.entries_awarded, 0)
       : 0;
 
     const rawEntries = baseEntries + streakBonus + missionBonus;

@@ -134,7 +134,7 @@ function HomePage() {
             {missions.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-3">No missions available today</p>
             )}
-            {missions.map((mission) => (
+            {missions.map((mission: { id: string; title: string; rewardAmount: number; rewardType: string; status: string; progress: string }) => (
               <div key={mission.id} className="rounded-xl bg-surface-1 border border-glass-border p-3 flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium">{mission.title}</p>
@@ -170,7 +170,7 @@ function HomePage() {
             {leaderboard.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-2">No entries yet this week</p>
             )}
-            {leaderboard.map((p, i) => (
+            {leaderboard.map((p: { id: string; name: string; entries: number }, i: number) => (
               <div key={p.id} className="flex items-center justify-between py-1.5">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold tabular-nums text-muted-foreground w-4">{i + 1}</span>
