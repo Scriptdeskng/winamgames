@@ -36,7 +36,7 @@ export const sendOtp = createServerFn({ method: "POST" })
     // TODO: PROTOTYPE MODE — skip OTP table and SMS delivery entirely
     // Replace with real OTP flow before go-live
     console.log(`[PROTOTYPE] OTP request for ****${last4} — use 0000 to verify`);
-    return { success: true, msisdnLast4: last4 };
+    return { success: true as const, msisdnLast4: last4, error: null };
   });
 
 export const verifyOtp = createServerFn({ method: "POST" })
