@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { Award, ArrowLeft } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { TopBar } from "@/components/layout/TopBar";
+import { Award } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/winners")({
   component: WinnersPage,
@@ -15,15 +15,11 @@ export const Route = createFileRoute("/_authed/winners")({
 function WinnersPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <div className="px-4 pt-6 pb-24 space-y-5">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-gold" />
-            <h1 className="text-xl font-bold">Winners</h1>
-          </div>
+      <TopBar backTo="/" />
+      <div className="px-4 pb-6 space-y-5">
+        <div className="flex items-center gap-2">
+          <Award className="h-5 w-5 text-gold" />
+          <h1 className="text-xl font-bold">Winners</h1>
         </div>
 
         <div className="space-y-3">
@@ -50,7 +46,6 @@ function WinnersPage() {
           ))}
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

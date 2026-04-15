@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BottomNav } from "@/components/layout/BottomNav";
+import { TopBar } from "@/components/layout/TopBar";
 import { Timer, Flame, Trophy, ChevronRight, Swords, BookOpen, Check } from "lucide-react";
 import { getPlayerData, getDailyMissions, getLeaderboard } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
@@ -59,22 +59,8 @@ function HomePage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <div className="px-4 pt-6 pb-24 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Welcome back</p>
-            <h1 className="text-xl font-bold text-foreground">WinamGames</h1>
-          </div>
-          <Link
-            to="/profile"
-            className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center border border-glass-border"
-          >
-            <span className="text-sm font-bold text-primary">
-              {player?.nickname?.[0]?.toUpperCase() ?? session?.nickname?.[0]?.toUpperCase() ?? "W"}
-            </span>
-          </Link>
-        </div>
-
+      <TopBar />
+      <div className="px-4 pb-6 space-y-5">
         <div className="rounded-2xl bg-glass border border-glass-border p-4 shadow-card">
           <div className="flex items-center gap-2 mb-3">
             <Timer className="h-4 w-4 text-primary" />
@@ -191,7 +177,6 @@ function HomePage() {
           </div>
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

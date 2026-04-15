@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BottomNav } from "@/components/layout/BottomNav";
+import { TopBar } from "@/components/layout/TopBar";
 import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/leaderboard")({
@@ -34,7 +34,8 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "same" }) {
 function LeaderboardPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <div className="px-4 pt-6 pb-24 space-y-5">
+      <TopBar />
+      <div className="px-4 pb-6 space-y-5">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-gold" />
           <h1 className="text-xl font-bold">Leaderboard</h1>
@@ -65,7 +66,6 @@ function LeaderboardPage() {
           ))}
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

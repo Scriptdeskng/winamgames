@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { Ticket, ArrowLeft, ChevronRight } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { TopBar } from "@/components/layout/TopBar";
+import { Ticket, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
@@ -15,18 +15,13 @@ export const Route = createFileRoute("/_authed/entries")({
 function EntriesPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <div className="px-4 pt-6 pb-24 space-y-5">
-        <div className="flex items-center gap-3">
-          <Link to="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold">My Entries</h1>
-          </div>
+      <TopBar backTo="/" />
+      <div className="px-4 pb-6 space-y-5">
+        <div className="flex items-center gap-2">
+          <Ticket className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold">My Entries</h1>
         </div>
 
-        {/* Current Week */}
         <div className="rounded-2xl bg-glass border border-glass-border p-4 shadow-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
           <p className="text-4xl font-bold tabular-nums text-primary mt-1">12 / 50</p>
@@ -35,7 +30,6 @@ function EntriesPage() {
           </div>
         </div>
 
-        {/* History */}
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Past Weeks</h2>
           <div className="space-y-2">
@@ -60,7 +54,6 @@ function EntriesPage() {
           </div>
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }
