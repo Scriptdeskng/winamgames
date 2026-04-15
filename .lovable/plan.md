@@ -1,110 +1,106 @@
 
-## You’re right to be frustrated
+Goal: stop the redirect loop permanently and make the prototype auth flow reliable end-to-end without relying on fragile client-side RPC cookie writes.
 
-This is not a “your phone number isn’t in the DB” issue. The prototype auth flow is still broken because the session is not being persisted after OTP verification.
+What I found:
+- The failure is not your phone number, OTP generation, player creation, or subscription setup.
+- Preview logs prove this exact sequence:
+  ```text
+  [session] Wrote session for player: ...
+  [session] No session cookie found
+  ```
+- So the app is writing a session during `setPlayerSession`, but the very next request still has no cookie.
+- The weak point is the current design: session creation/clearing happens inside `createServerFn` calls. In this environment, that response path is not persisting the cookie reliably.
 
-## Do I know what the issue is?
+Plan to fix it properly:
 
-Yes.
+1. Replace RPC-based login completion with a real server redirect flow
+- Add dedicated server routes for auth completion/logout that return an actual HTTP response.
+- Move these responsibilities out of `createServerFn` cookie writes:
+  - verify OTP
+  - set session cookie
+  - redirect to `/onboarding` or `/`
+  - clear session on logout
+- Why: browser-handled redirects with `Set-Cookie` are much more reliable than setting cookies inside a background RPC call and then navigating separately.
 
-## What the problem actually is
+2. Restructure session utilities around pure helpers
+- Keep session parsing/serialization logic in `src/utils/session.functions.ts` (or a small server-only helper), but stop exposing “write session” as a client-called server function.
+- Use the helpers from server routes only:
+  ```text
+  read cookie from request
+  build Set-Cookie header
+  clear Set-Cookie header
+  ```
+- Keep the prototype-safe plain cookie payload for now, with a TODO to sign/encrypt before launch.
 
-From the current code and runtime evidence:
+3. Update the auth screens to use the new server endpoints
+- `src/routes/verify.tsx`
+  - submit to the new server auth-complete endpoint instead of calling `setPlayerSession`
+  - keep `0000` prototype OTP behavior
+  - show explicit failure states instead of silently bouncing
+- `src/routes/_authed/profile.tsx`
+  - logout should hit a server logout endpoint that clears the cookie in the response, then redirects to `/login`
+- `src/routes/onboarding.tsx`
+  - after nickname save, refresh the session via a server redirect endpoint or avoid depending on cookie rewrite in a server function
 
-- `sendOtp` succeeds
-- `verifyOtp` succeeds
-- `setPlayerSession` returns `{ success: true }`
-- the very next `getCurrentPlayer()` call returns `null`
-- `_authed.tsx` then redirects to `/login`
+4. Make route protection safer and less surprising
+- Keep `_authed.tsx` protection, but add clearer fallback behavior where session-dependent routes can fail.
+- For onboarding/renew/home/profile flows, avoid hard assumptions like `session!` where possible and surface meaningful errors when auth state is missing.
 
-So the failure is not OTP, not your number, and not player creation. It is session persistence.
-
-The key mismatch is that the approved fix was to switch to raw request/response cookie headers, but the current `src/utils/session.functions.ts` still uses:
-
-- `getCookie`
-- `setCookie`
-- `deleteCookie`
-
-That means the real cookie persistence fix was not fully applied. The runtime behavior confirms it.
-
-## Files involved
-
-- `src/utils/session.functions.ts` — main root cause
-- `src/routes/verify.tsx` — writes session then navigates
-- `src/routes/_authed.tsx` — redirects to `/login` when session is missing
-- `src/routes/onboarding.tsx` and `src/routes/renew.tsx` — both depend on session being readable
-
-## Fix plan
-
-### 1. Replace the current cookie helpers with raw header-based session handling
-In `src/utils/session.functions.ts`:
-
-- stop using `getCookie`, `setCookie`, `deleteCookie`
-- use request header parsing to read cookies
-- use explicit `Set-Cookie` response headers to write and clear the session
-- keep the simple prototype-safe payload for now
-
-This is the critical fix.
-
-### 2. Make session read/write debuggable
-While fixing `session.functions.ts`, add temporary logs for:
-
-- when session is written
-- whether request cookies are present on the next request
-- whether decode/parse succeeds
-
-That will let me verify the exact handoff instead of guessing again.
-
-### 3. Keep the prototype OTP flow dependency-free
-Retain the current prototype behavior:
-
-- any valid Nigerian number can request OTP
-- verification accepts `0000`
-- no real SMS provider
-- no real payment dependency
-
-### 4. Re-check every transition that depends on session
-After the session fix, verify these routes all use the same session successfully:
-
+5. Verify the whole prototype path, not just one screen
+I’ll validate this sequence after implementation:
 ```text
 /login
+→ enter valid Nigerian number
 → /verify
-→ /onboarding (new player)
-→ /   or /renew
+→ enter 0000
+→ session is created by server response
+→ new user: /onboarding
+→ save nickname
+→ /
 → /profile
-→ logout → /login
+→ logout
+→ /login
+
+returning user:
+→ /login
+→ /verify
+→ 0000
+→ /
+
+inactive user:
+→ /login
+→ /verify
+→ 0000
+→ /renew
+→ activate prototype subscription
+→ /
 ```
 
-### 5. Tighten fallback UX so you don’t hit silent loops again
-If session is missing after verify, add clearer error handling instead of silently bouncing back to login. That way, if anything regresses, the app explains what failed.
+Files I expect to change:
+- `src/utils/session.functions.ts` — convert to cookie helper/parsing utilities; remove client-called session write dependency
+- `src/utils/auth.functions.ts` — keep OTP/player/subscription logic, but likely stop using it for final cookie persistence step
+- `src/routes/verify.tsx` — send user through a real server completion flow
+- `src/routes/onboarding.tsx` — avoid fragile post-save session rewrite
+- `src/routes/_authed/profile.tsx` — logout through real server response
+- likely add one or two auth server route files under `src/routes/api/...` for login completion and logout
 
-## Expected result after implementation
-
+Technical detail:
+The core fix is architectural, not cosmetic:
 ```text
-Enter phone
-→ Get OTP
-→ Enter 0000
-→ Session persists
-→ New user goes to onboarding
-→ Returning user goes to home
-→ Inactive user can renew and continue
-→ Profile/logout also work
+Current:
+client -> verifyOtp() RPC
+client -> setPlayerSession() RPC with Set-Cookie
+client -> window.location
+
+Planned:
+browser navigation/form submit -> auth server route
+server route -> verify player + Set-Cookie + redirect
+browser follows redirect with cookie already persisted
 ```
 
-## Why I’m confident this is the right fix
-
-The network trace already proves the sequence:
-
-```text
-verifyOtp: success
-setPlayerSession: success
-getCurrentPlayer: null
-```
-
-That isolates the issue to session storage, not OTP, not DB seeding, not missing users.
-
-## What I will change once you approve
-
-- `src/utils/session.functions.ts` — implement raw cookie header session handling
-- `src/routes/verify.tsx` — keep navigation flow, add clearer failure handling if needed
-- optionally `src/routes/onboarding.tsx` / `src/routes/renew.tsx` / `src/routes/_authed.tsx` only if small follow-up adjustments are needed after the real session fix
+Expected result:
+- No phone-number preloading needed
+- No real OTP provider needed
+- No PSP/payment dependency needed
+- No “success then back to login” loop
+- One stable prototype flow you can actually test end-to-end before making adjustments
