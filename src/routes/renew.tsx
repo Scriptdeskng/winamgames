@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, Crown, Clock, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/renew")({
   component: RenewPage,
@@ -9,22 +10,105 @@ export const Route = createFileRoute("/renew")({
 });
 
 function RenewPage() {
+  const [selected, setSelected] = useState<"daily" | "weekly">("weekly");
+
+  const handleSubscribe = () => {
+    // TODO: Forthsoft carrier billing integration
+    console.log(`[TODO: Forthsoft] Subscribe to ${selected} plan`);
+  };
+
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col items-center justify-center px-6">
-      <div className="h-16 w-16 rounded-2xl bg-warning/15 flex items-center justify-center mb-6">
-        <AlertTriangle className="h-8 w-8 text-warning" />
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
+      <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="h-12 w-12 rounded-xl bg-warning/15 flex items-center justify-center">
+            <AlertTriangle className="h-6 w-6 text-warning" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Subscription Inactive</h1>
+            <p className="text-sm text-muted-foreground">
+              Renew to keep playing & earning entries
+            </p>
+          </div>
+        </div>
+
+        {/* Plan cards */}
+        <div className="space-y-3">
+          {/* Weekly — recommended */}
+          <button
+            onClick={() => setSelected("weekly")}
+            className={`relative w-full rounded-2xl border-2 p-5 text-left transition-all ${
+              selected === "weekly"
+                ? "border-primary bg-primary/5 shadow-glow"
+                : "border-glass-border bg-surface-1 hover:border-primary/40"
+            }`}
+          >
+            <div className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wide uppercase">
+              Best Value
+            </div>
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Crown className="h-5 w-5 text-primary" />
+                  <span className="font-bold text-lg">Weekly</span>
+                </div>
+                <p className="text-sm text-muted-foreground">7 days of full access</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
+                    ₦42.86/day — save 71%
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold tabular-nums">₦300</span>
+                <p className="text-xs text-muted-foreground">/week</p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> All games</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Draw entries</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Missions</span>
+            </div>
+          </button>
+
+          {/* Daily */}
+          <button
+            onClick={() => setSelected("daily")}
+            className={`w-full rounded-2xl border-2 p-5 text-left transition-all ${
+              selected === "daily"
+                ? "border-primary bg-primary/5 shadow-glow"
+                : "border-glass-border bg-surface-1 hover:border-primary/40"
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-bold text-lg">Daily</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Access for today only</p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold tabular-nums">₦150</span>
+                <p className="text-xs text-muted-foreground">/day</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {/* Subscribe button */}
+        <button
+          onClick={handleSubscribe}
+          className="mt-8 w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-glow"
+        >
+          Subscribe — {selected === "weekly" ? "₦300/week" : "₦150/day"}
+        </button>
+
+        <p className="mt-4 text-xs text-muted-foreground text-center">
+          MTN Nigeria carrier billing • Cancel anytime
+        </p>
       </div>
-      <h1 className="text-xl font-bold text-center">Subscription Inactive</h1>
-      <p className="mt-2 text-sm text-muted-foreground text-center max-w-[280px]">
-        Your WinamGames subscription has expired. Renew to keep playing and earning draw entries.
-      </p>
-      <button className="mt-8 w-full max-w-[280px] h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-glow">
-        <RefreshCw className="h-5 w-5" />
-        Renew Subscription
-      </button>
-      <p className="mt-4 text-xs text-muted-foreground text-center">
-        MTN Nigeria • Daily or Weekly plans
-      </p>
     </div>
   );
 }
