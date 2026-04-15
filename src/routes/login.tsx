@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Phone, ArrowRight } from "lucide-react";
 import { sendOtp } from "@/utils/auth.functions";
+import { getSession } from "@/lib/session";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -18,6 +19,13 @@ function LoginPage() {
   const [msisdn, setMsisdn] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const session = getSession();
+    if (session) {
+      navigate({ to: "/" });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

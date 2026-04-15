@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award, LogOut } from "lucide-react";
 import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
-import { getCurrentPlayer } from "@/utils/session.functions";
+import { getSession, clearSession } from "@/lib/session";
 import type { RankTier } from "@/components/profile/RankBadge";
 
 export const Route = createFileRoute("/_authed/profile")({
@@ -12,26 +12,28 @@ export const Route = createFileRoute("/_authed/profile")({
     meta: [{ title: "Profile — WinamGames" }],
   }),
   loader: async () => {
-    const session = await getCurrentPlayer();
-    const playerId = session!.playerId;
-    const playerData = await getPlayerData({ data: { playerId } });
-    return playerData;
+    // playerId will be read client-side; loader fetches data with a placeholder
+    // We can't read localStorage in loader (SSR), so we return null and fetch client-side
+    return null;
   },
 });
 
 function ProfilePage() {
-  const result = Route.useLoaderData();
+  const navigate = useNavigate();
+  const session = getSession();
+  const [data, setData] = React.useState<any>(null);
 
-  const player = result.success ? result.player : null;
-  const weekTotal = result.success ? result.weekTotal : 0;
+  React.useEffect(() => {
+    if (!session) return;
+    getPlayerData({ data: { playerId: session.playerId } }).then(setData);
+  }, []);
+
+  const player = data?.success ? data.player : null;
+  const weekTotal = data?.success ? data.weekTotal : 0;
 
   const handleLogout = () => {
-    // Submit a form POST to the server logout route
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "/api/auth-logout";
-    document.body.appendChild(form);
-    form.submit();
+    clearSession();
+    navigate({ to: "/login" });
   };
 
   return (
@@ -48,24 +50,21 @@ function ProfilePage() {
           </button>
         </div>
 
-        {/* Avatar & Name */}
         <div className="rounded-2xl bg-glass border border-glass-border p-5 flex items-center gap-4 shadow-card">
           <div className="h-16 w-16 rounded-2xl bg-surface-2 flex items-center justify-center border border-glass-border">
             <User className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">{player?.nickname ?? "Player"}</h2>
-            <p className="text-sm text-muted-foreground">****{player?.msisdnLast4 ?? "0000"}</p>
+            <h2 className="text-lg font-bold">{player?.nickname ?? session?.nickname ?? "Player"}</h2>
+            <p className="text-sm text-muted-foreground">****{player?.msisdnLast4 ?? session?.msisdnLast4 ?? "0000"}</p>
           </div>
         </div>
 
-        {/* Rank & XP */}
         <XpProgressBar
           xp={player?.xpTotal ?? 0}
           tier={(player?.rankTier as RankTier) ?? "pawn"}
         />
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { icon: Coins, label: "Coins", value: player?.coinBalance?.toLocaleString() ?? "0", color: "text-coin" },
@@ -80,7 +79,6 @@ function ProfilePage() {
           ))}
         </div>
 
-        {/* Links */}
         <div className="space-y-2">
           {[
             { to: "/entries" as const, icon: Ticket, label: "My Entries" },
@@ -104,3 +102,5 @@ function ProfilePage() {
     </div>
   );
 }
+
+import React from "react";

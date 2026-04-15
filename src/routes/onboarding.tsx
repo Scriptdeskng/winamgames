@@ -1,44 +1,38 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
-import { getCurrentPlayer } from "@/utils/session.functions";
+import { getSession, updateSessionNickname } from "@/lib/session";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
-  loader: async () => {
-    const session = await getCurrentPlayer();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-    return { playerId: session.playerId, msisdnLast4: session.msisdnLast4 };
-  },
   head: () => ({
     meta: [{ title: "Choose Nickname — WinamGames" }],
   }),
 });
 
 function OnboardingPage() {
-  const { playerId, msisdnLast4 } = Route.useLoaderData();
+  const navigate = useNavigate();
+  const [playerId, setPlayerId] = useState("");
   const [nickname, setNicknameValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    const session = getSession();
+    if (!session) {
+      navigate({ to: "/login" });
+      return;
+    }
+    setPlayerId(session.playerId);
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = nickname.trim();
-    if (trimmed.length < 3) {
-      setError("At least 3 characters");
-      return;
-    }
-    if (trimmed.length > 16) {
-      setError("Maximum 16 characters");
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-      setError("Letters, numbers, and underscores only");
-      return;
-    }
+    if (trimmed.length < 3) { setError("At least 3 characters"); return; }
+    if (trimmed.length > 16) { setError("Maximum 16 characters"); return; }
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setError("Letters, numbers, and underscores only"); return; }
 
     setLoading(true);
     try {
@@ -48,28 +42,16 @@ function OnboardingPage() {
         setLoading(false);
         return;
       }
-
-      // Update session cookie via server route redirect
-      const res = await fetch("/api/auth-session-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname: trimmed, redirectTo: "/" }),
-        redirect: "follow",
-      });
-
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
-
-      // Fallback
-      window.location.href = "/";
+      updateSessionNickname(trimmed);
+      navigate({ to: "/" });
     } catch {
       setError("Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (!playerId) return null;
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">

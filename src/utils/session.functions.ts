@@ -1,24 +1,5 @@
-/**
- * Server functions for reading session state.
- * Writing/clearing sessions is now done via real server routes
- * (/api/auth-complete, /api/auth-logout, /api/auth-session-update).
- */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { readSession } from "@/utils/session.server";
-import { getRequest } from "@tanstack/react-start/server";
-
-export const getCurrentPlayer = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const request = getRequest();
-    const session = readSession(request);
-    if (!session) return null;
-    return {
-      playerId: session.playerId,
-      msisdnLast4: session.msisdnLast4,
-      nickname: session.nickname,
-    };
-  });
 
 export const getSubscriptionStatus = createServerFn({ method: "POST" })
   .inputValidator(z.object({
