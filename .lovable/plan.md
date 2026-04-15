@@ -1,56 +1,84 @@
 
+## Goal
 
-# Subscription Plans, Renew Screen, Test OTP & Expiry Logic
+Make the auth flow fully testable end-to-end as a prototype, with no dependency on real OTP delivery, payment processing, or third-party responses.
 
-## What gets built
+## What the actual issue is
 
-### 1. Hardcode test OTP `000000`
-In `sendOtp` (`src/utils/auth.functions.ts`), after generating the random OTP and storing its hash, also store a hash of `"000000"` so that code always works. Simpler approach: override `otpCode` to always be `"000000"` in dev, or insert a second OTP row. Cleanest: in `verifyOtp`, add a check — if `code === "000000"`, skip OTP lookup and proceed directly. Mark with `// TODO: REMOVE before go-live`.
+- The failure is happening in `sendOtp`, before verification.
+- `src/utils/auth.functions.ts` still tries to insert into `winam_otp_sessions`.
+- Server logs show: `permission denied for table winam_otp_sessions`.
+- The original schema migration revoked all table privileges on `winam_otp_sessions` for `anon` and `authenticated`.
+- The later migration added RLS policies, but RLS does not restore table privileges. So inserts are still blocked.
+- There is also a prototype mismatch: the app currently expects `000000` with 6 inputs, but the requested prototype OTP is `0000`.
 
-**Note:** The current `verifyOtp` validator requires exactly 6 digits (`z.string().length(6).regex(/^\d{6}$/)`), but user said "0000" (4 digits). Will use `"000000"` (6 zeros) to match the existing validator. If user truly wants 4 digits, the validator and UI (6 input boxes) would need changing — keeping 6 digits is simpler and consistent.
+## Do I know what the issue is?
 
-### 2. Seed `winam_platform_config` with plan data
-Use the database insert tool to add 4 rows:
-- `plan_daily_price` → `150`
-- `plan_daily_sku` → `"daily"`
-- `plan_weekly_price` → `300`
-- `plan_weekly_sku` → `"weekly"`
+Yes.
 
-### 3. Redesign `/renew` screen with two plan cards
-Replace the single button with two plan cards:
-- **Daily** — ₦150/day, "Access for today"
-- **Weekly** — ₦300/week, "BEST VALUE" badge, shows ₦42.86/day savings
-- Weekly card is visually recommended (emerald border/glow, badge)
-- Both buttons are stubs (TODO: Forthsoft carrier billing integration)
+## Implementation plan
 
-### 4. Fix subscription expiry logic in `verifyOtp`
-Replace the hardcoded 30-day `valid_until` with proper WAT-aware expiry:
-- **Daily**: `valid_until` = end of current WAT day (23:59:59 WAT = today+1 00:00 UTC+1)
-- **Weekly**: `valid_until` = `valid_from` + 7 days
+### 1. Make `sendOtp` prototype-safe
+Update `src/utils/auth.functions.ts` so the prototype path does not:
+- write to `winam_otp_sessions`
+- check rate limits in `winam_otp_sessions`
+- call any SMS provider
 
-Default new players to the daily plan (can upgrade on `/renew`).
+Instead, for prototype testing it should immediately return success with the masked phone number.
 
-### 5. Update `getSubscriptionStatus` to handle WAT expiry correctly
-Already compares `valid_until` to `now` — no change needed, the fix is in how `valid_until` is set.
+### 2. Hardcode the prototype OTP exactly as requested
+Update `verifyOtp` in `src/utils/auth.functions.ts` to accept `0000` as the test OTP and bypass OTP lookup entirely.
 
-## Files changed
+To avoid breaking any in-progress testing, I can temporarily allow both `0000` and `000000`, but the UI will be standardized around `0000`.
 
-- `src/utils/auth.functions.ts` — test OTP bypass in `verifyOtp`, WAT-aware expiry in subscription insert
-- `src/routes/renew.tsx` — full redesign with two plan cards
-- Database insert: 4 rows into `winam_platform_config`
+### 3. Align the verify screen with the prototype OTP
+Update `src/routes/verify.tsx` to:
+- render 4 OTP boxes instead of 6
+- validate 4 digits instead of 6
+- show clear helper text that prototype testing uses `0000`
 
-## Technical details
+### 4. Keep the rest of the flow real
+Do not bypass:
+- player creation
+- session persistence
+- nickname onboarding
+- subscription creation/gating
 
-WAT expiry calculation for daily plan:
-```typescript
-const watOffset = 1; // WAT = UTC+1
-const now = new Date();
-const watDate = new Date(now.getTime() + watOffset * 60 * 60 * 1000);
-const endOfDayWAT = new Date(Date.UTC(
-  watDate.getUTCFullYear(), watDate.getUTCMonth(), watDate.getUTCDate(),
-  23 - watOffset, 59, 59, 999
-));
+That keeps the prototype meaningful while removing only the external/blocked dependency.
+
+### 5. Remove the need for broad OTP table access in preview
+The current RLS workaround is not the right fix for a prototype-only OTP flow.
+
+Because prototype OTP should not touch `winam_otp_sessions`, we no longer need to widen access on that table just to test login.
+
+If later we want DB-backed OTP testing in preview, that would need a proper migration adding explicit table grants as well as policies. But for this prototype, the cleaner fix is to avoid the table entirely.
+
+## Files to update
+
+- `src/utils/auth.functions.ts`
+  - short-circuit `sendOtp`
+  - accept `0000` in `verifyOtp`
+  - bypass OTP table reads/writes for prototype auth
+- `src/routes/verify.tsx`
+  - 4-digit OTP UI
+  - updated validation and helper copy
+
+## Technical note
+
+The key reason the previous DB change did not solve it is this existing statement in the base migration:
+
+```sql
+REVOKE ALL ON public.winam_otp_sessions FROM authenticated, anon;
 ```
 
-No database migrations needed — `subscription_plan` enum already has `daily` and `weekly` only.
+Policies were added afterward, but no matching `GRANT` restored base privileges. In Postgres, policies filter access; they do not grant it.
 
+## Expected result
+
+After implementation, the prototype flow will work like this:
+
+```text
+/login -> /verify -> enter 0000 -> session created -> /onboarding or / -> /renew if inactive
+```
+
+No real OTPs, SMS provider, PSP processing, or third-party responses will be required to test the app end-to-end.
