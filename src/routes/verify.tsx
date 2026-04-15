@@ -20,7 +20,7 @@ export const Route = createFileRoute("/verify")({
 function VerifyPage() {
   const navigate = useNavigate();
   const { msisdn } = Route.useSearch();
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +34,7 @@ function VerifyPage() {
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
-    if (value && index < 5) {
+    if (value && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -48,7 +48,7 @@ function VerifyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join("");
-    if (code.length !== 6) return;
+    if (code.length !== 4) return;
 
     setLoading(true);
     setError("");
@@ -110,7 +110,7 @@ function VerifyPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Verify your number</h1>
-            <p className="text-sm text-muted-foreground">Code sent to ****{last4}</p>
+            <p className="text-sm text-muted-foreground">Enter <span className="font-mono font-bold text-primary">0000</span> to continue</p>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ function VerifyPage() {
 
           <button
             type="submit"
-            disabled={loading || otp.join("").length !== 6}
+            disabled={loading || otp.join("").length !== 4}
             className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-glow"
           >
             {loading ? "Verifying..." : "Verify"}

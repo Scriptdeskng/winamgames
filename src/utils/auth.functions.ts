@@ -29,56 +29,23 @@ export const sendOtp = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     msisdn: z.string().min(10).max(15),
   }))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .handler(async ({ data }): Promise<{ success: boolean; msisdnLast4?: string; error?: string }> => {
+    try {
+      const normalized = normalizeMsisdn(data.msisdn);
+      const last4 = normalized.slice(-4);
 
-    const normalized = normalizeMsisdn(data.msisdn);
-    const msisdnHash = sha256(normalized);
-    const last4 = normalized.slice(-4);
-
-    // Rate limiting: check for 5 failed attempts in last 15 min
-    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const { count } = await supabaseAdmin
-      .from("winam_otp_sessions")
-      .select("*", { count: "exact", head: true })
-      .eq("msisdn_hash", msisdnHash)
-      .eq("used", false)
-      .gte("created_at", fifteenMinAgo);
-
-    if (count !== null && count >= 5) {
-      return { success: false, error: "Too many attempts. Try again in 15 minutes." };
+      // TODO: PROTOTYPE MODE — skip OTP table and SMS delivery entirely
+      console.log(`[PROTOTYPE] OTP request for ****${last4} — use 0000 to verify`);
+      return { success: true, msisdnLast4: last4 };
+    } catch (e: any) {
+      return { success: false, error: e?.message || "Invalid phone number" };
     }
-
-    const otpCode = generateOtp();
-    const codeHash = sha256(otpCode);
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-    const { error } = await supabaseAdmin.from("winam_otp_sessions").insert({
-      msisdn_hash: msisdnHash,
-      code_hash: codeHash,
-      expires_at: expiresAt,
-    });
-
-    if (error) {
-      console.error("Failed to create OTP session:", error);
-      return { success: false, error: "Failed to send OTP" };
-    }
-
-    // TODO: SMS_PROVIDER — replace with Termii API call before go-live
-    // Termii endpoint: https://api.ng.termii.com/api/sms/send
-    // Required: TERMII_API_KEY, TERMII_SENDER_ID env vars
-    const TERMII_API_KEY = process.env.TERMII_API_KEY ?? '';
-    const TERMII_SENDER_ID = process.env.TERMII_SENDER_ID ?? '';
-    console.log(`[TODO: SMS_PROVIDER] OTP for ${last4}: ${otpCode}`);
-    console.log(`[Termii config] API_KEY set: ${!!TERMII_API_KEY}, SENDER_ID: ${TERMII_SENDER_ID}`);
-
-    return { success: true, msisdnLast4: last4 };
   });
 
 export const verifyOtp = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     msisdn: z.string().min(10).max(15),
-    code: z.string().length(6).regex(/^\d{6}$/),
+    code: z.string().min(4).max(6).regex(/^\d{4,6}$/),
   }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -88,8 +55,8 @@ export const verifyOtp = createServerFn({ method: "POST" })
     const codeHash = sha256(data.code);
     const last4 = normalized.slice(-4);
 
-    // TODO: REMOVE before go-live — test OTP bypass
-    const isTestOtp = data.code === "000000";
+    // TODO: REMOVE before go-live — prototype OTP bypass
+    const isTestOtp = data.code === "0000" || data.code === "000000";
 
     if (!isTestOtp) {
       // Find matching unused, unexpired OTP
