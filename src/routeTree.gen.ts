@@ -16,6 +16,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
 import { Route as ApiForthsoftWebhookRouteImport } from './routes/api/forthsoft-webhook'
+import { Route as ApiAuthSessionUpdateRouteImport } from './routes/api/auth-session-update'
+import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth-logout'
+import { Route as ApiAuthCompleteRouteImport } from './routes/api/auth-complete'
 import { Route as AuthedWisdomdropRouteImport } from './routes/_authed/wisdomdrop'
 import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
 import { Route as AuthedResultsRouteImport } from './routes/_authed/results'
@@ -56,6 +59,21 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
 const ApiForthsoftWebhookRoute = ApiForthsoftWebhookRouteImport.update({
   id: '/api/forthsoft-webhook',
   path: '/api/forthsoft-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionUpdateRoute = ApiAuthSessionUpdateRouteImport.update({
+  id: '/api/auth-session-update',
+  path: '/api/auth-session-update',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
+  id: '/api/auth-logout',
+  path: '/api/auth-logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthCompleteRoute = ApiAuthCompleteRouteImport.update({
+  id: '/api/auth-complete',
+  path: '/api/auth-complete',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedWisdomdropRoute = AuthedWisdomdropRouteImport.update({
@@ -107,6 +125,9 @@ export interface FileRoutesByFullPath {
   '/results': typeof AuthedResultsRoute
   '/winners': typeof AuthedWinnersRoute
   '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/auth-complete': typeof ApiAuthCompleteRoute
+  '/api/auth-logout': typeof ApiAuthLogoutRoute
+  '/api/auth-session-update': typeof ApiAuthSessionUpdateRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -121,6 +142,9 @@ export interface FileRoutesByTo {
   '/results': typeof AuthedResultsRoute
   '/winners': typeof AuthedWinnersRoute
   '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/auth-complete': typeof ApiAuthCompleteRoute
+  '/api/auth-logout': typeof ApiAuthLogoutRoute
+  '/api/auth-session-update': typeof ApiAuthSessionUpdateRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
   '/': typeof AuthedIndexRoute
 }
@@ -138,6 +162,9 @@ export interface FileRoutesById {
   '/_authed/results': typeof AuthedResultsRoute
   '/_authed/winners': typeof AuthedWinnersRoute
   '/_authed/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/auth-complete': typeof ApiAuthCompleteRoute
+  '/api/auth-logout': typeof ApiAuthLogoutRoute
+  '/api/auth-session-update': typeof ApiAuthSessionUpdateRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
   '/_authed/': typeof AuthedIndexRoute
 }
@@ -156,6 +183,9 @@ export interface FileRouteTypes {
     | '/results'
     | '/winners'
     | '/wisdomdrop'
+    | '/api/auth-complete'
+    | '/api/auth-logout'
+    | '/api/auth-session-update'
     | '/api/forthsoft-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -170,6 +200,9 @@ export interface FileRouteTypes {
     | '/results'
     | '/winners'
     | '/wisdomdrop'
+    | '/api/auth-complete'
+    | '/api/auth-logout'
+    | '/api/auth-session-update'
     | '/api/forthsoft-webhook'
     | '/'
   id:
@@ -186,6 +219,9 @@ export interface FileRouteTypes {
     | '/_authed/results'
     | '/_authed/winners'
     | '/_authed/wisdomdrop'
+    | '/api/auth-complete'
+    | '/api/auth-logout'
+    | '/api/auth-session-update'
     | '/api/forthsoft-webhook'
     | '/_authed/'
   fileRoutesById: FileRoutesById
@@ -196,6 +232,9 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   RenewRoute: typeof RenewRoute
   VerifyRoute: typeof VerifyRoute
+  ApiAuthCompleteRoute: typeof ApiAuthCompleteRoute
+  ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiAuthSessionUpdateRoute: typeof ApiAuthSessionUpdateRoute
   ApiForthsoftWebhookRoute: typeof ApiForthsoftWebhookRoute
 }
 
@@ -248,6 +287,27 @@ declare module '@tanstack/react-router' {
       path: '/api/forthsoft-webhook'
       fullPath: '/api/forthsoft-webhook'
       preLoaderRoute: typeof ApiForthsoftWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth-session-update': {
+      id: '/api/auth-session-update'
+      path: '/api/auth-session-update'
+      fullPath: '/api/auth-session-update'
+      preLoaderRoute: typeof ApiAuthSessionUpdateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth-logout': {
+      id: '/api/auth-logout'
+      path: '/api/auth-logout'
+      fullPath: '/api/auth-logout'
+      preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth-complete': {
+      id: '/api/auth-complete'
+      path: '/api/auth-complete'
+      fullPath: '/api/auth-complete'
+      preLoaderRoute: typeof ApiAuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/wisdomdrop': {
@@ -333,6 +393,9 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   RenewRoute: RenewRoute,
   VerifyRoute: VerifyRoute,
+  ApiAuthCompleteRoute: ApiAuthCompleteRoute,
+  ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiAuthSessionUpdateRoute: ApiAuthSessionUpdateRoute,
   ApiForthsoftWebhookRoute: ApiForthsoftWebhookRoute,
 }
 export const routeTree = rootRouteImport
