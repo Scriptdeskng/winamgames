@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Phone, ArrowRight } from "lucide-react";
+import { sendOtp } from "@/utils/auth.functions";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -30,8 +31,11 @@ function LoginPage() {
 
     setLoading(true);
     try {
-      // TODO: Call send-otp server function
-      console.log("Sending OTP to:", cleaned);
+      const result = await sendOtp({ data: { msisdn: cleaned } });
+      if (!result.success) {
+        setError(result.error || "Failed to send OTP");
+        return;
+      }
       navigate({ to: "/verify", search: { msisdn: cleaned } });
     } catch {
       setError("Failed to send OTP. Try again.");

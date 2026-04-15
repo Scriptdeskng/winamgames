@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { verifyOtp, sendOtp } from "@/utils/auth.functions";
+import { setPlayerSession } from "@/utils/session.functions";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -20,6 +22,7 @@ function VerifyPage() {
   const { msisdn } = Route.useSearch();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -50,13 +53,45 @@ function VerifyPage() {
     setLoading(true);
     setError("");
     try {
-      // TODO: Call verify-otp server function
-      console.log("Verifying OTP:", code, "for:", msisdn);
-      navigate({ to: "/onboarding" });
+      const result = await verifyOtp({ data: { msisdn, code } });
+      if (!result.success) {
+        setError(result.error || "Invalid OTP");
+        return;
+      }
+
+      // Persist session cookie
+      await setPlayerSession({
+        data: {
+          playerId: result.playerId,
+          msisdnLast4: result.msisdnLast4,
+          nickname: null,
+        },
+      });
+
+      if (result.needsOnboarding) {
+        navigate({ to: "/onboarding" });
+      } else {
+        navigate({ to: "/" });
+      }
     } catch {
       setError("Invalid or expired OTP. Try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setError("");
+    try {
+      const result = await sendOtp({ data: { msisdn } });
+      if (!result.success) {
+        setError(result.error || "Failed to resend OTP");
+      }
+    } catch {
+      setError("Failed to resend OTP");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -107,8 +142,12 @@ function VerifyPage() {
           </button>
         </form>
 
-        <button className="mt-4 text-sm text-primary text-center w-full hover:underline">
-          Resend code
+        <button
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-4 text-sm text-primary text-center w-full hover:underline disabled:opacity-50"
+        >
+          {resending ? "Resending..." : "Resend code"}
         </button>
       </div>
     </div>

@@ -64,9 +64,13 @@ export const sendOtp = createServerFn({ method: "POST" })
       return { success: false, error: "Failed to send OTP" };
     }
 
-    // TODO: SMS_PROVIDER — Replace this console.log with actual SMS delivery
-    // Integration point expects: sendSms(normalized, `Your WinamGames code is ${otpCode}`)
-    console.log(`[TODO: SMS_PROVIDER] Sending OTP ${otpCode} to ${normalized}`);
+    // TODO: SMS_PROVIDER — replace with Termii API call before go-live
+    // Termii endpoint: https://api.ng.termii.com/api/sms/send
+    // Required: TERMII_API_KEY, TERMII_SENDER_ID env vars
+    const TERMII_API_KEY = process.env.TERMII_API_KEY ?? '';
+    const TERMII_SENDER_ID = process.env.TERMII_SENDER_ID ?? '';
+    console.log(`[TODO: SMS_PROVIDER] OTP for ${last4}: ${otpCode}`);
+    console.log(`[Termii config] API_KEY set: ${!!TERMII_API_KEY}, SENDER_ID: ${TERMII_SENDER_ID}`);
 
     return { success: true, msisdnLast4: last4 };
   });
@@ -138,10 +142,25 @@ export const verifyOtp = createServerFn({ method: "POST" })
       }
       playerId = newPlayer.id;
       isNewPlayer = true;
+
+      // Auto-create subscription for new players
+      // TODO: Forthsoft billing webhook will replace this stub
+      const thirtyDaysOut = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: subError } = await supabaseAdmin
+        .from("winam_subscriptions")
+        .insert({
+          player_id: playerId,
+          plan: "daily",
+          status: "active",
+          valid_until: thirtyDaysOut,
+        });
+
+      if (subError) {
+        console.error("Failed to create subscription:", subError);
+        // Non-fatal: player can still proceed, subscription gate will redirect to /renew
+      }
     }
 
-    // TODO: Generate a proper session token (JWT or similar)
-    // For now, return player info directly
     return {
       success: true,
       playerId,
@@ -149,4 +168,38 @@ export const verifyOtp = createServerFn({ method: "POST" })
       needsOnboarding: isNewPlayer || !existingPlayer?.nickname,
       msisdnLast4: last4,
     };
+  });
+
+export const setNickname = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    playerId: z.string().uuid(),
+    nickname: z.string().min(3).max(16).regex(/^[a-zA-Z0-9_]+$/),
+  }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Check uniqueness
+    const { data: existing } = await supabaseAdmin
+      .from("winam_players")
+      .select("id")
+      .eq("nickname", data.nickname)
+      .neq("id", data.playerId)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      return { success: false, error: "Nickname already taken" };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("winam_players")
+      .update({ nickname: data.nickname })
+      .eq("id", data.playerId);
+
+    if (error) {
+      console.error("Failed to set nickname:", error);
+      return { success: false, error: "Failed to save nickname" };
+    }
+
+    return { success: true };
   });
