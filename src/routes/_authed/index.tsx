@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Timer, Flame, Trophy, ChevronRight, Swords, BookOpen, Check } from "lucide-react";
-import { getPlayerData, getDailyMissions, getLeaderboard } from "@/utils/mission.functions";
+import { Timer, Flame, Lightbulb, ChevronRight, Swords, BookOpen, Check } from "lucide-react";
+import { getPlayerData, getDailyMissions } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
@@ -28,7 +28,6 @@ function HomePage() {
   const [data, setData] = React.useState<{
     playerResult: any;
     missionsResult: any;
-    leaderboardResult: any;
   } | null>(null);
 
   React.useEffect(() => {
@@ -36,9 +35,8 @@ function HomePage() {
     Promise.all([
       getPlayerData({ data: { playerId: session.playerId } }),
       getDailyMissions({ data: { playerId: session.playerId } }),
-      getLeaderboard({ data: { limit: 5 } }),
-    ]).then(([playerResult, missionsResult, leaderboardResult]) => {
-      setData({ playerResult, missionsResult, leaderboardResult });
+    ]).then(([playerResult, missionsResult]) => {
+      setData({ playerResult, missionsResult });
     });
   }, []);
 
@@ -47,7 +45,6 @@ function HomePage() {
   const weekCap = data?.playerResult?.success ? data.playerResult.weekCap : 50;
   const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
-  const leaderboard = data?.leaderboardResult?.success ? data.leaderboardResult.players : [];
 
   if (!data) {
     return (
@@ -151,31 +148,7 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-surface-1 border border-border p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-gold" />
-              <h2 className="text-sm font-semibold">Leaderboard</h2>
-            </div>
-            <Link to="/leaderboard" className="text-xs text-primary flex items-center gap-1">
-              See all <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {leaderboard.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-2">No entries yet this week</p>
-            )}
-            {leaderboard.map((p: { id: string; name: string; entries: number }, i: number) => (
-              <div key={p.id} className="flex items-center justify-between py-1.5">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold tabular-nums text-muted-foreground w-4">{i + 1}</span>
-                  <span className="text-sm font-medium">{p.name}</span>
-                </div>
-                <span className="text-xs font-medium tabular-nums text-primary">{p.entries} entries</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <DidYouKnow />
       </div>
     </div>
   );
