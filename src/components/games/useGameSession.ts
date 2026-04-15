@@ -175,6 +175,13 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       });
 
       if (result.success) {
+        // Encode completed missions as "title|type|amount;;..." for search params
+        const missionsStr = (result.completedMissions ?? [])
+          .map((m: { title: string; rewardType: string; rewardAmount: number }) =>
+            `${m.title}|${m.rewardType}|${m.rewardAmount}`
+          )
+          .join(";;");
+
         navigate({
           to: "/results",
           search: {
@@ -184,6 +191,9 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
             streak: result.streak,
             weekTotal: result.weekTotal,
             weekCap: result.weekCap,
+            rankTier: result.rankTier ?? "pawn",
+            previousRank: result.previousRank ?? "pawn",
+            missions: missionsStr,
           },
         });
       }
