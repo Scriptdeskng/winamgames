@@ -1,32 +1,41 @@
 
 
-# Winners Page — Final Prize Structure & Implementation
+# Winners Page — Redesign for Trust + Engagement
 
-## Prize Distribution (₦100,000 budget, 100 winners max)
+## Layout (top to bottom)
 
-**Cash Prizes (3 winners) — ₦50,000 total**
-| Tier | Amount |
-|------|--------|
-| 1st | ₦35,000 |
-| 2nd | ₦10,000 |
-| 3rd | ₦5,000 |
+### 1. Hero / Ad Card (replaces prize pool breakdown)
+Bold motivational card with emerald gradient accent:
+- "Real people. Real wins." headline
+- "78 winners every week — cash, airtime & data"
+- CTA button: "Play Now" linking to `/checkmate`
 
-**Airtime & Data (60 winners) — ₦50,000 total**
-| Tier | Count | Amount | Subtotal |
-|------|-------|--------|----------|
-| ₦2,000 | 5 | ₦2,000 | ₦10,000 |
-| ₦1,000 | 10 | ₦1,000 | ₦10,000 |
-| ₦500 | 60 | ₦500 | ₦30,000 |
+### 2. Draw Weeks — Each week is ONE collapsible card
+Each draw week becomes a single card with a collapsible trigger showing the date range and a summary line like "3 cash + 75 airtime winners". Collapsed by default (most recent open by default).
 
-**Grand total: 78 winners, ₦100,000.**
+Inside each card when expanded:
+- **Cash winners** (3 rows, always visible within the expanded card) with gold/silver/bronze badges
+- **Airtime tiers** nested inside a second collapsible within the card, showing tier summary counts: "5x ₦2k, 10x ₦1k, 60x ₦500"
+  - When expanded, winners grouped by tier in compact rows
+
+This collapses ~80 rows per week into a single card header — far less intimidating.
+
+### 3. Bottom CTA
+"Keep playing, keep winning" with a Link button back to home or games.
+
+## Visual de-cluttering ideas
+- Each draw week is a single `Collapsible` card (date as trigger)
+- Cash winners shown immediately on expand; airtime is a nested collapsible
+- Compact airtime rows: 2-column grid for ₦500 tier (60 winners in 30 rows instead of 60)
+- Summary counts on each collapsible trigger so users see scope without expanding
 
 ## File: `src/routes/_authed/winners.tsx` — full rewrite
 
-- Trust subtitle: "Every week, 78 players win real cash, airtime & data"
-- Each winner shows: masked phone (`***XXXX`), entry ID (`#3F8A2C1D`), prize amount
-- **Cash section**: 3 winners with gold/silver/bronze position badges, always visible
-- **Airtime section**: Grouped by tier (₦2k → ₦1k → ₦500), uses `Collapsible` component, collapsed by default
-- Date labels: "Apr 7 – 13, 2025" format
-- Hardcoded sample data for 2 draw weeks
-- Imports: `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from UI, `ChevronDown` from lucide
+- Remove the "Weekly Prize Pool" breakdown section
+- Add hero card with CTA (`Link` to `/checkmate`)
+- Wrap each `DrawWeek` in a single `Collapsible` card (first week open by default)
+- Inside: cash winners visible, airtime in nested `Collapsible` with tier grouping
+- ₦500 data tier uses 2-column grid layout
+- Bottom CTA card: "Keep playing, keep winning" with Link to `/`
+- Add `Link` import from `@tanstack/react-router`, add `Gamepad2` or `Play` icon from lucide
 
