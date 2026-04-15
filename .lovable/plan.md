@@ -1,38 +1,32 @@
 
 
-# Home Page: Remove Leaderboard, Add Quick Tips
+# Winners Page — Final Prize Structure & Implementation
 
-## Changes
+## Prize Distribution (₦100,000 budget, 100 winners max)
 
-### Remove
-- **Leaderboard section** (lines 154-178 in `index.tsx`)
-- Remove `getLeaderboard` call from the data fetch
-- Remove `Trophy` icon import and leaderboard state
+**Cash Prizes (3 winners) — ₦50,000 total**
+| Tier | Amount |
+|------|--------|
+| 1st | ₦35,000 |
+| 2nd | ₦10,000 |
+| 3rd | ₦5,000 |
 
-### Add: "Did You Know?" Quick Tip
-A compact card below Daily Missions showing a rotating game tip. Tips rotate daily based on the date so every player sees the same tip each day.
+**Airtime & Data (60 winners) — ₦50,000 total**
+| Tier | Count | Amount | Subtotal |
+|------|-------|--------|----------|
+| ₦2,000 | 5 | ₦2,000 | ₦10,000 |
+| ₦1,000 | 10 | ₦1,000 | ₦10,000 |
+| ₦500 | 60 | ₦500 | ₦30,000 |
 
-**Tips content** — hardcoded array covering mechanics players often miss:
-- "Streaks of 3+ days earn a bonus entry each game"
-- "Solving puzzles without hints gives 2x coins"
-- "Complete all 3 daily missions for extra entries"
-- "Your rank tier upgrades as you earn more XP"
-- "Each correct answer earns entries into the weekly draw"
-- "Play both CheckMate and WisdomDrop to complete the game mix mission"
+**Grand total: 78 winners, ₦100,000.**
 
-**Design:** Small card with a `Lightbulb` icon, muted styling, tip text. Rotates by `dayOfYear % tips.length`.
+## File: `src/routes/_authed/winners.tsx` — full rewrite
 
-### Keep current section order
-Draw → Streak → Games → Missions → Quick Tip
-
-## Files
-
-### `src/routes/_authed/index.tsx`
-- Remove `getLeaderboard` import and call
-- Remove `Trophy` from icon imports, add `Lightbulb`
-- Remove leaderboard state/rendering (lines 154-178)
-- Add `TIPS` array and a `Did You Know?` card after missions
-
-### `src/utils/mission.functions.ts`
-- No changes needed (keep `getLeaderboard` — it's still used by `/leaderboard` page)
+- Trust subtitle: "Every week, 78 players win real cash, airtime & data"
+- Each winner shows: masked phone (`***XXXX`), entry ID (`#3F8A2C1D`), prize amount
+- **Cash section**: 3 winners with gold/silver/bronze position badges, always visible
+- **Airtime section**: Grouped by tier (₦2k → ₦1k → ₦500), uses `Collapsible` component, collapsed by default
+- Date labels: "Apr 7 – 13, 2025" format
+- Hardcoded sample data for 2 draw weeks
+- Imports: `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from UI, `ChevronDown` from lucide
 
