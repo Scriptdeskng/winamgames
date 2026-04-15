@@ -88,30 +88,35 @@ export const verifyOtp = createServerFn({ method: "POST" })
     const codeHash = sha256(data.code);
     const last4 = normalized.slice(-4);
 
-    // Find matching unused, unexpired OTP
-    const { data: otpRows, error: otpError } = await supabaseAdmin
-      .from("winam_otp_sessions")
-      .select("id, expires_at")
-      .eq("msisdn_hash", msisdnHash)
-      .eq("code_hash", codeHash)
-      .eq("used", false)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    // TODO: REMOVE before go-live — test OTP bypass
+    const isTestOtp = data.code === "000000";
 
-    if (otpError || !otpRows || otpRows.length === 0) {
-      return { success: false, error: "Invalid OTP code" };
+    if (!isTestOtp) {
+      // Find matching unused, unexpired OTP
+      const { data: otpRows, error: otpError } = await supabaseAdmin
+        .from("winam_otp_sessions")
+        .select("id, expires_at")
+        .eq("msisdn_hash", msisdnHash)
+        .eq("code_hash", codeHash)
+        .eq("used", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (otpError || !otpRows || otpRows.length === 0) {
+        return { success: false, error: "Invalid OTP code" };
+      }
+
+      const otpSession = otpRows[0];
+      if (new Date(otpSession.expires_at) < new Date()) {
+        return { success: false, error: "OTP has expired" };
+      }
+
+      // Mark OTP as used
+      await supabaseAdmin
+        .from("winam_otp_sessions")
+        .update({ used: true })
+        .eq("id", otpSession.id);
     }
-
-    const otpSession = otpRows[0];
-    if (new Date(otpSession.expires_at) < new Date()) {
-      return { success: false, error: "OTP has expired" };
-    }
-
-    // Mark OTP as used
-    await supabaseAdmin
-      .from("winam_otp_sessions")
-      .update({ used: true })
-      .eq("id", otpSession.id);
 
     // Upsert player
     const { data: existingPlayer } = await supabaseAdmin
@@ -143,16 +148,22 @@ export const verifyOtp = createServerFn({ method: "POST" })
       playerId = newPlayer.id;
       isNewPlayer = true;
 
-      // Auto-create subscription for new players
+      // Auto-create daily subscription for new players
       // TODO: Forthsoft billing webhook will replace this stub
-      const thirtyDaysOut = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const watOffset = 1; // WAT = UTC+1
+      const now = new Date();
+      const watDate = new Date(now.getTime() + watOffset * 60 * 60 * 1000);
+      const endOfDayWAT = new Date(Date.UTC(
+        watDate.getUTCFullYear(), watDate.getUTCMonth(), watDate.getUTCDate(),
+        23 - watOffset, 59, 59, 999
+      ));
       const { error: subError } = await supabaseAdmin
         .from("winam_subscriptions")
         .insert({
           player_id: playerId,
           plan: "daily",
           status: "active",
-          valid_until: thirtyDaysOut,
+          valid_until: endOfDayWAT.toISOString(),
         });
 
       if (subError) {
