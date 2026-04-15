@@ -3,9 +3,8 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award, LogOut } from "lucide-react";
 import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
-import { getCurrentPlayer, clearPlayerSession } from "@/utils/session.functions";
+import { getCurrentPlayer } from "@/utils/session.functions";
 import type { RankTier } from "@/components/profile/RankBadge";
-import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authed/profile")({
   component: ProfilePage,
@@ -22,14 +21,17 @@ export const Route = createFileRoute("/_authed/profile")({
 
 function ProfilePage() {
   const result = Route.useLoaderData();
-  const navigate = useNavigate();
 
   const player = result.success ? result.player : null;
   const weekTotal = result.success ? result.weekTotal : 0;
 
-  const handleLogout = async () => {
-    await clearPlayerSession();
-    navigate({ to: "/login" });
+  const handleLogout = () => {
+    // Submit a form POST to the server logout route
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/api/auth-logout";
+    document.body.appendChild(form);
+    form.submit();
   };
 
   return (

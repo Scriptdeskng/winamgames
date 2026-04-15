@@ -2,15 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { verifyOtp, sendOtp } from "@/utils/auth.functions";
-import { setPlayerSession } from "@/utils/session.functions";
+import { sendOtp } from "@/utils/auth.functions";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
   head: () => ({
-    meta: [
-      { title: "Verify OTP — WinamGames" },
-    ],
+    meta: [{ title: "Verify OTP — WinamGames" }],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
     msisdn: (search.msisdn as string) || "",
@@ -18,7 +15,6 @@ export const Route = createFileRoute("/verify")({
 });
 
 function VerifyPage() {
-  const navigate = useNavigate();
   const { msisdn } = Route.useSearch();
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -31,7 +27,6 @@ function VerifyPage() {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
-
     if (value && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -50,38 +45,37 @@ function VerifyPage() {
 
     setLoading(true);
     setError("");
-    try {
-      const result = await verifyOtp({ data: { msisdn, code } });
-      if (!result.success) {
-        setError(result.error || "Invalid OTP");
-        setLoading(false);
-        return;
-      }
 
-      // Persist session cookie via Set-Cookie header
-      const sessionResult = await setPlayerSession({
-        data: {
-          playerId: result.playerId,
-          msisdnLast4: result.msisdnLast4,
-          nickname: null,
-        },
+    try {
+      // POST to the real server route — it will Set-Cookie + 303 redirect
+      const res = await fetch("/api/auth-complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ msisdn, code }),
+        redirect: "follow", // browser follows the 303
       });
 
-      if (!sessionResult.success) {
-        setError("Failed to create session. Please try again.");
+      // If the response was a redirect that the browser followed,
+      // we end up with the final page HTML. But fetch won't change
+      // window.location, so we check the redirected URL or status.
+      if (res.redirected) {
+        // The server set the cookie and redirected — navigate there
+        window.location.href = res.url;
+        return;
+      }
+
+      // If we got a JSON error response
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || "Verification failed. Try again.");
         setLoading(false);
         return;
       }
 
-      // Use window.location for a full page navigation so the browser
-      // sends the Set-Cookie header's cookie on the next request
-      if (result.needsOnboarding) {
-        window.location.href = "/onboarding";
-      } else {
-        window.location.href = "/";
-      }
+      // Fallback: shouldn't happen, but just in case
+      window.location.href = "/";
     } catch (err: any) {
-      setError(err?.message || "Invalid or expired OTP. Try again.");
+      setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   };
