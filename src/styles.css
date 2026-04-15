@@ -80,9 +80,6 @@
   --surface-2: oklch(0.22 0.02 260);
   --surface-3: oklch(0.27 0.022 260);
 
-  /* Glass */
-  --glass: oklch(0.2 0.015 260 / 60%);
-  --glass-border: oklch(1 0 0 / 8%);
 
   /* Cards */
   --card: oklch(0.185 0.017 260);
@@ -167,12 +164,6 @@
 }
 
 @layer utilities {
-  .bg-glass {
-    background: var(--glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-  }
 
   .shadow-soft {
     box-shadow: var(--shadow-soft);
