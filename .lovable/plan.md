@@ -1,96 +1,101 @@
 
 
-# Phase 4 — Auth Wiring, Session Persistence & Subscription Gate
+# Phase 4 — Auth Wiring, Session Persistence & Secrets Setup
 
 ## Overview
 
-Wire the login/verify/onboarding screens to real server functions, persist player sessions via encrypted cookies, replace all hardcoded `PLAYER_ID` references with the authenticated player ID, and add a subscription gate that redirects inactive subscribers to `/renew`.
+Wire login/verify/onboarding to real server functions, persist player sessions via encrypted cookies, replace hardcoded `PLAYER_ID`, add subscription gate, and set up all secrets properly with env vars (no hardcoding).
+
+## Secrets approach
+
+All secrets read from `process.env` in server functions. No Edge Functions needed — this app uses TanStack Start server functions which run in the Worker runtime with `process.env`.
+
+**Secrets to add via the add_secret tool:**
+- `SESSION_SECRET` — a random 32+ char string for cookie encryption (generated, not user-provided)
+- `TERMII_API_KEY` → `dev_placeholder_termii_key`
+- `TERMII_SENDER_ID` → `dev_placeholder_sender_id`
+- `FORTHSOFT_WEBHOOK_SECRET` → `dev_placeholder_forthsoft_secret`
+
+`SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_URL` are already configured automatically.
+
+**OTP SMS stub** in `auth.functions.ts`: Since `TERMII_API_KEY` is a placeholder, the SMS delivery remains a `console.log` with a clear TODO comment referencing the Termii endpoint and required env vars.
 
 ## What gets built
 
-### 1. Session persistence via encrypted cookies
+### 1. Session management (`src/utils/session.functions.ts`)
+Server functions using TanStack Start's `useSession`/`updateSession`/`clearSession`:
+- `getCurrentPlayer` — reads encrypted cookie, returns `{ playerId, msisdnLast4, nickname }` or `null`
+- `setPlayerSession` — writes player data into cookie after OTP verification
+- `clearPlayerSession` — logout
+- `getSubscriptionStatus` — checks `winam_subscriptions` for active/grace status
 
-Create `src/utils/session.functions.ts` with server functions using TanStack Start's `useSession`/`updateSession`/`clearSession` from `@tanstack/react-start/server`:
-- `getCurrentPlayer` — reads the encrypted session cookie, returns `{ playerId, msisdnLast4, nickname }` or `null`
-- `setPlayerSession` — called after OTP verification, writes player ID into the encrypted cookie
-- `clearPlayerSession` — logout, clears the cookie
-- `getSubscriptionStatus` — checks `winam_subscriptions` for active/grace status for the current player
+Session secret: `process.env.SESSION_SECRET` (added via add_secret tool).
 
-Session secret stored via `process.env.SESSION_SECRET` (need to add this secret).
+### 2. Wire login → `sendOtp`
+`src/routes/login.tsx`: Call `sendOtp()` on submit. Navigate to `/verify` on success, show rate-limit errors.
 
-### 2. Wire login screen to `sendOtp`
-- `src/routes/login.tsx`: Replace the `console.log` TODO with actual `sendOtp()` call. On success, navigate to `/verify`. On rate-limit error, show the error message.
+### 3. Wire verify → `verifyOtp` + session
+`src/routes/verify.tsx`: Call `verifyOtp()`, then `setPlayerSession()` to persist cookie. Navigate to `/onboarding` if new, `/` if returning. Wire "Resend code" to `sendOtp`.
 
-### 3. Wire verify screen to `verifyOtp`
-- `src/routes/verify.tsx`: Replace the `console.log` TODO with actual `verifyOtp()` call. On success, call `setPlayerSession()` to persist the session cookie, then navigate to `/onboarding` (if `needsOnboarding`) or `/` (if returning player).
-- Wire the "Resend code" button to call `sendOtp` again.
+### 4. Wire onboarding → `setNickname`
+Add `setNickname` server function to `src/utils/auth.functions.ts`. Update `winam_players.nickname`. Navigate to `/`.
 
-### 4. Wire onboarding screen to save nickname
-- `src/routes/onboarding.tsx`: Create a `setNickname` server function in `src/utils/auth.functions.ts` that updates `winam_players.nickname` using `supabaseAdmin`. Wire the form to call it, then navigate to `/`.
+### 5. Auto-create subscription on first login
+In `verifyOtp`, after creating a new player, insert a `winam_subscriptions` row with `status: 'active'` and `valid_until` 30 days out. Marked with TODO for Forthsoft billing webhook replacement.
 
-### 5. Auth context via router context
-- Update `src/router.tsx` to add `playerId: string | null` to router context.
-- Update `src/routes/__root.tsx` to call `getCurrentPlayer` in `beforeLoad`, pass result into context.
-- All child routes access `playerId` from route context instead of the hardcoded constant.
+### 6. Update OTP SMS stub
+Update the TODO comment in `sendOtp` to reference Termii specifically:
+```
+// TODO: SMS_PROVIDER — replace with Termii API call before go-live
+// Termii endpoint: https://api.ng.termii.com/api/sms/send
+// Required: TERMII_API_KEY, TERMII_SENDER_ID env vars
+console.log(`OTP for ${last4}: ${otpCode}`);
+```
 
-### 6. Replace all hardcoded PLAYER_ID references
-Files to update (remove the `const PLAYER_ID = "..."` line, read from route context instead):
-- `src/routes/index.tsx`
-- `src/routes/checkmate.tsx`
-- `src/routes/wisdomdrop.tsx`
-- `src/routes/profile.tsx`
+### 7. Auth context via router
+- `src/router.tsx` — add `playerId: string | null` to context
+- `src/routes/__root.tsx` — call `getCurrentPlayer` in `beforeLoad`, pass into context
 
-For game routes, pass `playerId` from route context into `useGameSession()` and loader calls.
+### 8. Subscription gate (`src/routes/_authed.tsx`)
+Pathless layout route with `beforeLoad`:
+- No session → redirect to `/login`
+- Session exists → check subscription → inactive → redirect to `/renew`
+- Renders `<Outlet />` for child routes
 
-### 7. Subscription gate
-- Create a pathless layout route `src/routes/_authed.tsx` with `beforeLoad`:
-  - If no session → redirect to `/login`
-  - If session exists → check subscription status via `getSubscriptionStatus`
-  - If subscription inactive → redirect to `/renew`
-- Move protected routes under `_authed`:
-  - `src/routes/_authed/index.tsx` (home)
-  - `src/routes/_authed/checkmate.tsx`
-  - `src/routes/_authed/wisdomdrop.tsx`
-  - `src/routes/_authed/results.tsx`
-  - `src/routes/_authed/profile.tsx`
-  - `src/routes/_authed/leaderboard.tsx`
-  - `src/routes/_authed/entries.tsx`
-  - `src/routes/_authed/winners.tsx`
-- `/login`, `/verify`, `/onboarding`, `/renew` stay as public routes.
+### 9. Move protected routes under `_authed/`
+Move 8 routes into `src/routes/_authed/`:
+- `index.tsx`, `checkmate.tsx`, `wisdomdrop.tsx`, `results.tsx`, `profile.tsx`, `leaderboard.tsx`, `entries.tsx`, `winners.tsx`
 
-### 8. Auto-create subscription on first login
-- In `verifyOtp`, after creating a new player, also insert a row in `winam_subscriptions` with `status: 'active'` and a `valid_until` 30 days out (stubbed — TODO: Forthsoft billing webhook replaces this).
+Remove hardcoded `PLAYER_ID` from all — read from route context instead.
 
-### 9. Add SESSION_SECRET
-- Use the `add_secret` tool to request the user set a `SESSION_SECRET` environment variable for cookie encryption.
+### 10. Forthsoft webhook route (`src/routes/api/forthsoft-webhook.ts`)
+Server route with full HMAC-SHA256 validation using `process.env.FORTHSOFT_WEBHOOK_SECRET`. Uses Web Crypto API (compatible with Worker runtime). Stub handler that logs payload and updates subscription status. The validation logic works with the placeholder secret in dev and will work with the real secret when swapped.
 
-## Technical details
+## File changes
 
 **New files:**
-- `src/utils/session.functions.ts` — session cookie management
-- `src/routes/_authed.tsx` — auth + subscription gate layout
-
-**Renamed/moved files (8 routes):**
-- `src/routes/index.tsx` → `src/routes/_authed/index.tsx`
-- `src/routes/checkmate.tsx` → `src/routes/_authed/checkmate.tsx`
-- `src/routes/wisdomdrop.tsx` → `src/routes/_authed/wisdomdrop.tsx`
-- `src/routes/results.tsx` → `src/routes/_authed/results.tsx`
-- `src/routes/profile.tsx` → `src/routes/_authed/profile.tsx`
-- `src/routes/leaderboard.tsx` → `src/routes/_authed/leaderboard.tsx`
-- `src/routes/entries.tsx` → `src/routes/_authed/entries.tsx`
-- `src/routes/winners.tsx` → `src/routes/_authed/winners.tsx`
+- `src/utils/session.functions.ts`
+- `src/routes/_authed.tsx`
+- `src/routes/_authed/index.tsx` (moved from `src/routes/index.tsx`)
+- `src/routes/_authed/checkmate.tsx` (moved)
+- `src/routes/_authed/wisdomdrop.tsx` (moved)
+- `src/routes/_authed/results.tsx` (moved)
+- `src/routes/_authed/profile.tsx` (moved)
+- `src/routes/_authed/leaderboard.tsx` (moved)
+- `src/routes/_authed/entries.tsx` (moved)
+- `src/routes/_authed/winners.tsx` (moved)
+- `src/routes/api/forthsoft-webhook.ts`
 
 **Modified files:**
-- `src/router.tsx` — add `playerId` to context
-- `src/routes/__root.tsx` — `beforeLoad` calls `getCurrentPlayer`
-- `src/utils/auth.functions.ts` — add `setNickname` server function, add subscription insert in `verifyOtp`
-- `src/routes/login.tsx` — wire to `sendOtp`
-- `src/routes/verify.tsx` — wire to `verifyOtp` + session persistence
-- `src/routes/onboarding.tsx` — wire to `setNickname`
+- `src/router.tsx` — add playerId to context
+- `src/routes/__root.tsx` — beforeLoad with getCurrentPlayer
+- `src/utils/auth.functions.ts` — add setNickname, subscription insert, update OTP TODO
+- `src/routes/login.tsx` — wire to sendOtp
+- `src/routes/verify.tsx` — wire to verifyOtp + session
+- `src/routes/onboarding.tsx` — wire to setNickname
 
-**Secret needed:** `SESSION_SECRET` (random 32+ char string for cookie encryption).
+**Deleted files (moved to `_authed/`):**
+- `src/routes/index.tsx`, `checkmate.tsx`, `wisdomdrop.tsx`, `results.tsx`, `profile.tsx`, `leaderboard.tsx`, `entries.tsx`, `winners.tsx`
 
-**No database migrations needed.** All tables already exist.
-
-**No new npm dependencies.**
+**No database migrations needed.**
 
