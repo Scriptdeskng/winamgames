@@ -61,7 +61,7 @@ function HomePage() {
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar />
       <div className="px-4 pb-6 space-y-5">
-        <div className="rounded-2xl bg-glass border border-glass-border p-4 shadow-card">
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
           <div className="flex items-center gap-2 mb-3">
             <Timer className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Weekly Draw</span>
@@ -82,7 +82,7 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-surface-1 border border-glass-border p-4 flex items-center justify-between">
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-streak/15 flex items-center justify-center">
               <Flame className="h-5 w-5 text-streak" />
@@ -102,7 +102,7 @@ function HomePage() {
           <div className="grid grid-cols-2 gap-3">
             <Link
               to="/checkmate"
-              className="group rounded-2xl bg-surface-1 border border-glass-border p-4 transition-all hover:border-primary/30 hover:shadow-glow"
+              className="group rounded-2xl bg-surface-1 border border-border p-4 transition-all hover:border-primary/30 hover:shadow-glow"
             >
               <div className="h-12 w-12 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
                 <Swords className="h-6 w-6 text-primary" />
@@ -113,7 +113,7 @@ function HomePage() {
 
             <Link
               to="/wisdomdrop"
-              className="group rounded-2xl bg-surface-1 border border-glass-border p-4 transition-all hover:border-primary/30 hover:shadow-glow"
+              className="group rounded-2xl bg-surface-1 border border-border p-4 transition-all hover:border-primary/30 hover:shadow-glow"
             >
               <div className="h-12 w-12 rounded-xl bg-xp/15 flex items-center justify-center mb-3">
                 <BookOpen className="h-6 w-6 text-xp" />
@@ -131,7 +131,7 @@ function HomePage() {
               <p className="text-xs text-muted-foreground text-center py-3">No missions available today</p>
             )}
             {missions.map((mission: { id: string; title: string; rewardAmount: number; rewardType: string; status: string; progress: string }) => (
-              <div key={mission.id} className="rounded-xl bg-surface-1 border border-glass-border p-3 flex items-center justify-between">
+              <div key={mission.id} className="rounded-xl bg-surface-1 border border-border p-3 flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-medium">{mission.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -151,7 +151,7 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-surface-1 border border-glass-border p-4">
+        <div className="rounded-2xl bg-surface-1 border border-border p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-gold" />

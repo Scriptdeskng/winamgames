@@ -28,8 +28,8 @@ export function HintButton({ currentTier, coinBalance, onUseHint, disabled }: Hi
       className={cn(
         "flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all border",
         canAfford && !disabled
-          ? "bg-surface-1 border-glass-border text-foreground hover:border-primary/30"
-          : "bg-surface-1/50 border-glass-border/50 text-muted-foreground cursor-not-allowed opacity-50"
+          ? "bg-surface-1 border-border text-foreground hover:border-primary/30"
+          : "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
       )}
     >
       <Lightbulb className="h-4 w-4 text-coin" />

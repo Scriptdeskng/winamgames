@@ -27,7 +27,7 @@ function WinnersPage() {
             { week: "Week of Apr 7", winners: [{ name: "ProverbMaster", prize: "₦50,000" }, { name: "ChessKing", prize: "₦20,000" }] },
             { week: "Week of Mar 31", winners: [{ name: "NaijaWiz", prize: "₦50,000" }, { name: "PuzzlePro", prize: "₦20,000" }] },
           ].map((draw, i) => (
-            <div key={i} className="rounded-2xl bg-surface-1 border border-glass-border p-4">
+            <div key={i} className="rounded-2xl bg-surface-1 border border-border p-4">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">{draw.week}</p>
               <div className="space-y-2">
                 {draw.winners.map((w, j) => (

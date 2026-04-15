@@ -16,14 +16,14 @@ export function TopBar({ backTo }: TopBarProps) {
       {backTo ? (
         <Link
           to={backTo}
-          className="h-10 w-10 rounded-xl bg-surface-1 border border-glass-border flex items-center justify-center hover:border-primary/30 transition-colors"
+          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </Link>
       ) : (
         <Link
           to="/profile"
-          className="h-10 w-10 rounded-xl bg-surface-1 border border-glass-border flex items-center justify-center hover:border-primary/30 transition-colors"
+          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
         >
           <span className="text-sm font-bold text-primary">{initial}</span>
         </Link>

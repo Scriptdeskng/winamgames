@@ -73,7 +73,7 @@ function OnboardingPage() {
               value={nickname}
               onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
               placeholder="e.g. NaijaChamp"
-              className="w-full h-14 px-4 rounded-xl bg-surface-1 border border-glass-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              className="w-full h-14 px-4 rounded-xl bg-surface-1 border border-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               autoFocus
               maxLength={16}
             />

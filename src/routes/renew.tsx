@@ -65,7 +65,7 @@ function RenewPage() {
             className={`relative w-full rounded-2xl border-2 p-5 text-left transition-all ${
               selected === "weekly"
                 ? "border-primary bg-primary/5 shadow-glow"
-                : "border-glass-border bg-surface-1 hover:border-primary/40"
+                : "border-border bg-surface-1 hover:border-primary/40"
             }`}
           >
             <div className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wide uppercase">Best Value</div>
@@ -97,7 +97,7 @@ function RenewPage() {
             className={`w-full rounded-2xl border-2 p-5 text-left transition-all ${
               selected === "daily"
                 ? "border-primary bg-primary/5 shadow-glow"
-                : "border-glass-border bg-surface-1 hover:border-primary/40"
+                : "border-border bg-surface-1 hover:border-primary/40"
             }`}
           >
             <div className="flex items-start justify-between">

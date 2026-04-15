@@ -35,7 +35,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, disab
 
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
-      <div className="grid grid-cols-8 rounded-xl overflow-hidden border border-glass-border shadow-card">
+      <div className="grid grid-cols-8 rounded-xl overflow-hidden border border-border shadow-card">
         {board.map((row, ri) =>
           row.map((piece, ci) => {
             const square = `${files[ci]}${8 - ri}`;

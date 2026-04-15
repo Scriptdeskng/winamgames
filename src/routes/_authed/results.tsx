@@ -70,7 +70,7 @@ function ResultsPage() {
 
       <div className="w-full space-y-3">
         {stats.map((item, i) => (
-          <div key={i} className="rounded-xl bg-surface-1 border border-glass-border p-4 flex items-center justify-between">
+          <div key={i} className="rounded-xl bg-surface-1 border border-border p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <item.icon className={`h-5 w-5 ${item.color}`} />
               <span className="text-sm text-muted-foreground">{item.label}</span>

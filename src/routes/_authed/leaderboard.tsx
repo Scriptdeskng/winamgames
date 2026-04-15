@@ -48,7 +48,7 @@ function LeaderboardPage() {
 
         <div className="space-y-2">
           {mockLeaderboard.map((player) => (
-            <div key={player.rank} className="rounded-xl bg-surface-1 border border-glass-border p-3 flex items-center gap-3">
+            <div key={player.rank} className="rounded-xl bg-surface-1 border border-border p-3 flex items-center gap-3">
               <span className={`text-sm font-bold tabular-nums w-6 text-center ${player.rank <= 3 ? "text-gold" : "text-muted-foreground"}`}>
                 {player.rank}
               </span>
