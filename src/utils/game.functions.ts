@@ -50,7 +50,7 @@ export const startSession = createServerFn({ method: "POST" })
     }
 
     // Pick puzzles (shuffle and take 10)
-    let puzzleList: { id: string; clientData: Record<string, unknown> }[];
+    let puzzleList: { id: string; clientData: Record<string, string | string[]> }[];
     if (data.gameType === "checkmate") {
       const shuffled = [...CHECKMATE_PUZZLES].sort(() => Math.random() - 0.5).slice(0, 10);
       puzzleList = shuffled.map((p) => ({
@@ -144,7 +144,7 @@ export const submitMove = createServerFn({ method: "POST" })
     });
 
     // Get next puzzle data if requested
-    let nextPuzzle: Record<string, unknown> | null = null;
+    let nextPuzzle: Record<string, string | string[]> | null = null;
     if (data.nextPuzzleId) {
       if (isCheckmate) {
         const p = CHECKMATE_PUZZLES.find((x) => x.id === data.nextPuzzleId);
