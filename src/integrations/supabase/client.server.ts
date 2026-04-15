@@ -6,16 +6,37 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_URL =
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    import.meta.env.VITE_SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL) {
     throw new Error(
-      'Missing Supabase server environment variables. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.'
+      'Missing SUPABASE_URL. Ensure SUPABASE_URL or VITE_SUPABASE_URL is set.'
     );
   }
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  // In dev preview, service role key may not be injected — fall back to anon key with warning
+  let key = SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) {
+    key =
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (key) {
+      console.warn(
+        '[supabase-admin] SUPABASE_SERVICE_ROLE_KEY not set — falling back to anon key. RLS policies will apply. This is expected in dev preview.'
+      );
+    } else {
+      throw new Error(
+        'Missing Supabase key. Ensure SUPABASE_SERVICE_ROLE_KEY or SUPABASE_PUBLISHABLE_KEY is set.'
+      );
+    }
+  }
+
+  return createClient<Database>(SUPABASE_URL, key, {
     auth: {
       storage: undefined,
       persistSession: false,
