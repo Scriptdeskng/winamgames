@@ -1,112 +1,82 @@
 
 
-# WinamGames — VAS Platform Build Plan
+# Phase 2 — Games, Sessions & Results
 
-This is a large-scale project. I will break it into sequential phases, each delivering a working increment. Given the scope (15+ screens, 13 database tables, 4 server functions, complex game logic), I recommend building in 5 phases.
+## What gets built
 
----
+### 1. Mock puzzle data files
+- `src/data/checkmate-puzzles.ts` — 20 chess puzzles with FEN positions, solution moves, difficulty ratings. Solutions stored here but NEVER sent to client.
+- `src/data/wisdomdrop-puzzles.ts` — 20 African proverbs with blank word, 4 options, correct answer index. Correct answer NEVER sent to client.
 
-## Phase 1 — Foundation (this approval)
+### 2. Chess board renderer (`src/components/games/ChessBoard.tsx`)
+- Pure client-side FEN parser — render 8x8 grid using Unicode chess pieces (no `chess.js` dependency needed for display-only).
+- Tap-to-move: tap piece to select (highlight square), tap destination to submit move. Minimum 44px touch targets.
+- Visual: dark/light squares using emerald theme tokens, selected piece glow, last-move highlight.
 
-**What gets built:**
+### 3. Game session state management (`src/components/games/useGameSession.ts`)
+- React hook managing: timer (count-up), lives (3 max, wrong answer = -1 life), puzzles solved, hints used, current puzzle index.
+- Calls server function to validate moves / answers.
+- Session ends on: 0 lives, all puzzles done, or player exits.
 
-1. **Design system**: Apply the Winam "Refined Arena" theme to `styles.css` — emerald green signature color, dark mode default, OKLCH tokens, glass surfaces, custom shadows, 10px base radius.
+### 4. Shared game UI components
+- `src/components/games/GameHeader.tsx` — timer, lives display (hearts), exit button. Replaces BottomNav during play.
+- `src/components/games/HintButton.tsx` — 3-tier hint system with coin cost display.
+- `src/components/games/LivesDisplay.tsx` — 3 hearts, animate on loss.
+- `src/components/games/GameTimer.tsx` — elapsed time counter.
 
-2. **App shell**: Bottom tab navigation (Home, Games, Leaderboard, Profile), mobile-first layout capped at 430px, dark mode by default on `<html>`.
+### 5. CheckMate game screen (`src/routes/checkmate.tsx`)
+- Full rewrite of the stub. Shows chess board, game header, hint button.
+- On move submission: calls `submitMove` server function which validates against stored solution.
+- No bottom nav during play.
 
-3. **Supabase schema**: Enable Lovable Cloud and create all 13 tables with RLS policies, enums, and security constraints (append-only ledger, restricted OTP access). Seed `winam_platform_config`.
+### 6. WisdomDrop game screen (`src/routes/wisdomdrop.tsx`)
+- Full rewrite. Shows proverb with blank, 4 option buttons.
+- On selection: calls `submitAnswer` server function.
+- Same session structure (timer, lives, hints).
 
-4. **Auth flow (MSISDN + OTP)**: Three screens — MSISDN entry, OTP verification, onboarding (nickname). Server functions for `send-otp` and `verify-otp` with SHA-256 hashing, rate limiting (5 attempts / 15 min), SMS stubbed with `console.log` + TODO marker.
+### 7. Server functions (`src/utils/game.functions.ts`)
+- `startSession` — creates a game session row (locks `draw_week_id` at start), returns session ID and first puzzle (FEN only / proverb + options only, NO solution).
+- `submitMove` — validates player's move against stored solution server-side. Records puzzle attempt. Returns correct/incorrect + next puzzle if correct. Flags attempts under 3000ms.
+- `useHint` — deducts coins from player balance, returns hint data for the tier requested, records hint usage.
+- `closeSession` — full entry calculation per spec:
+  ```
+  net_puzzles = puzzles_solved - hints_used
+  base_entries = floor(net_puzzles / base_N)
+  streak_bonus from current_streak thresholds
+  mission_bonus from today's completed missions
+  raw_entries = base + streak + mission
+  entries_to_add = MIN(raw_entries, weekly_cap - week_so_far)
+  overflow → coins
+  ```
+  Writes `winam_game_sessions`, appends to `winam_entry_ledger`, updates `winam_players` (xp, coins, streak, last_session_date). Returns result object only.
 
-5. **Subscription gate**: Middleware that checks subscription status before granting access. Renewal screen for suspended/cancelled/churned users.
+### 8. Results screen (`src/routes/results.tsx`)
+- Full rewrite. Reads session results from route search params (passed from game screen after closeSession).
+- Shows: entries earned, coins earned, streak day, weekly total, XP gained.
+- "Back to Home" button.
 
-6. **Route files**: Create all route stubs — `/`, `/checkmate`, `/wisdomdrop`, `/results`, `/leaderboard`, `/entries`, `/winners`, `/profile`.
+### 9. Database migration
+- Create an initial `winam_draw_weeks` row for the current week so sessions can reference a valid `draw_week_id`.
+- Seed `winam_missions` with 6 sample missions.
 
----
+## Technical details
 
-## Phase 2 — Games & Session Logic
+**No new npm dependencies.** Chess board is rendered with a simple FEN parser using Unicode pieces — no `chess.js` needed. Move validation is server-side string comparison against the stored solution move.
 
-- CheckMate game screen (FEN rendering, tap-to-move, 44px touch targets, timer, lives, hints)
-- WisdomDrop game screen (proverb display, 4-option selection, timer, lives, hints)
-- Session management (start/close, puzzle attempts tracking)
-- `close-session` server function with full entry calculation
-- Results screen
-- Mock puzzle data (FEN positions, proverbs with answers)
+**Puzzle serving pattern:**
+- Server function selects the next puzzle from the mock data array.
+- For CheckMate: returns `{ fen, puzzleId }` — never the solution.
+- For WisdomDrop: returns `{ proverb, options, puzzleId }` — the options are shuffled server-side, correct answer index is NOT sent.
 
-## Phase 3 — Economy & Progression
+**Session flow:**
+1. Player taps "Start Game" → `startSession()` → gets session ID + first puzzle
+2. Player submits answer → `submitMove()` → server validates → returns result + next puzzle
+3. On 0 lives / exit / puzzles complete → `closeSession()` → entry calculation → navigate to `/results`
 
-- Coin balance, hint purchasing, overflow conversion
-- Rank system (XP tracking, 6 tiers, visual display)
-- Mission system (daily assignment, condition evaluation, rewards)
-- Streak system (WAT calendar day tracking, bonus calculation)
-
-## Phase 4 — Draw & Leaderboard
-
-- Draw week lifecycle (open → locked → drawn → settled)
-- Entry ledger display (My Entries screen)
-- Leaderboard (today top 10, all-time)
-- Winners screen (past draw results)
-- Draw execution logic with seeded random
-
-## Phase 5 — Webhooks & Hardening
-
-- Forthsoft webhook handler (HMAC-SHA256 validation, subscription state transitions, grace period)
-- Device fingerprinting and fraud flagging
-- Puzzle speed flagging (<3000ms)
-- Final security audit (RLS, append-only constraints)
-
----
-
-## Technical Details
-
-**Dependencies to add**: `chess.js` (FEN parsing/move validation for CheckMate client-side display only — solution validation stays server-side).
-
-**Database**: Lovable Cloud (Supabase). All 13 tables created via migrations. Custom enums for subscription status and rank tiers. RLS policies enforce player-scoped access. Entry ledger and game sessions are append-only (no UPDATE/DELETE for app role).
-
-**Server functions** (TanStack Start `createServerFn`, NOT Edge Functions):
-- `send-otp` and `verify-otp` in `src/utils/auth.functions.ts`
-- `close-session` in `src/utils/game.functions.ts`
-- Forthsoft webhook as a server route at `/api/webhooks/forthsoft`
-
-**Auth middleware**: Custom middleware using `winam_players` + `winam_subscriptions` tables (not Supabase Auth — this is MSISDN-based with custom OTP).
-
-**Timestamps**: All stored UTC. WAT (UTC+1) offset applied in server functions for streak/mission/draw calculations.
-
-**File structure**:
-```text
-src/
-  components/
-    layout/          Shell, BottomNav, SubscriptionGate
-    auth/            MsisdnEntry, OtpVerification, Onboarding
-    games/           ChessBoard, ProverbCard, Timer, LivesDisplay, HintButton
-    dashboard/       DrawCountdown, EntryCard, MissionCard, StreakBadge
-    profile/         RankBadge, XpBar, CoinBalance
-  routes/
-    __root.tsx       Dark mode shell, 430px max-width
-    index.tsx        Home dashboard
-    checkmate.tsx    Chess puzzle game
-    wisdomdrop.tsx   Proverb game
-    results.tsx      Session results
-    leaderboard.tsx  Rankings
-    entries.tsx      My entries
-    winners.tsx      Past draws
-    profile.tsx      Player profile
-    login.tsx        MSISDN entry
-    verify.tsx       OTP verification
-    onboarding.tsx   Nickname setup
-    renew.tsx        Subscription renewal
-  utils/
-    auth.functions.ts
-    auth.server.ts
-    game.functions.ts
-    game.server.ts
-    subscription.functions.ts
-    subscription.server.ts
-    draw.server.ts
-    missions.server.ts
-```
-
----
-
-**Shall I proceed with Phase 1?** This will set up the design system, database schema, auth flow, subscription gate, and app shell — giving us a working foundation for all subsequent phases.
+**File changes summary:**
+- Create: `src/data/checkmate-puzzles.ts`, `src/data/wisdomdrop-puzzles.ts`
+- Create: `src/components/games/ChessBoard.tsx`, `src/components/games/GameHeader.tsx`, `src/components/games/HintButton.tsx`, `src/components/games/LivesDisplay.tsx`, `src/components/games/GameTimer.tsx`, `src/components/games/useGameSession.ts`
+- Create: `src/utils/game.functions.ts`
+- Rewrite: `src/routes/checkmate.tsx`, `src/routes/wisdomdrop.tsx`, `src/routes/results.tsx`
+- Migration: seed current draw week + sample missions
 
