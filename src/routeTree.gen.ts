@@ -9,8 +9,74 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WisdomdropRouteImport } from './routes/wisdomdrop'
+import { Route as WinnersRouteImport } from './routes/winners'
+import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as ResultsRouteImport } from './routes/results'
+import { Route as RenewRouteImport } from './routes/renew'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as EntriesRouteImport } from './routes/entries'
+import { Route as CheckmateRouteImport } from './routes/checkmate'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WisdomdropRoute = WisdomdropRouteImport.update({
+  id: '/wisdomdrop',
+  path: '/wisdomdrop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WinnersRoute = WinnersRouteImport.update({
+  id: '/winners',
+  path: '/winners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultsRoute = ResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RenewRoute = RenewRouteImport.update({
+  id: '/renew',
+  path: '/renew',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntriesRoute = EntriesRouteImport.update({
+  id: '/entries',
+  path: '/entries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckmateRoute = CheckmateRouteImport.update({
+  id: '/checkmate',
+  path: '/checkmate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +85,186 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/checkmate': typeof CheckmateRoute
+  '/entries': typeof EntriesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/renew': typeof RenewRoute
+  '/results': typeof ResultsRoute
+  '/verify': typeof VerifyRoute
+  '/winners': typeof WinnersRoute
+  '/wisdomdrop': typeof WisdomdropRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/checkmate': typeof CheckmateRoute
+  '/entries': typeof EntriesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/renew': typeof RenewRoute
+  '/results': typeof ResultsRoute
+  '/verify': typeof VerifyRoute
+  '/winners': typeof WinnersRoute
+  '/wisdomdrop': typeof WisdomdropRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/checkmate': typeof CheckmateRoute
+  '/entries': typeof EntriesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/renew': typeof RenewRoute
+  '/results': typeof ResultsRoute
+  '/verify': typeof VerifyRoute
+  '/winners': typeof WinnersRoute
+  '/wisdomdrop': typeof WisdomdropRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/checkmate'
+    | '/entries'
+    | '/leaderboard'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/renew'
+    | '/results'
+    | '/verify'
+    | '/winners'
+    | '/wisdomdrop'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/checkmate'
+    | '/entries'
+    | '/leaderboard'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/renew'
+    | '/results'
+    | '/verify'
+    | '/winners'
+    | '/wisdomdrop'
+  id:
+    | '__root__'
+    | '/'
+    | '/checkmate'
+    | '/entries'
+    | '/leaderboard'
+    | '/login'
+    | '/onboarding'
+    | '/profile'
+    | '/renew'
+    | '/results'
+    | '/verify'
+    | '/winners'
+    | '/wisdomdrop'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CheckmateRoute: typeof CheckmateRoute
+  EntriesRoute: typeof EntriesRoute
+  LeaderboardRoute: typeof LeaderboardRoute
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
+  ProfileRoute: typeof ProfileRoute
+  RenewRoute: typeof RenewRoute
+  ResultsRoute: typeof ResultsRoute
+  VerifyRoute: typeof VerifyRoute
+  WinnersRoute: typeof WinnersRoute
+  WisdomdropRoute: typeof WisdomdropRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wisdomdrop': {
+      id: '/wisdomdrop'
+      path: '/wisdomdrop'
+      fullPath: '/wisdomdrop'
+      preLoaderRoute: typeof WisdomdropRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/winners': {
+      id: '/winners'
+      path: '/winners'
+      fullPath: '/winners'
+      preLoaderRoute: typeof WinnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/results': {
+      id: '/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof ResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renew': {
+      id: '/renew'
+      path: '/renew'
+      fullPath: '/renew'
+      preLoaderRoute: typeof RenewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entries': {
+      id: '/entries'
+      path: '/entries'
+      fullPath: '/entries'
+      preLoaderRoute: typeof EntriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkmate': {
+      id: '/checkmate'
+      path: '/checkmate'
+      fullPath: '/checkmate'
+      preLoaderRoute: typeof CheckmateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +277,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CheckmateRoute: CheckmateRoute,
+  EntriesRoute: EntriesRoute,
+  LeaderboardRoute: LeaderboardRoute,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
+  ProfileRoute: ProfileRoute,
+  RenewRoute: RenewRoute,
+  ResultsRoute: ResultsRoute,
+  VerifyRoute: VerifyRoute,
+  WinnersRoute: WinnersRoute,
+  WisdomdropRoute: WisdomdropRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
