@@ -377,6 +377,15 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.playerId);
 
+    // ── Evaluate missions ──
+    const { evaluatePendingMissions } = await import("@/utils/mission.server");
+    const completedMissions = await evaluatePendingMissions(
+      supabaseAdmin,
+      data.playerId,
+      session.draw_week_id,
+      watDate
+    );
+
     return {
       success: true as const,
       entries: entriesToAdd,
@@ -388,5 +397,11 @@ export const closeSession = createServerFn({ method: "POST" })
       overflow,
       netPuzzles,
       rankTier: newTier,
+      previousRank: player.rank_tier,
+      completedMissions: completedMissions.map((m) => ({
+        title: m.title,
+        rewardType: m.rewardType,
+        rewardAmount: m.rewardAmount,
+      })),
     };
   });

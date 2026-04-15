@@ -1,23 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { User, Coins, Flame, Trophy, Star, ChevronRight, Ticket, Award } from "lucide-react";
+import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award } from "lucide-react";
+import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
+import { getPlayerData } from "@/utils/mission.functions";
+import type { RankTier } from "@/components/profile/RankBadge";
+
+// TODO: Replace with actual player ID from auth context
+const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
   head: () => ({
-    meta: [
-      { title: "Profile — WinamGames" },
-    ],
+    meta: [{ title: "Profile — WinamGames" }],
   }),
+  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
 });
 
-const RANKS = ["Pawn", "Knight", "Bishop", "Rook", "Queen", "King"];
-
 function ProfilePage() {
-  const rank = "Knight";
-  const xp = 450;
-  const nextRankXp = 1000;
-  const xpProgress = (xp / nextRankXp) * 100;
+  const result = Route.useLoaderData();
+
+  const player = result.success ? result.player : null;
+  const weekTotal = result.success ? result.weekTotal : 0;
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
@@ -30,31 +33,23 @@ function ProfilePage() {
             <User className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">NaijaChamp</h2>
-            <p className="text-sm text-muted-foreground">****5678</p>
+            <h2 className="text-lg font-bold">{player?.nickname ?? "Player"}</h2>
+            <p className="text-sm text-muted-foreground">****{player?.msisdnLast4 ?? "0000"}</p>
           </div>
         </div>
 
         {/* Rank & XP */}
-        <div className="rounded-2xl bg-surface-1 border border-glass-border p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-xp" />
-              <span className="text-sm font-semibold">{rank}</span>
-            </div>
-            <span className="text-xs text-muted-foreground tabular-nums">{xp} / {nextRankXp} XP</span>
-          </div>
-          <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
-            <div className="h-full rounded-full bg-xp transition-all" style={{ width: `${xpProgress}%` }} />
-          </div>
-        </div>
+        <XpProgressBar
+          xp={player?.xpTotal ?? 0}
+          tier={(player?.rankTier as RankTier) ?? "pawn"}
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Coins, label: "Coins", value: "1,250", color: "text-coin" },
-            { icon: Flame, label: "Streak", value: "5 days", color: "text-streak" },
-            { icon: Trophy, label: "Entries", value: "12", color: "text-primary" },
+            { icon: Coins, label: "Coins", value: player?.coinBalance?.toLocaleString() ?? "0", color: "text-coin" },
+            { icon: Flame, label: "Streak", value: `${player?.currentStreak ?? 0}d`, color: "text-streak" },
+            { icon: Trophy, label: "Entries", value: `${weekTotal}`, color: "text-primary" },
           ].map((stat, i) => (
             <div key={i} className="rounded-xl bg-surface-1 border border-glass-border p-3 text-center">
               <stat.icon className={`h-5 w-5 mx-auto mb-1 ${stat.color}`} />
@@ -67,8 +62,8 @@ function ProfilePage() {
         {/* Links */}
         <div className="space-y-2">
           {[
-            { to: "/entries", icon: Ticket, label: "My Entries" },
-            { to: "/winners", icon: Award, label: "Winners" },
+            { to: "/entries" as const, icon: Ticket, label: "My Entries" },
+            { to: "/winners" as const, icon: Award, label: "Winners" },
           ].map((item) => (
             <Link
               key={item.to}
