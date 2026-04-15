@@ -37,8 +37,8 @@ function LoginPage() {
         return;
       }
       navigate({ to: "/verify", search: { msisdn: cleaned } });
-    } catch {
-      setError("Failed to send OTP. Try again.");
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
