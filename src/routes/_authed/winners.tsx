@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Award, ChevronDown, Phone, Hash } from "lucide-react";
+import { Award, ChevronDown, Phone, Hash, Gamepad2, Trophy } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -130,33 +130,26 @@ const POSITION_STYLES = [
 
 function AirtimeSection({ tiers }: { tiers: DrawWeek["airtimeTiers"] }) {
   const [open, setOpen] = useState(false);
-  const totalAirtimeWinners = tiers.reduce((s, t) => s + t.winners.length, 0);
+  const summary = tiers.map((t) => `${t.winners.length}× ${t.label.split(" ")[0]}`).join(", ");
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl bg-surface-1 border border-border px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-surface-1/80 transition-colors">
-        <span>Airtime & Data — {totalAirtimeWinners} winners</span>
+      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg bg-surface-2/50 px-3 py-2 text-xs text-muted-foreground hover:bg-surface-2/80 transition-colors">
+        <span>Airtime & Data — {summary}</span>
         <ChevronDown
-          className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 space-y-2">
         {tiers.map((tier) => (
-          <div key={tier.label} className="rounded-xl bg-surface-1 border border-border p-3">
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+          <div key={tier.label}>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 px-1">
               {tier.label} ({tier.winners.length})
             </p>
-            <div className="space-y-1">
+            <div className={tier.winners.length > 10 ? "grid grid-cols-2 gap-x-3 gap-y-0.5" : "space-y-0.5"}>
               {tier.winners.map((w, j) => (
-                <div
-                  key={j}
-                  className="flex items-center justify-between py-1 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium tabular-nums">{w.phone}</span>
-                    <span className="text-muted-foreground tabular-nums">{w.entryId}</span>
-                  </div>
+                <div key={j} className="flex items-center justify-between py-0.5 text-[11px]">
+                  <span className="font-medium tabular-nums">{w.phone}</span>
                   <span className="font-semibold text-primary">{w.prize}</span>
                 </div>
               ))}
@@ -168,74 +161,103 @@ function AirtimeSection({ tiers }: { tiers: DrawWeek["airtimeTiers"] }) {
   );
 }
 
+function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const totalWinners = draw.cashWinners.length + draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-2xl bg-surface-1 border border-border overflow-hidden">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 hover:bg-surface-1/80 transition-colors">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            <div className="text-left">
+              <p className="text-sm font-semibold">{draw.label}</p>
+              <p className="text-[10px] text-muted-foreground">{totalWinners} winners</p>
+            </div>
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-3">
+            {/* Cash winners */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+                Cash Prizes
+              </p>
+              {draw.cashWinners.map((w, j) => (
+                <div key={j} className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`h-7 w-7 rounded-full ${POSITION_STYLES[j].bg} flex items-center justify-center text-[10px] font-bold ${POSITION_STYLES[j].text}`}
+                    >
+                      {POSITION_STYLES[j].label}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium tabular-nums">{w.phone}</span>
+                      <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
+                        <Hash className="h-2 w-2" />
+                        {w.entryId.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-primary">{w.prize}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Airtime nested collapsible */}
+            <AirtimeSection tiers={draw.airtimeTiers} />
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 function WinnersPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar backTo="/" />
-      <div className="px-4 pb-6 space-y-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold">Past Winners</h1>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Every week, 78 players win real cash, airtime & data.
+      <div className="px-4 pb-6 space-y-4">
+        {/* Hero / Ad Card */}
+        <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 text-center space-y-2">
+          <Award className="h-8 w-8 text-primary mx-auto" />
+          <h1 className="text-xl font-bold">Real people. Real wins.</h1>
+          <p className="text-xs text-muted-foreground">
+            78 winners every week — cash, airtime & data
           </p>
-        </div>
-
-        {/* Prize breakdown */}
-        <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-          <p className="text-xs font-semibold text-primary mb-2 uppercase tracking-wider">
-            Weekly Prize Pool — ₦100,000
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span>🥇 1st Place</span><span className="text-right font-medium text-foreground">₦35,000</span>
-            <span>🥈 2nd Place</span><span className="text-right font-medium text-foreground">₦10,000</span>
-            <span>🥉 3rd Place</span><span className="text-right font-medium text-foreground">₦5,000</span>
-            <span>5× ₦2,000</span><span className="text-right font-medium text-foreground">₦10,000</span>
-            <span>10× ₦1,000</span><span className="text-right font-medium text-foreground">₦10,000</span>
-            <span>60× ₦500</span><span className="text-right font-medium text-foreground">₦30,000</span>
-          </div>
+          <Link
+            to="/checkmate"
+            className="inline-flex items-center gap-2 mt-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <Gamepad2 className="h-4 w-4" />
+            Play Now
+          </Link>
         </div>
 
         {/* Draw weeks */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {DRAW_WEEKS.map((draw, i) => (
-            <div key={i} className="space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                {draw.label}
-              </p>
-
-              {/* Cash winners */}
-              <div className="rounded-2xl bg-surface-1 border border-border p-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-1">
-                  Cash Prizes
-                </p>
-                {draw.cashWinners.map((w, j) => (
-                  <div key={j} className="flex items-center justify-between py-1.5">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-8 w-8 rounded-full ${POSITION_STYLES[j].bg} flex items-center justify-center text-xs font-bold ${POSITION_STYLES[j].text}`}
-                      >
-                        {POSITION_STYLES[j].label}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium tabular-nums">{w.phone}</span>
-                        <span className="text-[10px] text-muted-foreground tabular-nums flex items-center gap-1">
-                          <Hash className="h-2.5 w-2.5" />
-                          {w.entryId.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold text-primary">{w.prize}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Airtime section */}
-              <AirtimeSection tiers={draw.airtimeTiers} />
-            </div>
+            <DrawWeekCard key={i} draw={draw} defaultOpen={i === 0} />
           ))}
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 text-center space-y-2">
+          <p className="text-sm font-semibold">Keep playing, keep winning</p>
+          <p className="text-[11px] text-muted-foreground">
+            More entries = better odds. Play daily to climb the ranks.
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-4 py-1.5 text-xs font-semibold hover:bg-primary/20 transition-colors"
+          >
+            Back to Games
+          </Link>
         </div>
       </div>
     </div>
