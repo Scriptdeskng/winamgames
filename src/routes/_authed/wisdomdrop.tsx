@@ -1,20 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
-import { getCurrentPlayer } from "@/utils/session.functions";
+import { getSession } from "@/lib/session";
 import { BookOpen, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
   component: WisdomDropPage,
-  loader: async () => {
-    const session = await getCurrentPlayer();
-    const playerId = session!.playerId;
-    const playerData = await getPlayerData({ data: { playerId } });
-    return { playerId, playerData };
-  },
   head: () => ({
     meta: [
       { title: "WisdomDrop — WinamGames" },
@@ -24,12 +19,18 @@ export const Route = createFileRoute("/_authed/wisdomdrop")({
 });
 
 function WisdomDropPage() {
-  const { playerId, playerData } = Route.useLoaderData();
-  const coinBalance = playerData.success ? playerData.player.coinBalance : 0;
+  const sessionData = getSession();
+  const playerId = sessionData?.playerId ?? "";
+  const [playerData, setPlayerData] = React.useState<any>(null);
 
+  React.useEffect(() => {
+    if (!playerId) return;
+    getPlayerData({ data: { playerId } }).then(setPlayerData);
+  }, [playerId]);
+
+  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
   const session = useGameSession("wisdomdrop", playerId);
 
-  // Pre-game screen
   if (!session.sessionId) {
     return (
       <div className="mx-auto min-h-screen max-w-[430px] bg-background">
@@ -64,7 +65,6 @@ function WisdomDropPage() {
     origin: string;
   } | null;
 
-  // Determine which options to eliminate based on hint data
   const eliminatedOptions = session.hintData?.eliminate
     ? session.hintData.eliminate.split(",")
     : [];
@@ -82,7 +82,6 @@ function WisdomDropPage() {
       />
 
       <div className="px-4 pt-6 pb-8 space-y-6">
-        {/* Feedback flash */}
         {session.feedback && (
           <div className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold ${
             session.feedback === "correct"
@@ -97,7 +96,6 @@ function WisdomDropPage() {
           </div>
         )}
 
-        {/* Proverb card */}
         {puzzle && (
           <div className="rounded-2xl bg-surface-1 border border-glass-border p-6 shadow-card">
             <p className="text-xs text-muted-foreground mb-3">{puzzle.origin}</p>
@@ -107,7 +105,6 @@ function WisdomDropPage() {
           </div>
         )}
 
-        {/* Hint display */}
         {session.hintData && session.hintData.startsWidth && (
           <div className="rounded-xl bg-coin/10 border border-coin/20 p-3">
             <p className="text-xs font-medium text-coin">
@@ -116,7 +113,6 @@ function WisdomDropPage() {
           </div>
         )}
 
-        {/* Options */}
         {puzzle && (
           <div className="grid grid-cols-1 gap-3">
             {puzzle.options.map((option, i) => {
@@ -140,7 +136,6 @@ function WisdomDropPage() {
           </div>
         )}
 
-        {/* Hint button */}
         <HintButton
           currentTier={session.currentHintTier}
           coinBalance={session.coinBalance}

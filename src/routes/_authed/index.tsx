@@ -2,22 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Timer, Flame, Trophy, ChevronRight, Swords, BookOpen, Check } from "lucide-react";
 import { getPlayerData, getDailyMissions, getLeaderboard } from "@/utils/mission.functions";
-import { getCurrentPlayer } from "@/utils/session.functions";
+import { getSession } from "@/lib/session";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
+import React from "react";
 
 export const Route = createFileRoute("/_authed/")({
   component: HomePage,
-  loader: async () => {
-    const session = await getCurrentPlayer();
-    const playerId = session!.playerId;
-    const [playerResult, missionsResult, leaderboardResult] = await Promise.all([
-      getPlayerData({ data: { playerId } }),
-      getDailyMissions({ data: { playerId } }),
-      getLeaderboard({ data: { limit: 5 } }),
-    ]);
-    return { playerResult, missionsResult, leaderboardResult };
-  },
 });
 
 function formatCountdown(targetDateStr: string | undefined): string {
@@ -33,19 +24,42 @@ function formatCountdown(targetDateStr: string | undefined): string {
 }
 
 function HomePage() {
-  const { playerResult, missionsResult, leaderboardResult } = Route.useLoaderData();
+  const session = getSession();
+  const [data, setData] = React.useState<{
+    playerResult: any;
+    missionsResult: any;
+    leaderboardResult: any;
+  } | null>(null);
 
-  const player = playerResult.success ? playerResult.player : null;
-  const weekTotal = playerResult.success ? playerResult.weekTotal : 0;
-  const weekCap = playerResult.success ? playerResult.weekCap : 50;
-  const drawWeek = playerResult.success ? playerResult.drawWeek : null;
-  const missions = missionsResult.success ? missionsResult.missions : [];
-  const leaderboard = leaderboardResult.success ? leaderboardResult.players : [];
+  React.useEffect(() => {
+    if (!session) return;
+    Promise.all([
+      getPlayerData({ data: { playerId: session.playerId } }),
+      getDailyMissions({ data: { playerId: session.playerId } }),
+      getLeaderboard({ data: { limit: 5 } }),
+    ]).then(([playerResult, missionsResult, leaderboardResult]) => {
+      setData({ playerResult, missionsResult, leaderboardResult });
+    });
+  }, []);
+
+  const player = data?.playerResult?.success ? data.playerResult.player : null;
+  const weekTotal = data?.playerResult?.success ? data.playerResult.weekTotal : 0;
+  const weekCap = data?.playerResult?.success ? data.playerResult.weekCap : 50;
+  const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
+  const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
+  const leaderboard = data?.leaderboardResult?.success ? data.leaderboardResult.players : [];
+
+  if (!data) {
+    return (
+      <div className="mx-auto min-h-screen max-w-[430px] bg-background flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <div className="px-4 pt-6 pb-24 space-y-5">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Welcome back</p>
@@ -56,12 +70,11 @@ function HomePage() {
             className="h-10 w-10 rounded-full bg-surface-2 flex items-center justify-center border border-glass-border"
           >
             <span className="text-sm font-bold text-primary">
-              {player?.nickname?.[0]?.toUpperCase() ?? "W"}
+              {player?.nickname?.[0]?.toUpperCase() ?? session?.nickname?.[0]?.toUpperCase() ?? "W"}
             </span>
           </Link>
         </div>
 
-        {/* Draw Countdown */}
         <div className="rounded-2xl bg-glass border border-glass-border p-4 shadow-card">
           <div className="flex items-center gap-2 mb-3">
             <Timer className="h-4 w-4 text-primary" />
@@ -83,7 +96,6 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Streak */}
         <div className="rounded-2xl bg-surface-1 border border-glass-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-streak/15 flex items-center justify-center">
@@ -99,7 +111,6 @@ function HomePage() {
           <RankBadge tier={(player?.rankTier as RankTier) ?? "pawn"} />
         </div>
 
-        {/* Games */}
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Play Now</h2>
           <div className="grid grid-cols-2 gap-3">
@@ -127,7 +138,6 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Missions */}
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Daily Missions</h2>
           <div className="space-y-2">
@@ -155,7 +165,6 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Leaderboard teaser */}
         <div className="rounded-2xl bg-surface-1 border border-glass-border p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
