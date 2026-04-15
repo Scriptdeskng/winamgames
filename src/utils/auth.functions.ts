@@ -29,14 +29,17 @@ export const sendOtp = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     msisdn: z.string().min(10).max(15),
   }))
-  .handler(async ({ data }) => {
-    const normalized = normalizeMsisdn(data.msisdn);
-    const last4 = normalized.slice(-4);
+  .handler(async ({ data }): Promise<{ success: boolean; msisdnLast4?: string; error?: string }> => {
+    try {
+      const normalized = normalizeMsisdn(data.msisdn);
+      const last4 = normalized.slice(-4);
 
-    // TODO: PROTOTYPE MODE — skip OTP table and SMS delivery entirely
-    // Replace with real OTP flow before go-live
-    console.log(`[PROTOTYPE] OTP request for ****${last4} — use 0000 to verify`);
-    return { success: true as const, msisdnLast4: last4, error: null };
+      // TODO: PROTOTYPE MODE — skip OTP table and SMS delivery entirely
+      console.log(`[PROTOTYPE] OTP request for ****${last4} — use 0000 to verify`);
+      return { success: true, msisdnLast4: last4 };
+    } catch (e: any) {
+      return { success: false, error: e?.message || "Invalid phone number" };
+    }
   });
 
 export const verifyOtp = createServerFn({ method: "POST" })
