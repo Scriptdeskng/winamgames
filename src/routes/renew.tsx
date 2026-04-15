@@ -1,20 +1,45 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { AlertTriangle, Crown, Clock, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { getCurrentPlayer } from "@/utils/session.functions";
+import { renewSubscription } from "@/utils/auth.functions";
 
 export const Route = createFileRoute("/renew")({
   component: RenewPage,
+  beforeLoad: async () => {
+    const player = await getCurrentPlayer();
+    if (!player) {
+      throw redirect({ to: "/login" });
+    }
+    return { playerId: player.playerId };
+  },
   head: () => ({
     meta: [{ title: "Renew Subscription — WinamGames" }],
   }),
 });
 
 function RenewPage() {
+  const { playerId } = Route.useRouteContext();
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<"daily" | "weekly">("weekly");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubscribe = () => {
-    // TODO: Forthsoft carrier billing integration
-    console.log(`[TODO: Forthsoft] Subscribe to ${selected} plan`);
+  const handleSubscribe = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await renewSubscription({ data: { playerId, plan: selected } });
+      if (!result.success) {
+        setError(result.error || "Something went wrong");
+        return;
+      }
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -97,12 +122,18 @@ function RenewPage() {
           </button>
         </div>
 
+        {/* Error */}
+        {error && (
+          <p className="mt-4 text-sm text-destructive text-center">{error}</p>
+        )}
+
         {/* Subscribe button */}
         <button
           onClick={handleSubscribe}
-          className="mt-8 w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-glow"
+          disabled={loading}
+          className="mt-8 w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-glow"
         >
-          Subscribe — {selected === "weekly" ? "₦300/week" : "₦150/day"}
+          {loading ? "Activating..." : `Subscribe — ${selected === "weekly" ? "₦300/week" : "₦150/day"}`}
         </button>
 
         <p className="mt-4 text-xs text-muted-foreground text-center">

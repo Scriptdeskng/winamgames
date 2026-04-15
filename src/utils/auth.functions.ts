@@ -25,6 +25,18 @@ function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+/** Helper: compute WAT end-of-day as UTC timestamp */
+function watEndOfDay(): string {
+  const watOffset = 1; // WAT = UTC+1
+  const now = new Date();
+  const watDate = new Date(now.getTime() + watOffset * 60 * 60 * 1000);
+  const endOfDayWAT = new Date(Date.UTC(
+    watDate.getUTCFullYear(), watDate.getUTCMonth(), watDate.getUTCDate(),
+    23 - watOffset, 59, 59, 999
+  ));
+  return endOfDayWAT.toISOString();
+}
+
 export const sendOtp = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     msisdn: z.string().min(10).max(15),
@@ -98,6 +110,28 @@ export const verifyOtp = createServerFn({ method: "POST" })
 
     if (existingPlayer) {
       playerId = existingPlayer.id;
+
+      // Auto-renew subscription for returning players (PROTOTYPE)
+      const { data: activeSub } = await supabaseAdmin
+        .from("winam_subscriptions")
+        .select("id")
+        .eq("player_id", playerId)
+        .in("status", ["active", "grace"])
+        .gte("valid_until", new Date().toISOString())
+        .limit(1)
+        .maybeSingle();
+
+      if (!activeSub) {
+        console.log(`[PROTOTYPE] Auto-renewing daily sub for player ${playerId}`);
+        await supabaseAdmin
+          .from("winam_subscriptions")
+          .insert({
+            player_id: playerId,
+            plan: "daily",
+            status: "active",
+            valid_until: watEndOfDay(),
+          });
+      }
     } else {
       const { data: newPlayer, error: insertError } = await supabaseAdmin
         .from("winam_players")
@@ -116,26 +150,17 @@ export const verifyOtp = createServerFn({ method: "POST" })
       isNewPlayer = true;
 
       // Auto-create daily subscription for new players
-      // TODO: Forthsoft billing webhook will replace this stub
-      const watOffset = 1; // WAT = UTC+1
-      const now = new Date();
-      const watDate = new Date(now.getTime() + watOffset * 60 * 60 * 1000);
-      const endOfDayWAT = new Date(Date.UTC(
-        watDate.getUTCFullYear(), watDate.getUTCMonth(), watDate.getUTCDate(),
-        23 - watOffset, 59, 59, 999
-      ));
       const { error: subError } = await supabaseAdmin
         .from("winam_subscriptions")
         .insert({
           player_id: playerId,
           plan: "daily",
           status: "active",
-          valid_until: endOfDayWAT.toISOString(),
+          valid_until: watEndOfDay(),
         });
 
       if (subError) {
         console.error("Failed to create subscription:", subError);
-        // Non-fatal: player can still proceed, subscription gate will redirect to /renew
       }
     }
 
@@ -179,5 +204,51 @@ export const setNickname = createServerFn({ method: "POST" })
       return { success: false, error: "Failed to save nickname" };
     }
 
+    return { success: true };
+  });
+
+/** Prototype: renew subscription from /renew page */
+export const renewSubscription = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    playerId: z.string().uuid(),
+    plan: z.enum(["daily", "weekly"]),
+  }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const watOffset = 1;
+    const now = new Date();
+    const watDate = new Date(now.getTime() + watOffset * 60 * 60 * 1000);
+
+    let validUntil: Date;
+    if (data.plan === "weekly") {
+      // 7 days from now, end of day WAT
+      const futureWat = new Date(watDate.getTime() + 6 * 24 * 60 * 60 * 1000);
+      validUntil = new Date(Date.UTC(
+        futureWat.getUTCFullYear(), futureWat.getUTCMonth(), futureWat.getUTCDate(),
+        23 - watOffset, 59, 59, 999
+      ));
+    } else {
+      validUntil = new Date(Date.UTC(
+        watDate.getUTCFullYear(), watDate.getUTCMonth(), watDate.getUTCDate(),
+        23 - watOffset, 59, 59, 999
+      ));
+    }
+
+    const { error } = await supabaseAdmin
+      .from("winam_subscriptions")
+      .insert({
+        player_id: data.playerId,
+        plan: data.plan,
+        status: "active",
+        valid_until: validUntil.toISOString(),
+      });
+
+    if (error) {
+      console.error("Failed to renew subscription:", error);
+      return { success: false, error: "Failed to activate subscription" };
+    }
+
+    console.log(`[PROTOTYPE] Renewed ${data.plan} sub for player ${data.playerId}`);
     return { success: true };
   });

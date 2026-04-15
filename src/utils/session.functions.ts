@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { useSession, updateSession, clearSession } from "@tanstack/react-start/server";
+import { getCookie, setCookie, deleteCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
+
+// TODO: sign/encrypt cookie payload before go-live
+const COOKIE_NAME = "winam-session";
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 interface SessionData {
   playerId: string;
@@ -8,22 +12,37 @@ interface SessionData {
   nickname: string | null;
 }
 
-function getSessionConfig() {
-  return {
-    password: process.env.SESSION_SECRET || "dev-fallback-secret-change-me-in-production-32chars",
-    name: "winam-session",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  };
+function readSession(): SessionData | null {
+  try {
+    const raw = getCookie(COOKIE_NAME);
+    if (!raw) return null;
+    const decoded = atob(raw);
+    const parsed = JSON.parse(decoded) as SessionData;
+    if (!parsed.playerId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(data: SessionData) {
+  const payload = btoa(JSON.stringify(data));
+  setCookie(COOKIE_NAME, payload, {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: MAX_AGE,
+  });
 }
 
 export const getCurrentPlayer = createServerFn({ method: "GET" })
   .handler(async () => {
-    const session = await useSession<SessionData>(getSessionConfig());
-    if (!session.data.playerId) return null;
+    const session = readSession();
+    if (!session) return null;
     return {
-      playerId: session.data.playerId,
-      msisdnLast4: session.data.msisdnLast4,
-      nickname: session.data.nickname,
+      playerId: session.playerId,
+      msisdnLast4: session.msisdnLast4,
+      nickname: session.nickname,
     };
   });
 
@@ -34,7 +53,7 @@ export const setPlayerSession = createServerFn({ method: "POST" })
     nickname: z.string().nullable(),
   }))
   .handler(async ({ data }) => {
-    await updateSession<SessionData>(getSessionConfig(), {
+    writeSession({
       playerId: data.playerId,
       msisdnLast4: data.msisdnLast4,
       nickname: data.nickname,
@@ -44,7 +63,7 @@ export const setPlayerSession = createServerFn({ method: "POST" })
 
 export const clearPlayerSession = createServerFn({ method: "POST" })
   .handler(async () => {
-    await clearSession(getSessionConfig());
+    deleteCookie(COOKIE_NAME, { path: "/" });
     return { success: true };
   });
 
