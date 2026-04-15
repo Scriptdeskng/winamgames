@@ -60,11 +60,11 @@ function VerifyPage() {
       setSession({
         playerId: result.playerId!,
         msisdnLast4: result.msisdnLast4!,
-        nickname: result.nickname ?? null,
+        nickname: null,
       });
 
       // Navigate based on whether user needs onboarding
-      if (!result.nickname) {
+      if (result.needsOnboarding) {
         navigate({ to: "/onboarding" });
       } else {
         navigate({ to: "/" });

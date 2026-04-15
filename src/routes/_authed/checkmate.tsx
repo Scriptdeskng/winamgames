@@ -1,21 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
+import React from "react";
 import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
-import { getCurrentPlayer } from "@/utils/session.functions";
+import { getSession } from "@/lib/session";
 import { Swords, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
-  loader: async () => {
-    const session = await getCurrentPlayer();
-    const playerId = session!.playerId;
-    const playerData = await getPlayerData({ data: { playerId } });
-    return { playerId, playerData };
-  },
   head: () => ({
     meta: [
       { title: "CheckMate — WinamGames" },
@@ -25,25 +20,29 @@ export const Route = createFileRoute("/_authed/checkmate")({
 });
 
 function CheckMatePage() {
-  const { playerId, playerData } = Route.useLoaderData();
-  const coinBalance = playerData.success ? playerData.player.coinBalance : 0;
+  const sessionData = getSession();
+  const playerId = sessionData?.playerId ?? "";
+  const [playerData, setPlayerData] = React.useState<any>(null);
 
+  React.useEffect(() => {
+    if (!playerId) return;
+    getPlayerData({ data: { playerId } }).then(setPlayerData);
+  }, [playerId]);
+
+  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
   const session = useGameSession("checkmate", playerId);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
 
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
-
     if (selectedSquare) {
-      const move = square;
-      session.submit(move);
+      session.submit(square);
       setSelectedSquare(null);
     } else {
       setSelectedSquare(square);
     }
   }, [selectedSquare, session]);
 
-  // Pre-game screen
   if (!session.sessionId) {
     return (
       <div className="mx-auto min-h-screen max-w-[430px] bg-background">
@@ -86,7 +85,6 @@ function CheckMatePage() {
       />
 
       <div className="px-4 pt-4 pb-8 space-y-4">
-        {/* Feedback flash */}
         {session.feedback && (
           <div className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold ${
             session.feedback === "correct"
@@ -101,7 +99,6 @@ function CheckMatePage() {
           </div>
         )}
 
-        {/* Chess board */}
         {puzzle && (
           <ChessBoard
             fen={puzzle.fen}
@@ -111,7 +108,6 @@ function CheckMatePage() {
           />
         )}
 
-        {/* Hint display */}
         {session.hintData && (
           <div className="rounded-xl bg-coin/10 border border-coin/20 p-3">
             <p className="text-xs font-medium text-coin">
@@ -122,7 +118,6 @@ function CheckMatePage() {
           </div>
         )}
 
-        {/* Hint button */}
         <HintButton
           currentTier={session.currentHintTier}
           coinBalance={session.coinBalance}
