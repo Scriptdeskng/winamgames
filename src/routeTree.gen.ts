@@ -9,47 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WisdomdropRouteImport } from './routes/wisdomdrop'
-import { Route as WinnersRouteImport } from './routes/winners'
 import { Route as VerifyRouteImport } from './routes/verify'
-import { Route as ResultsRouteImport } from './routes/results'
 import { Route as RenewRouteImport } from './routes/renew'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LeaderboardRouteImport } from './routes/leaderboard'
-import { Route as EntriesRouteImport } from './routes/entries'
-import { Route as CheckmateRouteImport } from './routes/checkmate'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as ApiForthsoftWebhookRouteImport } from './routes/api/forthsoft-webhook'
+import { Route as AuthedWisdomdropRouteImport } from './routes/_authed/wisdomdrop'
+import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
+import { Route as AuthedResultsRouteImport } from './routes/_authed/results'
+import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
+import { Route as AuthedLeaderboardRouteImport } from './routes/_authed/leaderboard'
+import { Route as AuthedEntriesRouteImport } from './routes/_authed/entries'
+import { Route as AuthedCheckmateRouteImport } from './routes/_authed/checkmate'
 
-const WisdomdropRoute = WisdomdropRouteImport.update({
-  id: '/wisdomdrop',
-  path: '/wisdomdrop',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WinnersRoute = WinnersRouteImport.update({
-  id: '/winners',
-  path: '/winners',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResultsRoute = ResultsRouteImport.update({
-  id: '/results',
-  path: '/results',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RenewRoute = RenewRouteImport.update({
   id: '/renew',
   path: '/renew',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -62,146 +44,163 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LeaderboardRoute = LeaderboardRouteImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EntriesRoute = EntriesRouteImport.update({
-  id: '/entries',
-  path: '/entries',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckmateRoute = CheckmateRouteImport.update({
-  id: '/checkmate',
-  path: '/checkmate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthedIndexRoute = AuthedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const ApiForthsoftWebhookRoute = ApiForthsoftWebhookRouteImport.update({
+  id: '/api/forthsoft-webhook',
+  path: '/api/forthsoft-webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedWisdomdropRoute = AuthedWisdomdropRouteImport.update({
+  id: '/wisdomdrop',
+  path: '/wisdomdrop',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedWinnersRoute = AuthedWinnersRouteImport.update({
+  id: '/winners',
+  path: '/winners',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedResultsRoute = AuthedResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedProfileRoute = AuthedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLeaderboardRoute = AuthedLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedEntriesRoute = AuthedEntriesRouteImport.update({
+  id: '/entries',
+  path: '/entries',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedCheckmateRoute = AuthedCheckmateRouteImport.update({
+  id: '/checkmate',
+  path: '/checkmate',
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/checkmate': typeof CheckmateRoute
-  '/entries': typeof EntriesRoute
-  '/leaderboard': typeof LeaderboardRoute
+  '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/profile': typeof ProfileRoute
   '/renew': typeof RenewRoute
-  '/results': typeof ResultsRoute
   '/verify': typeof VerifyRoute
-  '/winners': typeof WinnersRoute
-  '/wisdomdrop': typeof WisdomdropRoute
+  '/checkmate': typeof AuthedCheckmateRoute
+  '/entries': typeof AuthedEntriesRoute
+  '/leaderboard': typeof AuthedLeaderboardRoute
+  '/profile': typeof AuthedProfileRoute
+  '/results': typeof AuthedResultsRoute
+  '/winners': typeof AuthedWinnersRoute
+  '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/checkmate': typeof CheckmateRoute
-  '/entries': typeof EntriesRoute
-  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/profile': typeof ProfileRoute
   '/renew': typeof RenewRoute
-  '/results': typeof ResultsRoute
   '/verify': typeof VerifyRoute
-  '/winners': typeof WinnersRoute
-  '/wisdomdrop': typeof WisdomdropRoute
+  '/checkmate': typeof AuthedCheckmateRoute
+  '/entries': typeof AuthedEntriesRoute
+  '/leaderboard': typeof AuthedLeaderboardRoute
+  '/profile': typeof AuthedProfileRoute
+  '/results': typeof AuthedResultsRoute
+  '/winners': typeof AuthedWinnersRoute
+  '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
+  '/': typeof AuthedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/checkmate': typeof CheckmateRoute
-  '/entries': typeof EntriesRoute
-  '/leaderboard': typeof LeaderboardRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/profile': typeof ProfileRoute
   '/renew': typeof RenewRoute
-  '/results': typeof ResultsRoute
   '/verify': typeof VerifyRoute
-  '/winners': typeof WinnersRoute
-  '/wisdomdrop': typeof WisdomdropRoute
+  '/_authed/checkmate': typeof AuthedCheckmateRoute
+  '/_authed/entries': typeof AuthedEntriesRoute
+  '/_authed/leaderboard': typeof AuthedLeaderboardRoute
+  '/_authed/profile': typeof AuthedProfileRoute
+  '/_authed/results': typeof AuthedResultsRoute
+  '/_authed/winners': typeof AuthedWinnersRoute
+  '/_authed/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
+  '/_authed/': typeof AuthedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
+    | '/onboarding'
+    | '/renew'
+    | '/verify'
     | '/checkmate'
     | '/entries'
     | '/leaderboard'
-    | '/login'
-    | '/onboarding'
     | '/profile'
-    | '/renew'
     | '/results'
-    | '/verify'
     | '/winners'
     | '/wisdomdrop'
+    | '/api/forthsoft-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/renew'
+    | '/verify'
     | '/checkmate'
     | '/entries'
     | '/leaderboard'
-    | '/login'
-    | '/onboarding'
     | '/profile'
-    | '/renew'
     | '/results'
-    | '/verify'
     | '/winners'
     | '/wisdomdrop'
+    | '/api/forthsoft-webhook'
+    | '/'
   id:
     | '__root__'
-    | '/'
-    | '/checkmate'
-    | '/entries'
-    | '/leaderboard'
+    | '/_authed'
     | '/login'
     | '/onboarding'
-    | '/profile'
     | '/renew'
-    | '/results'
     | '/verify'
-    | '/winners'
-    | '/wisdomdrop'
+    | '/_authed/checkmate'
+    | '/_authed/entries'
+    | '/_authed/leaderboard'
+    | '/_authed/profile'
+    | '/_authed/results'
+    | '/_authed/winners'
+    | '/_authed/wisdomdrop'
+    | '/api/forthsoft-webhook'
+    | '/_authed/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CheckmateRoute: typeof CheckmateRoute
-  EntriesRoute: typeof EntriesRoute
-  LeaderboardRoute: typeof LeaderboardRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
-  ProfileRoute: typeof ProfileRoute
   RenewRoute: typeof RenewRoute
-  ResultsRoute: typeof ResultsRoute
   VerifyRoute: typeof VerifyRoute
-  WinnersRoute: typeof WinnersRoute
-  WisdomdropRoute: typeof WisdomdropRoute
+  ApiForthsoftWebhookRoute: typeof ApiForthsoftWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/wisdomdrop': {
-      id: '/wisdomdrop'
-      path: '/wisdomdrop'
-      fullPath: '/wisdomdrop'
-      preLoaderRoute: typeof WisdomdropRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/winners': {
-      id: '/winners'
-      path: '/winners'
-      fullPath: '/winners'
-      preLoaderRoute: typeof WinnersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -209,25 +208,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/results': {
-      id: '/results'
-      path: '/results'
-      fullPath: '/results'
-      preLoaderRoute: typeof ResultsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/renew': {
       id: '/renew'
       path: '/renew'
       fullPath: '/renew'
       preLoaderRoute: typeof RenewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -244,50 +229,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/leaderboard': {
-      id: '/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof LeaderboardRouteImport
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/entries': {
-      id: '/entries'
-      path: '/entries'
-      fullPath: '/entries'
-      preLoaderRoute: typeof EntriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkmate': {
-      id: '/checkmate'
-      path: '/checkmate'
-      fullPath: '/checkmate'
-      preLoaderRoute: typeof CheckmateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
+    '/_authed/': {
+      id: '/_authed/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthedIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/api/forthsoft-webhook': {
+      id: '/api/forthsoft-webhook'
+      path: '/api/forthsoft-webhook'
+      fullPath: '/api/forthsoft-webhook'
+      preLoaderRoute: typeof ApiForthsoftWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authed/wisdomdrop': {
+      id: '/_authed/wisdomdrop'
+      path: '/wisdomdrop'
+      fullPath: '/wisdomdrop'
+      preLoaderRoute: typeof AuthedWisdomdropRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/winners': {
+      id: '/_authed/winners'
+      path: '/winners'
+      fullPath: '/winners'
+      preLoaderRoute: typeof AuthedWinnersRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/results': {
+      id: '/_authed/results'
+      path: '/results'
+      fullPath: '/results'
+      preLoaderRoute: typeof AuthedResultsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/profile': {
+      id: '/_authed/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthedProfileRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/leaderboard': {
+      id: '/_authed/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthedLeaderboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/entries': {
+      id: '/_authed/entries'
+      path: '/entries'
+      fullPath: '/entries'
+      preLoaderRoute: typeof AuthedEntriesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/checkmate': {
+      id: '/_authed/checkmate'
+      path: '/checkmate'
+      fullPath: '/checkmate'
+      preLoaderRoute: typeof AuthedCheckmateRouteImport
+      parentRoute: typeof AuthedRoute
     }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedCheckmateRoute: typeof AuthedCheckmateRoute
+  AuthedEntriesRoute: typeof AuthedEntriesRoute
+  AuthedLeaderboardRoute: typeof AuthedLeaderboardRoute
+  AuthedProfileRoute: typeof AuthedProfileRoute
+  AuthedResultsRoute: typeof AuthedResultsRoute
+  AuthedWinnersRoute: typeof AuthedWinnersRoute
+  AuthedWisdomdropRoute: typeof AuthedWisdomdropRoute
+  AuthedIndexRoute: typeof AuthedIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedCheckmateRoute: AuthedCheckmateRoute,
+  AuthedEntriesRoute: AuthedEntriesRoute,
+  AuthedLeaderboardRoute: AuthedLeaderboardRoute,
+  AuthedProfileRoute: AuthedProfileRoute,
+  AuthedResultsRoute: AuthedResultsRoute,
+  AuthedWinnersRoute: AuthedWinnersRoute,
+  AuthedWisdomdropRoute: AuthedWisdomdropRoute,
+  AuthedIndexRoute: AuthedIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CheckmateRoute: CheckmateRoute,
-  EntriesRoute: EntriesRoute,
-  LeaderboardRoute: LeaderboardRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
-  ProfileRoute: ProfileRoute,
   RenewRoute: RenewRoute,
-  ResultsRoute: ResultsRoute,
   VerifyRoute: VerifyRoute,
-  WinnersRoute: WinnersRoute,
-  WisdomdropRoute: WisdomdropRoute,
+  ApiForthsoftWebhookRoute: ApiForthsoftWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

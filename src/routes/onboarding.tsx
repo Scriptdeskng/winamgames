@@ -51,7 +51,7 @@ function OnboardingPage() {
 
       // Update session with nickname
       await setPlayerSession({
-        data: { playerId, msisdnLast4, nickname: trimmed },
+        data: { playerId, msisdnLast4: msisdnLast4 ?? "", nickname: trimmed },
       });
 
       navigate({ to: "/" });
