@@ -1,21 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { BottomNav } from "@/components/layout/BottomNav";
+import { TopBar } from "@/components/layout/TopBar";
 import { User, Coins, Flame, Trophy, ChevronRight, Ticket, Award, LogOut } from "lucide-react";
 import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession, clearSession } from "@/lib/session";
 import type { RankTier } from "@/components/profile/RankBadge";
+import React from "react";
 
 export const Route = createFileRoute("/_authed/profile")({
   component: ProfilePage,
   head: () => ({
     meta: [{ title: "Profile — WinamGames" }],
   }),
-  loader: async () => {
-    // playerId will be read client-side; loader fetches data with a placeholder
-    // We can't read localStorage in loader (SSR), so we return null and fetch client-side
-    return null;
-  },
+  loader: async () => null,
 });
 
 function ProfilePage() {
@@ -38,7 +35,8 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <div className="px-4 pt-6 pb-24 space-y-5">
+      <TopBar backTo="/" />
+      <div className="px-4 pb-6 space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">Profile</h1>
           <button
@@ -98,9 +96,6 @@ function ProfilePage() {
           ))}
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }
-
-import React from "react";
