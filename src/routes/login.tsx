@@ -70,7 +70,7 @@ function LoginPage() {
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value)}
                 placeholder="0801 234 5678"
-                className="w-full h-14 pl-11 pr-4 rounded-xl bg-surface-1 border border-glass-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="w-full h-14 pl-11 pr-4 rounded-xl bg-surface-1 border border-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 autoFocus
               />
             </div>

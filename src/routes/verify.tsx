@@ -121,7 +121,7 @@ function VerifyPage() {
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
-                className="h-14 w-12 rounded-xl bg-surface-1 border border-glass-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className="h-14 w-12 rounded-xl bg-surface-1 border border-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             ))}
           </div>

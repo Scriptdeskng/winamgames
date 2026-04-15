@@ -48,8 +48,8 @@ function ProfilePage() {
           </button>
         </div>
 
-        <div className="rounded-2xl bg-glass border border-glass-border p-5 flex items-center gap-4 shadow-card">
-          <div className="h-16 w-16 rounded-2xl bg-surface-2 flex items-center justify-center border border-glass-border">
+        <div className="rounded-2xl bg-surface-1 border border-border p-5 flex items-center gap-4 shadow-card">
+          <div className="h-16 w-16 rounded-2xl bg-surface-2 flex items-center justify-center border border-border">
             <User className="h-8 w-8 text-primary" />
           </div>
           <div>
@@ -69,7 +69,7 @@ function ProfilePage() {
             { icon: Flame, label: "Streak", value: `${player?.currentStreak ?? 0}d`, color: "text-streak" },
             { icon: Trophy, label: "Entries", value: `${weekTotal}`, color: "text-primary" },
           ].map((stat, i) => (
-            <div key={i} className="rounded-xl bg-surface-1 border border-glass-border p-3 text-center">
+            <div key={i} className="rounded-xl bg-surface-1 border border-border p-3 text-center">
               <stat.icon className={`h-5 w-5 mx-auto mb-1 ${stat.color}`} />
               <p className="text-lg font-bold tabular-nums">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -85,7 +85,7 @@ function ProfilePage() {
             <Link
               key={item.to}
               to={item.to}
-              className="rounded-xl bg-surface-1 border border-glass-border p-3 flex items-center justify-between hover:border-primary/30 transition-all"
+              className="rounded-xl bg-surface-1 border border-border p-3 flex items-center justify-between hover:border-primary/30 transition-all"
             >
               <div className="flex items-center gap-3">
                 <item.icon className="h-5 w-5 text-muted-foreground" />

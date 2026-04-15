@@ -14,11 +14,11 @@ interface GameHeaderProps {
 
 export function GameHeader({ title, lives, startTime, running, puzzleIndex, totalPuzzles, onExit }: GameHeaderProps) {
   return (
-    <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-glass-border px-4 py-3">
+    <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-sm border-b border-border px-4 py-3">
       <div className="flex items-center justify-between">
         <button
           onClick={onExit}
-          className="h-9 w-9 rounded-lg bg-surface-1 flex items-center justify-center border border-glass-border"
+          className="h-9 w-9 rounded-lg bg-surface-1 flex items-center justify-center border border-border"
         >
           <X className="h-4 w-4 text-muted-foreground" />
         </button>

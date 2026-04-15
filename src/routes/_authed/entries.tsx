@@ -22,7 +22,7 @@ function EntriesPage() {
           <h1 className="text-xl font-bold">My Entries</h1>
         </div>
 
-        <div className="rounded-2xl bg-glass border border-glass-border p-4 shadow-card">
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
           <p className="text-4xl font-bold tabular-nums text-primary mt-1">12 / 50</p>
           <div className="mt-3 h-2 rounded-full bg-surface-2 overflow-hidden">
@@ -38,7 +38,7 @@ function EntriesPage() {
               { week: "Mar 24 – Mar 30", entries: 50, result: "Won ₦5,000!" },
               { week: "Mar 17 – Mar 23", entries: 38, result: "No win" },
             ].map((w, i) => (
-              <div key={i} className="rounded-xl bg-surface-1 border border-glass-border p-3 flex items-center justify-between">
+              <div key={i} className="rounded-xl bg-surface-1 border border-border p-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">{w.week}</p>
                   <p className="text-xs text-muted-foreground">{w.entries} entries</p>

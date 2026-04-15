@@ -56,7 +56,7 @@ export function XpProgressBar({ xp, tier }: { xp: number; tier: RankTier }) {
     : Math.min(100, ((xp - currentMin) / (nextMin - currentMin)) * 100);
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-glass-border p-4">
+    <div className="rounded-2xl bg-surface-1 border border-border p-4">
       <div className="flex items-center justify-between mb-2">
         <RankBadge tier={tier} />
         <span className="text-xs text-muted-foreground tabular-nums">

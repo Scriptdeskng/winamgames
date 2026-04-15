@@ -97,7 +97,7 @@ function WisdomDropPage() {
         )}
 
         {puzzle && (
-          <div className="rounded-2xl bg-surface-1 border border-glass-border p-6 shadow-card">
+          <div className="rounded-2xl bg-surface-1 border border-border p-6 shadow-card">
             <p className="text-xs text-muted-foreground mb-3">{puzzle.origin}</p>
             <p className="text-lg font-medium leading-relaxed text-foreground">
               "{puzzle.proverb}"
@@ -125,8 +125,8 @@ function WisdomDropPage() {
                   className={cn(
                     "h-14 rounded-xl text-sm font-semibold transition-all border min-h-[44px]",
                     isEliminated
-                      ? "bg-surface-1/30 border-glass-border/30 text-muted-foreground/30 line-through cursor-not-allowed"
-                      : "bg-surface-1 border-glass-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
+                      ? "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed"
+                      : "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
                   )}
                 >
                   {option}

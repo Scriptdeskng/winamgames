@@ -20,7 +20,7 @@ export function MenuSheet() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="h-10 w-10 rounded-xl bg-surface-1 border border-glass-border flex items-center justify-center hover:border-primary/30 transition-colors"
+        className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
       >
         <Menu className="h-5 w-5 text-foreground" />
       </button>
