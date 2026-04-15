@@ -1,106 +1,67 @@
 
-Goal: stop the redirect loop permanently and make the prototype auth flow reliable end-to-end without relying on fragile client-side RPC cookie writes.
 
-What I found:
-- The failure is not your phone number, OTP generation, player creation, or subscription setup.
-- Preview logs prove this exact sequence:
-  ```text
-  [session] Wrote session for player: ...
-  [session] No session cookie found
-  ```
-- So the app is writing a session during `setPlayerSession`, but the very next request still has no cookie.
-- The weak point is the current design: session creation/clearing happens inside `createServerFn` calls. In this environment, that response path is not persisting the cookie reliably.
+# Switch Session to localStorage
 
-Plan to fix it properly:
+## Problem
+Server-side cookie persistence keeps failing in the Worker SSR environment. Every fix attempt has failed because `Set-Cookie` headers from server functions and server routes are not reliably persisted by the browser in this runtime.
 
-1. Replace RPC-based login completion with a real server redirect flow
-- Add dedicated server routes for auth completion/logout that return an actual HTTP response.
-- Move these responsibilities out of `createServerFn` cookie writes:
-  - verify OTP
-  - set session cookie
-  - redirect to `/onboarding` or `/`
-  - clear session on logout
-- Why: browser-handled redirects with `Set-Cookie` are much more reliable than setting cookies inside a background RPC call and then navigating separately.
+## Solution
+Move session state to localStorage. Keep server functions for database operations only (player creation, nickname, subscriptions, games, missions). Session = client-side concern only.
 
-2. Restructure session utilities around pure helpers
-- Keep session parsing/serialization logic in `src/utils/session.functions.ts` (or a small server-only helper), but stop exposing “write session” as a client-called server function.
-- Use the helpers from server routes only:
-  ```text
-  read cookie from request
-  build Set-Cookie header
-  clear Set-Cookie header
-  ```
-- Keep the prototype-safe plain cookie payload for now, with a TODO to sign/encrypt before launch.
-
-3. Update the auth screens to use the new server endpoints
-- `src/routes/verify.tsx`
-  - submit to the new server auth-complete endpoint instead of calling `setPlayerSession`
-  - keep `0000` prototype OTP behavior
-  - show explicit failure states instead of silently bouncing
-- `src/routes/_authed/profile.tsx`
-  - logout should hit a server logout endpoint that clears the cookie in the response, then redirects to `/login`
-- `src/routes/onboarding.tsx`
-  - after nickname save, refresh the session via a server redirect endpoint or avoid depending on cookie rewrite in a server function
-
-4. Make route protection safer and less surprising
-- Keep `_authed.tsx` protection, but add clearer fallback behavior where session-dependent routes can fail.
-- For onboarding/renew/home/profile flows, avoid hard assumptions like `session!` where possible and surface meaningful errors when auth state is missing.
-
-5. Verify the whole prototype path, not just one screen
-I’ll validate this sequence after implementation:
+## Architecture Change
 ```text
-/login
-→ enter valid Nigerian number
-→ /verify
-→ enter 0000
-→ session is created by server response
-→ new user: /onboarding
-→ save nickname
-→ /
-→ /profile
-→ logout
-→ /login
-
-returning user:
-→ /login
-→ /verify
-→ 0000
-→ /
-
-inactive user:
-→ /login
-→ /verify
-→ 0000
-→ /renew
-→ activate prototype subscription
-→ /
+Before: server writes cookie → SSR reads cookie → route guard
+After:  client writes localStorage → client reads localStorage → client-side guard
 ```
 
-Files I expect to change:
-- `src/utils/session.functions.ts` — convert to cookie helper/parsing utilities; remove client-called session write dependency
-- `src/utils/auth.functions.ts` — keep OTP/player/subscription logic, but likely stop using it for final cookie persistence step
-- `src/routes/verify.tsx` — send user through a real server completion flow
-- `src/routes/onboarding.tsx` — avoid fragile post-save session rewrite
-- `src/routes/_authed/profile.tsx` — logout through real server response
-- likely add one or two auth server route files under `src/routes/api/...` for login completion and logout
+## Files to create
 
-Technical detail:
-The core fix is architectural, not cosmetic:
+**`src/lib/session.ts`** — localStorage session helpers
+- `getSession(): { playerId, msisdnLast4, nickname } | null`
+- `setSession(data)` 
+- `clearSession()`
+- `updateSessionNickname(nickname)`
+
+## Files to change
+
+**`src/routes/_authed.tsx`** — Remove server `beforeLoad`. Use client-side component that reads localStorage and redirects to `/login` if missing. Still call `getSubscriptionStatus` server function (DB query) but from client side.
+
+**`src/routes/verify.tsx`** — After `verifyOtp()` succeeds, store result in localStorage via `setSession()`, then `navigate()` to `/onboarding` or `/`. No fetch to `/api/auth-complete`.
+
+**`src/routes/onboarding.tsx`** — Read session from localStorage. After `setNickname()` succeeds, update localStorage and navigate to `/`.
+
+**`src/routes/renew.tsx`** — Read session from localStorage instead of server `beforeLoad`. After `renewSubscription()` succeeds, navigate to `/`.
+
+**`src/routes/_authed/profile.tsx`** — Read from localStorage. Logout = `clearSession()` + navigate to `/login`.
+
+**`src/routes/_authed/index.tsx`** — Read playerId from localStorage instead of server session.
+
+**`src/routes/login.tsx`** — Check localStorage on mount; if session exists, redirect to `/`.
+
+**`src/utils/session.functions.ts`** — Remove `getCurrentPlayer` server function. Keep `getSubscriptionStatus` (needs DB).
+
+## Files to delete
+
+- `src/routes/api/auth-complete.ts`
+- `src/routes/api/auth-session-update.ts`  
+- `src/routes/api/auth-logout.ts`
+- `src/utils/session.server.ts`
+
+## What stays on the backend
+All database operations remain as server functions:
+- `verifyOtp`, `sendOtp`, `setNickname`, `renewSubscription` (auth.functions.ts)
+- `getSubscriptionStatus` (session.functions.ts)
+- All game/mission server functions (game.functions.ts, mission.functions.ts)
+
+## SSR handling
+Since localStorage is not available during SSR, `_authed.tsx` will render a loading state server-side and check auth client-side with `useEffect`. This avoids the cookie problem entirely.
+
+## Expected flow after fix
 ```text
-Current:
-client -> verifyOtp() RPC
-client -> setPlayerSession() RPC with Set-Cookie
-client -> window.location
-
-Planned:
-browser navigation/form submit -> auth server route
-server route -> verify player + Set-Cookie + redirect
-browser follows redirect with cookie already persisted
+/login → enter phone → /verify → enter 0000 
+→ verifyOtp() server call succeeds
+→ localStorage.setItem("winam-session", JSON.stringify({...}))
+→ navigate to /onboarding or /
+→ _authed reads localStorage → renders page
 ```
 
-Expected result:
-- No phone-number preloading needed
-- No real OTP provider needed
-- No PSP/payment dependency needed
-- No “success then back to login” loop
-- One stable prototype flow you can actually test end-to-end before making adjustments
