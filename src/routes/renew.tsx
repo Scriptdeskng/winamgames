@@ -34,7 +34,7 @@ function RenewPage() {
         setError(result.error || "Something went wrong");
         return;
       }
-      navigate({ to: "/" });
+      window.location.href = "/";
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Try again.");
     } finally {

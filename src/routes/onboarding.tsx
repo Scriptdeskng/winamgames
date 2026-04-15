@@ -54,7 +54,7 @@ function OnboardingPage() {
         data: { playerId, msisdnLast4: msisdnLast4 ?? "", nickname: trimmed },
       });
 
-      navigate({ to: "/" });
+      window.location.href = "/";
     } catch {
       setError("Something went wrong. Try again.");
     } finally {

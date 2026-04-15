@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie, setCookie, deleteCookie } from "@tanstack/react-start/server";
+import { getRequest, setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 // TODO: sign/encrypt cookie payload before go-live
@@ -12,32 +12,59 @@ interface SessionData {
   nickname: string | null;
 }
 
-function readSession(): SessionData | null {
+function parseCookieHeader(cookieHeader: string | null): Record<string, string> {
+  if (!cookieHeader) return {};
+  const cookies: Record<string, string> = {};
+  for (const pair of cookieHeader.split(";")) {
+    const eqIdx = pair.indexOf("=");
+    if (eqIdx === -1) continue;
+    const key = pair.substring(0, eqIdx).trim();
+    const value = pair.substring(eqIdx + 1).trim();
+    cookies[key] = value;
+  }
+  return cookies;
+}
+
+function readSessionFromRequest(): SessionData | null {
   try {
-    const raw = getCookie(COOKIE_NAME);
-    if (!raw) return null;
-    const decoded = atob(raw);
+    const request = getRequest();
+    const cookieHeader = request.headers.get("cookie");
+    const cookies = parseCookieHeader(cookieHeader);
+    const raw = cookies[COOKIE_NAME];
+    if (!raw) {
+      console.log("[session] No session cookie found");
+      return null;
+    }
+    const decoded = atob(decodeURIComponent(raw));
     const parsed = JSON.parse(decoded) as SessionData;
-    if (!parsed.playerId) return null;
+    if (!parsed.playerId) {
+      console.log("[session] Session cookie missing playerId");
+      return null;
+    }
+    console.log("[session] Read session for player:", parsed.playerId);
     return parsed;
-  } catch {
+  } catch (err) {
+    console.error("[session] Failed to read session:", err);
     return null;
   }
 }
 
-function writeSession(data: SessionData) {
-  const payload = btoa(JSON.stringify(data));
-  setCookie(COOKIE_NAME, payload, {
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: MAX_AGE,
-  });
+function writeSessionToResponse(data: SessionData) {
+  const payload = encodeURIComponent(btoa(JSON.stringify(data)));
+  const cookie = `${COOKIE_NAME}=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE}`;
+  setResponseHeader("Set-Cookie", cookie);
+  console.log("[session] Wrote session for player:", data.playerId);
+}
+
+function clearSessionFromResponse() {
+  const cookie = `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+  setResponseHeader("Set-Cookie", cookie);
+  console.log("[session] Cleared session cookie");
 }
 
 export const getCurrentPlayer = createServerFn({ method: "GET" })
   .handler(async () => {
-    const session = readSession();
+    const session = readSessionFromRequest();
     if (!session) return null;
     return {
       playerId: session.playerId,
@@ -53,7 +80,7 @@ export const setPlayerSession = createServerFn({ method: "POST" })
     nickname: z.string().nullable(),
   }))
   .handler(async ({ data }) => {
-    writeSession({
+    writeSessionToResponse({
       playerId: data.playerId,
       msisdnLast4: data.msisdnLast4,
       nickname: data.nickname,
@@ -63,7 +90,7 @@ export const setPlayerSession = createServerFn({ method: "POST" })
 
 export const clearPlayerSession = createServerFn({ method: "POST" })
   .handler(async () => {
-    deleteCookie(COOKIE_NAME, { path: "/" });
+    clearSessionFromResponse();
     return { success: true };
   });
 

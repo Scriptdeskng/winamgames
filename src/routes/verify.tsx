@@ -26,8 +26,6 @@ function VerifyPage() {
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const last4 = msisdn.slice(-4);
-
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp];
@@ -56,11 +54,12 @@ function VerifyPage() {
       const result = await verifyOtp({ data: { msisdn, code } });
       if (!result.success) {
         setError(result.error || "Invalid OTP");
+        setLoading(false);
         return;
       }
 
-      // Persist session cookie
-      await setPlayerSession({
+      // Persist session cookie via Set-Cookie header
+      const sessionResult = await setPlayerSession({
         data: {
           playerId: result.playerId,
           msisdnLast4: result.msisdnLast4,
@@ -68,14 +67,21 @@ function VerifyPage() {
         },
       });
 
-      if (result.needsOnboarding) {
-        navigate({ to: "/onboarding" });
-      } else {
-        navigate({ to: "/" });
+      if (!sessionResult.success) {
+        setError("Failed to create session. Please try again.");
+        setLoading(false);
+        return;
       }
-    } catch {
-      setError("Invalid or expired OTP. Try again.");
-    } finally {
+
+      // Use window.location for a full page navigation so the browser
+      // sends the Set-Cookie header's cookie on the next request
+      if (result.needsOnboarding) {
+        window.location.href = "/onboarding";
+      } else {
+        window.location.href = "/";
+      }
+    } catch (err: any) {
+      setError(err?.message || "Invalid or expired OTP. Try again.");
       setLoading(false);
     }
   };
