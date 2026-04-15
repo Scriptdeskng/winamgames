@@ -2,11 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
+import { getPlayerData } from "@/utils/mission.functions";
 import { BookOpen, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// TODO: Replace with actual player ID from auth context
+const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
+
 export const Route = createFileRoute("/wisdomdrop")({
   component: WisdomDropPage,
+  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
   head: () => ({
     meta: [
       { title: "WisdomDrop — WinamGames" },
@@ -16,9 +21,10 @@ export const Route = createFileRoute("/wisdomdrop")({
 });
 
 function WisdomDropPage() {
-  // TODO: Replace with actual player ID from auth context
-  const playerId = "00000000-0000-0000-0000-000000000001";
-  const session = useGameSession("wisdomdrop", playerId);
+  const loaderData = Route.useLoaderData();
+  const coinBalance = loaderData.success ? loaderData.player.coinBalance : 0;
+
+  const session = useGameSession("wisdomdrop", PLAYER_ID);
 
   // Pre-game screen
   if (!session.sessionId) {
@@ -37,7 +43,7 @@ function WisdomDropPage() {
             <p className="text-xs text-muted-foreground">10 proverbs per round</p>
           </div>
           <button
-            onClick={() => session.start(100)} // TODO: pass actual coin balance
+            onClick={() => session.start(coinBalance)}
             disabled={session.loading}
             className="mt-8 h-14 w-full max-w-[280px] rounded-xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all shadow-glow disabled:opacity-50"
           >

@@ -4,10 +4,15 @@ import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
+import { getPlayerData } from "@/utils/mission.functions";
 import { Swords, Check, X } from "lucide-react";
+
+// TODO: Replace with actual player ID from auth context
+const PLAYER_ID = "00000000-0000-0000-0000-000000000001";
 
 export const Route = createFileRoute("/checkmate")({
   component: CheckMatePage,
+  loader: () => getPlayerData({ data: { playerId: PLAYER_ID } }),
   head: () => ({
     meta: [
       { title: "CheckMate — WinamGames" },
@@ -17,9 +22,10 @@ export const Route = createFileRoute("/checkmate")({
 });
 
 function CheckMatePage() {
-  // TODO: Replace with actual player ID from auth context
-  const playerId = "00000000-0000-0000-0000-000000000001";
-  const session = useGameSession("checkmate", playerId);
+  const loaderData = Route.useLoaderData();
+  const coinBalance = loaderData.success ? loaderData.player.coinBalance : 0;
+
+  const session = useGameSession("checkmate", PLAYER_ID);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
 
   const handleSquareClick = useCallback((square: string) => {
@@ -55,7 +61,7 @@ function CheckMatePage() {
             <p className="text-xs text-muted-foreground">10 puzzles per round</p>
           </div>
           <button
-            onClick={() => session.start(100)} // TODO: pass actual coin balance
+            onClick={() => session.start(coinBalance)}
             disabled={session.loading}
             className="mt-8 h-14 w-full max-w-[280px] rounded-xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all shadow-glow disabled:opacity-50"
           >
