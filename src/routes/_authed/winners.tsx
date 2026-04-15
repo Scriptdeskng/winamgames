@@ -35,88 +35,98 @@ const DRAW_WEEKS: DrawWeek[] = [
   {
     label: "Apr 7 – 13, 2025",
     cashWinners: [
-      { phone: "***8231", entryId: "#3F8A2C1D", prize: "₦35,000", type: "cash" },
-      { phone: "***4507", entryId: "#7B2E9F4A", prize: "₦10,000", type: "cash" },
-      { phone: "***1190", entryId: "#A1C5D8E2", prize: "₦5,000", type: "cash" },
+      { phone: "080*****31", entryId: "#3F8A2C1D", prize: "₦35,000", type: "cash" },
+      { phone: "081*****07", entryId: "#7B2E9F4A", prize: "₦10,000", type: "cash" },
+      { phone: "070*****90", entryId: "#A1C5D8E2", prize: "₦5,000", type: "cash" },
     ],
     airtimeTiers: [
       {
         label: "₦2,000 Airtime",
         winners: [
-          { phone: "***3342", entryId: "#D4E7F1A3", prize: "₦2,000", type: "airtime" },
-          { phone: "***7891", entryId: "#B8C2D5E9", prize: "₦2,000", type: "airtime" },
-          { phone: "***2056", entryId: "#F3A1B4C7", prize: "₦2,000", type: "airtime" },
-          { phone: "***6614", entryId: "#9E5D2F8A", prize: "₦2,000", type: "airtime" },
-          { phone: "***9103", entryId: "#1C7B3E4D", prize: "₦2,000", type: "airtime" },
+          { phone: "090*****42", entryId: "#D4E7F1A3", prize: "₦2,000", type: "airtime" },
+          { phone: "081*****91", entryId: "#B8C2D5E9", prize: "₦2,000", type: "airtime" },
+          { phone: "080*****56", entryId: "#F3A1B4C7", prize: "₦2,000", type: "airtime" },
+          { phone: "070*****14", entryId: "#9E5D2F8A", prize: "₦2,000", type: "airtime" },
+          { phone: "091*****03", entryId: "#1C7B3E4D", prize: "₦2,000", type: "airtime" },
         ],
       },
       {
         label: "₦1,000 Airtime",
         winners: [
-          { phone: "***5521", entryId: "#E2F4A6B8", prize: "₦1,000", type: "airtime" },
-          { phone: "***8834", entryId: "#4D6E8F1A", prize: "₦1,000", type: "airtime" },
-          { phone: "***1247", entryId: "#7A3C5E9B", prize: "₦1,000", type: "airtime" },
-          { phone: "***3690", entryId: "#C8D1E3F5", prize: "₦1,000", type: "airtime" },
-          { phone: "***7403", entryId: "#2B4D6F8A", prize: "₦1,000", type: "airtime" },
-          { phone: "***0158", entryId: "#F1A3C5E7", prize: "₦1,000", type: "airtime" },
-          { phone: "***4972", entryId: "#8B2D4F6A", prize: "₦1,000", type: "airtime" },
-          { phone: "***6385", entryId: "#3E5A7C9D", prize: "₦1,000", type: "airtime" },
-          { phone: "***2716", entryId: "#D7F1A3B5", prize: "₦1,000", type: "airtime" },
-          { phone: "***8049", entryId: "#5C8E1A3D", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****21", entryId: "#E2F4A6B8", prize: "₦1,000", type: "airtime" },
+          { phone: "081*****34", entryId: "#4D6E8F1A", prize: "₦1,000", type: "airtime" },
+          { phone: "090*****47", entryId: "#7A3C5E9B", prize: "₦1,000", type: "airtime" },
+          { phone: "070*****90", entryId: "#C8D1E3F5", prize: "₦1,000", type: "airtime" },
+          { phone: "091*****03", entryId: "#2B4D6F8A", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****58", entryId: "#F1A3C5E7", prize: "₦1,000", type: "airtime" },
+          { phone: "081*****72", entryId: "#8B2D4F6A", prize: "₦1,000", type: "airtime" },
+          { phone: "070*****85", entryId: "#3E5A7C9D", prize: "₦1,000", type: "airtime" },
+          { phone: "090*****16", entryId: "#D7F1A3B5", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****49", entryId: "#5C8E1A3D", prize: "₦1,000", type: "airtime" },
         ],
       },
       {
         label: "₦500 Data",
-        winners: Array.from({ length: 60 }, (_, i) => ({
-          phone: `***${String(1000 + i * 13 + 7).slice(-4)}`,
-          entryId: `#${((i * 2654435761) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
-          prize: "₦500",
-          type: "airtime" as const,
-        })),
+        winners: Array.from({ length: 60 }, (_, i) => {
+          const prefixes = ["080", "081", "070", "090", "091"];
+          const prefix = prefixes[i % prefixes.length];
+          const last2 = String((i * 13 + 7) % 100).padStart(2, "0");
+          return {
+            phone: `${prefix}*****${last2}`,
+            entryId: `#${((i * 2654435761) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
+            prize: "₦500",
+            type: "airtime" as const,
+          };
+        }),
       },
     ],
   },
   {
     label: "Mar 31 – Apr 6, 2025",
     cashWinners: [
-      { phone: "***5614", entryId: "#2A4C6E8F", prize: "₦35,000", type: "cash" },
-      { phone: "***9387", entryId: "#B1D3F5A7", prize: "₦10,000", type: "cash" },
-      { phone: "***2741", entryId: "#8E1A3C5D", prize: "₦5,000", type: "cash" },
+      { phone: "081*****14", entryId: "#2A4C6E8F", prize: "₦35,000", type: "cash" },
+      { phone: "090*****87", entryId: "#B1D3F5A7", prize: "₦10,000", type: "cash" },
+      { phone: "070*****41", entryId: "#8E1A3C5D", prize: "₦5,000", type: "cash" },
     ],
     airtimeTiers: [
       {
         label: "₦2,000 Airtime",
         winners: [
-          { phone: "***4128", entryId: "#C7E9F1A3", prize: "₦2,000", type: "airtime" },
-          { phone: "***7653", entryId: "#5A3D1E8B", prize: "₦2,000", type: "airtime" },
-          { phone: "***0296", entryId: "#D2F4B6C8", prize: "₦2,000", type: "airtime" },
-          { phone: "***8471", entryId: "#A1E3C5D7", prize: "₦2,000", type: "airtime" },
-          { phone: "***3905", entryId: "#6B8D2F4A", prize: "₦2,000", type: "airtime" },
+          { phone: "080*****28", entryId: "#C7E9F1A3", prize: "₦2,000", type: "airtime" },
+          { phone: "091*****53", entryId: "#5A3D1E8B", prize: "₦2,000", type: "airtime" },
+          { phone: "070*****96", entryId: "#D2F4B6C8", prize: "₦2,000", type: "airtime" },
+          { phone: "081*****71", entryId: "#A1E3C5D7", prize: "₦2,000", type: "airtime" },
+          { phone: "090*****05", entryId: "#6B8D2F4A", prize: "₦2,000", type: "airtime" },
         ],
       },
       {
         label: "₦1,000 Airtime",
         winners: [
-          { phone: "***1834", entryId: "#F5A7C9E1", prize: "₦1,000", type: "airtime" },
-          { phone: "***6207", entryId: "#3D5F8A2B", prize: "₦1,000", type: "airtime" },
-          { phone: "***9540", entryId: "#B4D6E8F1", prize: "₦1,000", type: "airtime" },
-          { phone: "***2873", entryId: "#7C1A3E5D", prize: "₦1,000", type: "airtime" },
-          { phone: "***5106", entryId: "#E9F1A3C5", prize: "₦1,000", type: "airtime" },
-          { phone: "***8439", entryId: "#2D4F6B8A", prize: "₦1,000", type: "airtime" },
-          { phone: "***0762", entryId: "#A5C7E9F1", prize: "₦1,000", type: "airtime" },
-          { phone: "***4095", entryId: "#8B1D3F5A", prize: "₦1,000", type: "airtime" },
-          { phone: "***7328", entryId: "#D6E8F1A3", prize: "₦1,000", type: "airtime" },
-          { phone: "***1651", entryId: "#4A6C8E2D", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****34", entryId: "#F5A7C9E1", prize: "₦1,000", type: "airtime" },
+          { phone: "091*****07", entryId: "#3D5F8A2B", prize: "₦1,000", type: "airtime" },
+          { phone: "070*****40", entryId: "#B4D6E8F1", prize: "₦1,000", type: "airtime" },
+          { phone: "081*****73", entryId: "#7C1A3E5D", prize: "₦1,000", type: "airtime" },
+          { phone: "090*****06", entryId: "#E9F1A3C5", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****39", entryId: "#2D4F6B8A", prize: "₦1,000", type: "airtime" },
+          { phone: "070*****62", entryId: "#A5C7E9F1", prize: "₦1,000", type: "airtime" },
+          { phone: "081*****95", entryId: "#8B1D3F5A", prize: "₦1,000", type: "airtime" },
+          { phone: "090*****28", entryId: "#D6E8F1A3", prize: "₦1,000", type: "airtime" },
+          { phone: "080*****51", entryId: "#4A6C8E2D", prize: "₦1,000", type: "airtime" },
         ],
       },
       {
         label: "₦500 Data",
-        winners: Array.from({ length: 60 }, (_, i) => ({
-          phone: `***${String(2000 + i * 17 + 3).slice(-4)}`,
-          entryId: `#${((i * 1597334677) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
-          prize: "₦500",
-          type: "airtime" as const,
-        })),
+        winners: Array.from({ length: 60 }, (_, i) => {
+          const prefixes = ["080", "081", "070", "090", "091"];
+          const prefix = prefixes[(i + 2) % prefixes.length];
+          const last2 = String((i * 17 + 3) % 100).padStart(2, "0");
+          return {
+            phone: `${prefix}*****${last2}`,
+            entryId: `#${((i * 1597334677) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
+            prize: "₦500",
+            type: "airtime" as const,
+          };
+        }),
       },
     ],
   },
@@ -149,7 +159,13 @@ function AirtimeSection({ tiers }: { tiers: DrawWeek["airtimeTiers"] }) {
             <div className={tier.winners.length > 10 ? "grid grid-cols-2 gap-x-3 gap-y-0.5" : "space-y-0.5"}>
               {tier.winners.map((w, j) => (
                 <div key={j} className="flex items-center justify-between py-0.5 text-[11px]">
-                  <span className="font-medium tabular-nums">{w.phone}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium tabular-nums">{w.phone}</span>
+                    <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
+                      <Hash className="h-2 w-2" />
+                      {w.entryId.slice(1)}
+                    </span>
+                  </div>
                   <span className="font-semibold text-primary">{w.prize}</span>
                 </div>
               ))}
