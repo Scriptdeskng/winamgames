@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
-import { getCurrentPlayer, setPlayerSession } from "@/utils/session.functions";
+import { getCurrentPlayer } from "@/utils/session.functions";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -20,7 +20,6 @@ export const Route = createFileRoute("/onboarding")({
 
 function OnboardingPage() {
   const { playerId, msisdnLast4 } = Route.useLoaderData();
-  const navigate = useNavigate();
   const [nickname, setNicknameValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,14 +45,24 @@ function OnboardingPage() {
       const result = await setNickname({ data: { playerId, nickname: trimmed } });
       if (!result.success) {
         setError(result.error || "Something went wrong");
+        setLoading(false);
         return;
       }
 
-      // Update session with nickname
-      await setPlayerSession({
-        data: { playerId, msisdnLast4: msisdnLast4 ?? "", nickname: trimmed },
+      // Update session cookie via server route redirect
+      const res = await fetch("/api/auth-session-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname: trimmed, redirectTo: "/" }),
+        redirect: "follow",
       });
 
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
+      // Fallback
       window.location.href = "/";
     } catch {
       setError("Something went wrong. Try again.");
