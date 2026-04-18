@@ -187,8 +187,10 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
               ))}
             </div>
 
-            {/* Airtime nested collapsible */}
-            <AirtimeSection tiers={draw.airtimeTiers} />
+            {/* Airtime & data summary */}
+            <p className="text-xs text-muted-foreground px-1">
+              + {totalAirtimeWinners} airtime & data winners
+            </p>
           </div>
         </CollapsibleContent>
       </div>
