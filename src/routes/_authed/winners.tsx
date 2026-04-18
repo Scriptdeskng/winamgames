@@ -211,7 +211,7 @@ function WinnersPage() {
           <Award className="h-8 w-8 text-primary mx-auto" />
           <h1 className="text-xl font-bold">Real people. Real wins.</h1>
           <p className="text-xs text-muted-foreground">
-            78 winners every week — cash, airtime & data
+            50+ winners every week — cash, airtime & data
           </p>
           <Link
             to="/"
