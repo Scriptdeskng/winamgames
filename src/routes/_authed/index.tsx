@@ -222,12 +222,6 @@ function DailyMissionsSection({ missions }: { missions: any[] }) {
           <p className="text-xs text-muted-foreground mt-1">
             Play now to build your streak and earn entries
           </p>
-          <Link
-            to="/checkmate"
-            className="inline-flex items-center justify-center mt-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 py-2 hover:shadow-glow transition-all"
-          >
-            Play now
-          </Link>
         </div>
       ) : (
         <div className="space-y-2">
