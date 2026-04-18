@@ -122,7 +122,7 @@ function HomePage() {
 
         <BannerStack banners={banners} />
 
-        <DailyMissionsSection missions={missions} />
+        <MissionsSection playerId={session?.playerId ?? ""} initialMissions={missions} />
 
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Play Now</h2>
