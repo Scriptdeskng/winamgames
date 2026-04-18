@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { sendOtp } from "@/utils/auth.functions";
 import { getSession } from "@/lib/session";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  useAllowScroll();
   const navigate = useNavigate();
   const [msisdn, setMsisdn] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
         <Link to="/" className="text-lg font-bold text-gradient-emerald">
           WinamGames

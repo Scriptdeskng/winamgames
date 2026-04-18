@@ -95,21 +95,20 @@ function HomePage() {
   const bestSession = data?.playerResult?.success ? data.playerResult.bestSession : 0;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
+  const streak = player?.currentStreak ?? 0;
+  const tier: RankTier = player?.rankTier ?? "starter";
+  const xpTotal = player?.xpTotal ?? 0;
 
   if (!data) {
     return (
-      <div className="mx-auto min-h-screen max-w-[430px] bg-background flex items-center justify-center">
+      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex items-center justify-center">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
   }
 
-  const tier = (player?.rankTier as RankTier) ?? "starter";
-  const xpTotal = player?.xpTotal ?? 0;
-  const streak = player?.currentStreak ?? 0;
-
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background">
+    <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar />
       <div className="px-4 pb-6 space-y-5">
         <DrawHeroCard

@@ -54,7 +54,7 @@ function ResultsPage() {
   ];
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
+    <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex flex-col">
       <TopBar backTo="/" />
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
       <div className="h-16 w-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">

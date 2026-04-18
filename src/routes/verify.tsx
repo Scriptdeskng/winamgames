@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { sendOtp, verifyOtp } from "@/utils/auth.functions";
 import { setSession } from "@/lib/session";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/verify")({
 const RESEND_SECONDS = 25;
 
 function VerifyPage() {
+  useAllowScroll();
   const { msisdn } = Route.useSearch();
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
@@ -74,7 +76,7 @@ function VerifyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
         <Link to="/" className="text-lg font-bold text-gradient-emerald">
           WinamGames

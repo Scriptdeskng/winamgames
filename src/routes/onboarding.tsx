@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
 import { getSession, updateSessionNickname } from "@/lib/session";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
+  useAllowScroll();
   const navigate = useNavigate();
   const [playerId, setPlayerId] = useState("");
   const [nickname, setNicknameValue] = useState("");
@@ -52,7 +54,7 @@ function OnboardingPage() {
   if (!playerId) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
         <Link to="/" className="text-lg font-bold text-gradient-emerald">
           WinamGames
