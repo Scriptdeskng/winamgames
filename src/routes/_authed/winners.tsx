@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Award, ChevronDown, Phone, Hash, Gamepad2, Trophy } from "lucide-react";
+import { Award, ChevronDown, Hash, Gamepad2, Trophy } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -138,48 +138,10 @@ const POSITION_STYLES = [
   { bg: "bg-[oklch(0.55_0.05_55)]/15", text: "text-[oklch(0.55_0.05_55)]", label: "3rd" },
 ];
 
-function AirtimeSection({ tiers }: { tiers: DrawWeek["airtimeTiers"] }) {
-  const [open, setOpen] = useState(false);
-  const summary = tiers.map((t) => `${t.winners.length}× ${t.label.split(" ")[0]}`).join(", ");
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg bg-surface-2/50 px-3 py-2 text-xs text-muted-foreground hover:bg-surface-2/80 transition-colors">
-        <span>Airtime & Data — {summary}</span>
-        <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 space-y-2">
-        {tiers.map((tier) => (
-          <div key={tier.label}>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 px-1">
-              {tier.label} ({tier.winners.length})
-            </p>
-            <div className={tier.winners.length > 10 ? "grid grid-cols-2 gap-x-3 gap-y-0.5" : "space-y-0.5"}>
-              {tier.winners.map((w, j) => (
-                <div key={j} className="flex items-center justify-between py-0.5 text-[11px]">
-                  <div className="flex flex-col">
-                    <span className="font-medium tabular-nums">{w.phone}</span>
-                    <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
-                      <Hash className="h-2 w-2" />
-                      {w.entryId.slice(1)}
-                    </span>
-                  </div>
-                  <span className="font-semibold text-primary">{w.prize}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
-  const totalWinners = draw.cashWinners.length + draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
+  const totalAirtimeWinners = draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
+  const totalWinners = draw.cashWinners.length + totalAirtimeWinners;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -225,8 +187,10 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
               ))}
             </div>
 
-            {/* Airtime nested collapsible */}
-            <AirtimeSection tiers={draw.airtimeTiers} />
+            {/* Airtime & data summary */}
+            <p className="text-xs text-muted-foreground px-1">
+              + {totalAirtimeWinners} airtime & data winners
+            </p>
           </div>
         </CollapsibleContent>
       </div>
