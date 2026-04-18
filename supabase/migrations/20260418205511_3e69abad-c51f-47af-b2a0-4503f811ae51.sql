@@ -1,0 +1,1 @@
+ALTER TABLE public.winam_game_sessions DROP COLUMN IF EXISTS net_puzzles;
