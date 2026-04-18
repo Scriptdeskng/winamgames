@@ -1,100 +1,115 @@
 
 
-## Plan: Persistent missions, entries-only rewards, auto-replacement (12 missions)
+## Scroll-when-content-fits issue on entries & winners
 
-### A. Schema migration
+### The actual bug
 
-`winam_player_missions`:
-- `DROP COLUMN assigned_date_wat`
-- `DROP COLUMN coins_awarded`
-- `ADD COLUMN progress_current int NOT NULL DEFAULT 0`
-- Add unique partial index `(player_id, mission_id) WHERE status = 'pending'`
-- Truncate existing rows (clean slate)
+You're right — I missed this. `useAllowScroll()` is a one-way toggle: it unconditionally sets `html { height: auto; overflow: visible }`. That means **even when content fits the viewport, the page is still scrollable** (rubber-band on iOS, scrollbar on desktop, accidental drag-to-refresh on Android). On a 1022px-tall viewport showing a short Entries page (~400px of content), the page shouldn't move at all.
 
-`winam_missions`:
-- Delete all existing rows
-- Insert 12 seed rows, all `reward_type = 'entries'` (see seed list below)
+Leaderboard is fine because its content genuinely overflows. Entries and Winners (when collapsed) often don't.
 
-Keep `mission_status` enum as-is (don't remove `expired`); code just stops writing it.
+### Reference: Quiz Flash AI pattern
 
-### B. Mission seed (12 rows)
+Let me check that project for the conditional-scroll pattern they used before finalizing.
+<lov-tool-use id="toolu_vrtx_012GGKBkq5Fcz1wn96mERxGC" name="tool_search" data="{\"target\": \"cross_project--list_projects\"}">
+</lov-tool-use>
 
-| Title | condition_type | condition_value | reward |
-|---|---|---|---|
-| Solve 5 CheckMate puzzles | puzzles_solved | 5 | 2 |
-| Play WisdomDrop today | game_type_mix | 1 | 1 |
-| Solve 3 puzzles without using any hints | no_hints | 1 | 1 |
-| Play both CheckMate and WisdomDrop | game_type_mix | 2 | 1 |
-| Achieve a 3-day streak | streak_day | 3 | 1 |
-| Solve 10 CheckMate puzzles | puzzles_solved | 10 | 3 |
-| Complete 5 WisdomDrop questions | puzzles_solved | 5 | 1 |
-| Solve 3 puzzles in a single session | puzzles_solved | 3 | 1 |
-| Solve a puzzle without using any hints | no_hints | 1 | 1 |
-| Achieve a 5-day streak | streak_day | 5 | 2 |
-| Solve 20 puzzles total | puzzles_solved | 20 | 3 |
-| Achieve a 7-day streak | streak_day | 7 | 3 |
+<lov-tool-use id="toolu_vrtx_01QicJacSMX2RCUvYExPAs6N" name="cross_project--list_projects" integration-id="cross_project" data="">
+</lov-tool-use>
 
-Skipped (require new condition types): "3 sessions in one day", "no lives lost", "tier-1 hints only".
+<lov-tool-use id="toolu_vrtx_013sxRe5pf8C7ZnuvQMZxMc6" name="cross_project--search_project_files" integration-id="cross_project" data="{\"project_id\": \"59c40741-ab30-4ffc-a579-d7edf50dceff\", \"query\": \"allow-scroll\"}">
+</lov-tool-use>
 
-### C. Progress logic (`src/utils/mission.server.ts`)
+<lov-tool-use id="toolu_vrtx_014bTKbJLo2UDk3eXYP6oiDA" name="cross_project--search_project_files" integration-id="cross_project" data="{\"project_id\": \"59c40741-ab30-4ffc-a579-d7edf50dceff\", \"query\": \"overflow\", \"include_patterns\": \"*.css\"}">
+</lov-tool-use>
 
-Rewrite `evaluatePendingMissions` for incremental, persistent tracking:
+<lov-tool-use id="toolu_vrtx_01CDUf4kfGWNGoQTVVNzjikQ" name="tool_search" data="{\"target\": \"cross_project--search_project_files\"}">
+</lov-tool-use>
 
-- For each pending mission, compute new `progress_current`:
-  - `puzzles_solved` → `progress_current + session.puzzles_solved`
-  - `streak_day` → `player.current_streak` (set, not increment)
-  - `game_type_mix` → distinct game types ever played by player (recompute)
-  - `no_hints` → 1 if any session ever had `hints_used=0 AND puzzles_solved>0`, else 0
-- If `progress_current >= condition_value`: mark `completed`, set `completed_at`, set `entries_awarded`, write to `winam_entry_ledger` respecting 50/week cap (overflow → coins, same path `closeSession` already uses).
-- Return list of completed missions for the results screen.
+<lov-tool-use id="toolu_vrtx_019hbac8M6gprkhsnSaEDw1d" name="cross_project--search_project_files" integration-id="cross_project" data="{\"project\": \"59c40741-ab30-4ffc-a579-d7edf50dceff\", \"query\": \"allow-scroll\"}">
+</lov-tool-use>
+Same pattern as ours. Let me check our current styles.css to confirm the lock rule.
+<lov-tool-use id="toolu_vrtx_01QnbB349ssNUNSE5VpwnKTR" name="code--view" integration-id="code" data="{\"file_path\": \"src/styles.css\", \"lines\": \"147-206\"}">
+</lov-tool-use>
+Now I see. The hook adds `allow-scroll` which makes `html`/`body` `height:auto` + `overflow:auto`. Even when content fits, it allows scroll — but what makes pages "scrollable when they shouldn't be"?
 
-No replacement here — done lazily by `getActiveMissions`.
+Looking at entries.tsx and winners.tsx: both use `min-h-screen` on the wrapper. With `allow-scroll`, body becomes `height:auto`, but the wrapper still has `min-h-screen` (= 100vh), which forces wrapper to fill viewport. Should be fine if content < viewport... unless TopBar adds height that pushes total over.
 
-### D. Active mission management (`src/utils/mission.functions.ts`)
+Actually the issue: Quiz Flash AI uses `overflow: visible !important` while ours uses `overflow-y: auto !important`. The `auto` value enables scrollbars/scrolling even when not needed in some browsers, and importantly creates a scroll container. The Quiz Flash version uses `visible` which only scrolls when content actually exceeds.
 
-Rename `getDailyMissions` → `getActiveMissions`. New behaviour:
+But functionally `overflow-y: auto` should NOT scroll if content fits. Let me check more carefully — `min-h-screen` = `min-height: 100vh`. With `html, body { height: auto }`, that's fine.
 
-1. Fetch player's `pending` missions.
-2. If fewer than 3, pick from `winam_missions WHERE is_active=true` excluding currently pending + 3 most recently completed (variety guard). Insert as `pending`.
-3. Return shape: `{ id, title, conditionType, conditionValue, progressCurrent, status, rewardAmount }` (no `rewardType` — always entries).
+Wait — the actual issue might be: with our rule `html.allow-scroll, html.allow-scroll body { height: auto !important; overflow-y: auto !important }`, BOTH html and body become scroll containers. `min-h-screen` on wrapper means wrapper = 100vh minimum. If content is only 600px but wrapper is 100vh on body that's also `height:auto`... wrapper renders 100vh. Then page = 100vh. Still no overflow.
 
-Drop all `assigned_date_wat` / today / draw-week-required logic. Missions exist independent of draw weeks.
+But on mobile, `100vh` includes browser chrome while actual viewport is smaller — so `min-h-screen` (100vh) > actual visible area → scroll appears even with no content overflow. This is the classic mobile vh bug.
 
-### E. closeSession update (`src/utils/game.functions.ts`)
+The fix: Quiz Flash uses `overflow: visible !important` (not auto). With visible, even if there's a tiny overflow, browser doesn't show a scrollbar on body — relies on natural document scroll. But more importantly, switching `min-h-screen` to `min-h-[100dvh]` would fix the vh-vs-dvh discrepancy.
 
-- Remove `assigned_date_wat` filter on mission queries.
-- Remove `coins_awarded` writes on `winam_player_missions`.
-- Mission bonus calc: count missions completed during this session (those returned from `evaluatePendingMissions`) — already the correct semantic.
-- Coins still awarded only via cap overflow (existing logic preserved).
+Let me check the user's description: "scrollable when based on the content contained shouldn't be" — yes, classic mobile chrome eating viewport while `100vh` doesn't account for it.
+<lov-tool-use id="toolu_vrtx_015NUj5PQY4aZVnVQyagJwYj" name="cross_project--read_project_file" integration-id="cross_project" data="{\"project\": \"59c40741-ab30-4ffc-a579-d7edf50dceff\", \"file_path\": \"src/index.css\", \"lines\": \"50-80\"}">
+</lov-tool-use>
+Confirmed. Quiz Flash uses `overflow: visible !important` (not auto). That's the key difference. With `auto`, browsers can show scrollbars and reserve scroll space; with `visible`, content only scrolls if it actually overflows the document, no false scrollbar.
 
-### F. UI rewrite (`src/routes/_authed/index.tsx`)
+Combined with the entries/winners pages using `min-h-screen` (100vh, not 100dvh), on mobile this creates phantom scroll. Fixing both — switching CSS to `visible` and swapping `min-h-screen` → `min-h-[100dvh]` on these short pages — eliminates the issue.
 
-Replace `DailyMissionsSection` with `MissionsSection`:
+<lov-plan>
 
-- **Header**: `MISSIONS` + muted `· N of 3 done` (only when N>0). No countdown.
-- **Row**: 40×40 tinted icon tile + title + (right side) `progress_current/condition_value` tabular-nums + ticket reward chip with proper pluralization (`1 entry` / `2 entries`).
-- **Icon map**:
-  - `puzzles_solved` → Swords, `bg-primary/15 text-primary`
-  - `no_hints` → Sparkles, `bg-xp/15 text-xp`
-  - `streak_day` → Flame, `bg-streak/15 text-streak`
-  - `game_type_mix` → Shuffle, `bg-primary/15 text-primary`
-- **Completed state**: `border-success/30 bg-success/5`, Check icon + "Reward claimed" replaces progress number, reward chip stays.
-- **Auto-replacement animation** (client-only): when a mission's status is `completed` on mount, hold 3s, fade/slide it out, refetch via server fn to get the replacement, slide it in. Use `setTimeout` + Tailwind `transition-all opacity translate-y`. No new deps.
-- **Empty state**: `<Calendar /> New missions coming soon` when API returns empty array.
+## Fix phantom scroll on entries / winners (and verify leaderboard)
 
-### G. Results screen (`src/routes/_authed/results.tsx`)
+The scroll-on-short-pages bug has two compounding causes:
 
-Tighten mission display to entries-only — drop the `rewardType` branch, always render Ticket icon + "+N entries".
+### Cause 1 — `overflow-y: auto` instead of `visible`
 
-### H. Files touched
+Our `.allow-scroll` rule uses `overflow-y: auto !important`, which makes html+body each become a scroll container. Some browsers (esp. mobile WebKit) reserve scrollbar gutter or render a scroll affordance even when content barely overflows.
 
-- New migration: schema changes + seed data
-- `src/utils/mission.server.ts` — rewrite progress evaluation
-- `src/utils/mission.functions.ts` — rename + lazy-replacement logic
-- `src/utils/game.functions.ts` — drop daily filters + coin mission writes
-- `src/routes/_authed/index.tsx` — new MissionsSection + helpers
-- `src/routes/_authed/results.tsx` — entries-only mission display
-- `src/components/games/useGameSession.ts` — verify no `rewardType` assumption (likely no change)
+Quiz Flash AI's working version (referenced) uses `overflow: visible !important` — content only scrolls when it actually exceeds the document height, no false scrollbar.
 
-No new dependencies. No cron jobs. No midnight WAT logic anywhere.
+### Cause 2 — `min-h-screen` is `100vh`, not `100dvh`
+
+`entries.tsx`, `winners.tsx`, and `leaderboard.tsx` all wrap content in `min-h-screen` (= `100vh`). On mobile, `100vh` includes browser chrome (URL bar, etc.) while the actually visible viewport is smaller. So the wrapper is taller than the visible area → scroll appears even when content fits.
+
+Our base lock uses `100dvh` correctly; the wrappers should match.
+
+### The fix
+
+**1. `src/styles.css`** — align with the proven Quiz Flash pattern:
+
+```css
+html, body {
+  height: 100dvh;
+  overflow: hidden;
+}
+html.allow-scroll,
+html.allow-scroll body {
+  height: auto !important;
+  overflow: visible !important;
+}
+html.allow-scroll {
+  scroll-behavior: smooth;
+  overflow-x: hidden !important;
+}
+```
+
+Changes: `overflow-y: auto` → `overflow: visible`, plus the smooth-scroll + horizontal-clamp safety rule.
+
+**2. `src/routes/_authed/entries.tsx`** — `min-h-screen` → `min-h-[100dvh]`.
+
+**3. `src/routes/_authed/winners.tsx`** — same swap.
+
+**4. `src/routes/_authed/leaderboard.tsx`** — same swap (verified: hook is correct, but the wrapper has the same vh issue).
+
+### Why this works
+
+- Short pages (entries, leaderboard at default state): document height ≈ visible viewport → no scroll, no scrollbar, nothing to scroll.
+- Long pages (leaderboard scrolled, winners with cards expanded): content naturally exceeds viewport → browser scrolls the document, smooth-scroll active, horizontal locked.
+- Game/auth pages (already using `useAllowScroll`): unaffected — they were always meant to scroll when needed and now do so cleanly.
+
+### Files touched
+
+- `src/styles.css` — 6 lines
+- `src/routes/_authed/entries.tsx` — 1 line
+- `src/routes/_authed/winners.tsx` — 1 line
+- `src/routes/_authed/leaderboard.tsx` — 1 line
+
+No new dependencies, no hook/component changes, no route changes.
 
