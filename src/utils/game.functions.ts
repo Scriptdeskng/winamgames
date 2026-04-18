@@ -284,20 +284,10 @@ export const closeSession = createServerFn({ method: "POST" })
     else if (streak >= 7) streakBonus = 2;
     else if (streak >= 3) streakBonus = 1;
 
-    // Mission bonus: check today's completed missions for this player
+    // Mission bonus is now awarded directly by evaluatePendingMissions (which
+    // writes its own ledger rows). Session-level rawEntries excludes missions.
     const watDate = session.session_date_wat;
-    const { data: priorCompletedMissions } = await supabaseAdmin
-      .from("winam_player_missions")
-      .select("entries_awarded")
-      .eq("player_id", data.playerId)
-      .eq("assigned_date_wat", watDate)
-      .eq("status", "completed");
-
-    const missionBonus = priorCompletedMissions
-      ? priorCompletedMissions.reduce((sum: number, m: { entries_awarded: number }) => sum + m.entries_awarded, 0)
-      : 0;
-
-    const rawEntries = baseEntries + streakBonus + missionBonus;
+    const rawEntries = baseEntries + streakBonus;
 
     // Get current week total
     const { data: weekEntries } = await supabaseAdmin
