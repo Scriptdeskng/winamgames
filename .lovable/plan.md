@@ -2,33 +2,54 @@
 
 ## Plan
 
-Two small edits to `src/routes/_authed/index.tsx`.
+Update `DrawHeroCard` in `src/routes/_authed/index.tsx` to render the countdown as stacked number + label units instead of the current inline `Xd HH:MM:SS` string.
 
-### 1. Countdown format with days
+### Changes
 
-Update `formatHMS` (rename to `formatCountdown`) to include days when remaining time exceeds 24 hours:
-
+**1. Replace `formatCountdown` with `getCountdownParts`**
+Returns structured data instead of a string:
 ```ts
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return "00:00:00";
-  const totalSec = Math.floor(ms / 1000);
-  const days = Math.floor(totalSec / 86400);
-  const h = Math.floor((totalSec % 86400) / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const hms = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return days > 0 ? `${days}d ${hms}` : hms;
+function getCountdownParts(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(total / 86400),
+    hours: Math.floor((total % 86400) / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+    seconds: total % 60,
+  };
 }
 ```
 
-The existing `getNextSundayWAT()` logic is already correct — it computes the next Sunday at 19:00 UTC (= 20:00 WAT) and rolls forward to next week if today is Sunday past the cutoff. The `remaining = targetDate.getTime() - now` calculation in `DrawHeroCard` is also correct (target minus now = time until draw, not elapsed).
+**2. Replace the single `<p>` timer in `DrawHeroCard` with a stacked unit row**
+- Flex row, `items-end`, no gap on the colon separators (tight).
+- Each unit = a small flex column: number on top (`font-mono text-4xl font-bold tabular-nums leading-none`), label below (`text-[10px] text-muted-foreground lowercase mt-0.5`).
+- Colons are their own column, vertically aligned to the number row only (`text-4xl font-mono leading-none` with bottom padding equal to label height so the colon sits next to digits, not labels).
+- Conditionally render the `day` unit + its trailing colon only when `days > 0`.
 
-When days are present, the digit count grows (e.g. `2d 05:28:00` is wider than `00:00:00`). To keep the timer from overflowing the card on a 390px viewport, drop the countdown text size from `text-5xl` to `text-4xl`.
+Sketch:
+```tsx
+<div className="flex items-end gap-1.5">
+  {days > 0 && (
+    <>
+      <Unit value={days} label="day" />
+      <Colon />
+    </>
+  )}
+  <Unit value={hours} label="hr" />
+  <Colon />
+  <Unit value={minutes} label="min" />
+  <Colon />
+  <Unit value={seconds} label="sec" />
+</div>
+```
 
-### 2. Remove "Play now" button from empty state
+**3. Spacing**
+- The current timer `<p>` had `mt-2` from the label and the entries line had `mt-4`. Keep both spacings exactly as they are — the new block replaces the `<p>` in place. The 10px label sits inside the unit column so it doesn't push the entries line down.
+- To prevent the labels from adding visible height vs the old single line, use `leading-none` on the number and `mt-0.5` on the label, then reduce the entries-line `mt-4` to `mt-3` so total visual height stays ~equal.
 
-In `DailyMissionsSection`, delete the `<Link to="/checkmate">Play now</Link>` element from the empty state card. Keep the heading "Missions reset at midnight" and the subtext "Play now to build your streak and earn entries". Remove the now-unused `Link` reference inside that block (the import stays since it's used elsewhere).
+**4. Sub-24h behaviour**
+Already handled by the conditional `days > 0` render — only `hr / min / sec` show in the final day.
 
 ### Files touched
-- `src/routes/_authed/index.tsx` — update `formatHMS`, adjust countdown text size, trim the missions empty state.
+- `src/routes/_authed/index.tsx` — swap `formatCountdown` for `getCountdownParts`, replace timer `<p>` with stacked unit layout, tweak entries-line top margin from `mt-4` to `mt-3`.
 
