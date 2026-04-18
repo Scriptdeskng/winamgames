@@ -1,34 +1,47 @@
 
-# Winners Page — Phone Format & Entry ID Display Fix
 
-## Changes needed
+## Goal
+Add back navigation to pages currently missing it. Reuse the existing TopBar `backTo` pattern (already styled with `ArrowLeft` icon in a 10×10 surface-1 rounded square — matches the staysharp lucide icon-button convention).
 
-### 1. Phone number format
-Change from `***8231` to `080*****31` format (showing first 3 and last 2 digits with middle asterisked).
+## Findings
+- `TopBar` already renders a back button when `backTo` is provided.
+- Pages **with** back button: `entries`, `profile`, `winners` → all `backTo="/"`.
+- Pages **without** back button (showing avatar/menu only):
+  - `/` (home) — root, no back needed ✓
+  - `/leaderboard` — missing, should go to `/`
+  - `/checkmate`, `/wisdomdrop` — use `GameHeader` with X-exit (intentional, leave as-is)
+  - `/results` — has Link home in body, no header back button
+- Pages with **no TopBar at all**:
+  - `/renew` — needs back to `/` (or `/profile`)
+  - `/login`, `/verify`, `/onboarding` — auth flow, back is contextual (verify → login already exists)
 
-Nigerian phone format: typically 11 digits starting with `080`, `081`, `070`, `090`, `091` etc.
-Pattern: `ABC*****XY` where ABC = first 3 digits, XY = last 2 digits, middle = 6 asterisks
+## Changes
 
-### 2. Entry ID display
-Currently only cash winners show entry IDs. Need to add entry IDs to ALL airtime winners as well.
+**1. `src/routes/_authed/leaderboard.tsx`**
+- `<TopBar />` → `<TopBar backTo="/" />`
 
-## Implementation
+**2. `src/routes/_authed/results.tsx`**
+- Add `<TopBar backTo="/" />` at top of page (currently has no TopBar).
 
-**File: `src/routes/_authed/winners.tsx`**
+**3. `src/routes/renew.tsx`**
+- Add a standalone back button in top-left (matches TopBar styling: 10×10, rounded-xl, bg-surface-1, border, ArrowLeft icon) linking to `/profile`. Standalone (not TopBar) since renew is outside `_authed` layout and has its own centered layout.
 
-1. Update all hardcoded phone numbers in `DRAW_WEEKS` data to use format `080*****31`, `081*****42`, etc.
-2. Modify `AirtimeSection` component to display entry IDs for all airtime winners (lines 150-154)
-   - Add entry ID display below or next to phone number
-   - Use same styling as cash winners: `text-[9px] text-muted-foreground tabular-nums` with `Hash` icon
-3. Update phone generation logic for ₦500 tier (lines 70-72, 114-116) to produce realistic Nigerian numbers
+**4. `src/routes/onboarding.tsx`**
+- No back button — onboarding is mandatory after signup. Skip.
 
-Example airtime winner row (new layout):
+**5. `src/routes/login.tsx`** and **`/verify.tsx`**
+- `verify` already has back-to-login link. `login` is the entry point. Skip both.
+
+## Styling
+Reuse exact TopBar back-button classes for consistency:
 ```
-080*****31  #D4E7F1A3  ₦2,000
+h-10 w-10 rounded-xl bg-surface-1 border border-border 
+flex items-center justify-center hover:border-primary/30 transition-colors
 ```
+with `<ArrowLeft className="h-5 w-5 text-foreground" />` inside.
 
-Or stacked for better mobile fit:
-```
-080*****31
-#D4E7F1A3         ₦2,000
-```
+## Files touched
+- `src/routes/_authed/leaderboard.tsx`
+- `src/routes/_authed/results.tsx`
+- `src/routes/renew.tsx`
+
