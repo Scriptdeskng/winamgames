@@ -47,7 +47,7 @@ function RenewPage() {
   if (!playerId) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
         <Link to="/" className="text-lg font-bold text-gradient-emerald">
           WinamGames
