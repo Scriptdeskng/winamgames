@@ -97,6 +97,22 @@ function ProfilePage() {
             </Link>
           ))}
         </div>
+
+        <div className="rounded-2xl bg-surface-1 border border-border p-5">
+          <h3 className="text-sm font-semibold mb-3">How entries work</h3>
+          <div className="text-sm text-muted-foreground space-y-3 leading-relaxed">
+            <p>Every 5 puzzles you solve in a session earns 1 draw entry.</p>
+            <p>
+              Play daily to build your streak — a 3-day streak adds 1 bonus entry per session,
+              7 days adds 2, and 14 days adds 3.
+            </p>
+            <p>Complete missions to earn bonus entries on top.</p>
+            <p>
+              Entries reset every Monday. The weekly draw is every Sunday at 20:00 WAT — more
+              entries means better odds.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

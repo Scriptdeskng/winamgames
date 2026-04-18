@@ -425,7 +425,7 @@ function DynamicTip({
     body = ONBOARDING_TIPS[dayOfYear % ONBOARDING_TIPS.length];
   } else if (weekTotal < weekCap) {
     label = "This week";
-    body = `${weekCap - weekTotal} more entries to hit your weekly cap`;
+    body = `${weekCap - weekTotal} more entries this week`;
   } else {
     const idx = RANK_ORDER.indexOf(tier);
     const nextTier = idx >= 0 && idx < RANK_ORDER.length - 1 ? RANK_ORDER[idx + 1] : null;

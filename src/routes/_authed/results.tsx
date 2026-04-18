@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Trophy, ArrowUp } from "lucide-react";
+import { Trophy, ArrowUp, Flame } from "lucide-react";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
 import { TopBar } from "@/components/layout/TopBar";
@@ -37,6 +37,7 @@ function ResultsPage() {
   const {
     entries,
     baseEntries,
+    streak,
     weekTotal,
     weekCap,
     rankTier,
@@ -45,6 +46,13 @@ function ResultsPage() {
     puzzlesSolved,
     gameType,
   } = Route.useSearch();
+
+  // Streak pill copy
+  let streakPill: string | null = null;
+  if (streak >= 14) streakPill = `Day ${streak} — earning +3 bonus entries per session`;
+  else if (streak >= 7) streakPill = `Day ${streak} — earning +2 bonus entries per session`;
+  else if (streak >= 3) streakPill = `Day ${streak} — earning +1 bonus entry per session`;
+  else if (streak >= 1) streakPill = `Day ${streak} — reach day 3 for bonus entries`;
 
   const rankedUp = rankTier !== previousRank;
 
@@ -149,6 +157,14 @@ function ResultsPage() {
           {/* Nudge */}
           <p className="mt-5 text-center text-xs text-muted-foreground">{nudge}</p>
         </div>
+
+        {/* Streak pill */}
+        {streakPill && (
+          <div className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
+            <Flame className="h-3.5 w-3.5 text-streak" />
+            <span className="text-xs font-medium text-streak">{streakPill}</span>
+          </div>
+        )}
 
         {/* Buttons */}
         <button
