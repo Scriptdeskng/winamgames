@@ -100,10 +100,22 @@ function ProfilePage() {
 
         {/* ── Secondary stats: coins + streak ─────────────────── */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-surface-1 border border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Coins className="h-4 w-4 text-coin" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">Coins</span>
+          <div className="rounded-2xl bg-surface-1 border border-border p-4 relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-coin" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Coins</span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors -m-1 p-1" aria-label="About coins">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
+                  <span className="font-semibold text-foreground">Coins</span> are earned from sessions and from overflow when you've already hit the 50-entry weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
+                </PopoverContent>
+              </Popover>
             </div>
             <p className="text-2xl font-bold tabular-nums">
               {player?.coinBalance?.toLocaleString() ?? "0"}
