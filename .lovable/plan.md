@@ -1,37 +1,32 @@
 
 
-## Improve XP-to-next-rank copy
+## Home page cleanup — keep streak strip, drop dynamic tip
 
-Current: `"140 XP to Recruit"` — terse, reads like a debug label. Could be warmer, clearer, and more motivating without getting verbose.
-
-### Options considered
-
-1. `"140 XP until Recruit"` — minor, still flat.
-2. `"Earn 140 XP to reach Recruit"` — action-led, clearer intent. Slightly longer but still one line on mobile.
-3. `"140 XP to unlock Recruit"` — game-y, implies reward.
-4. `"Next: Recruit · 140 XP to go"` — two-part, scannable.
-
-### Recommendation
-
-Go with **option 3**: `"140 XP to unlock Recruit"`.
-
-Why:
-- "Unlock" frames rank-up as a reward (matches the gamified tone of the app — coins, streaks, draws).
-- Still concise — fits on one line under the progress bar at mobile widths.
-- "to" + verb + noun reads more naturally than "to Recruit" alone.
-- Max-rank state stays as `"Maximum rank reached"` (already good).
+Confirmed: navigation is the hamburger `MenuSheet` in the TopBar, not a bottom nav. So the Play Now grid is the only on-screen entry to games and stays.
 
 ### Change
 
-In `src/routes/_authed/profile.tsx` → `IdentityHero`, the muted line under the XP bar:
+Remove only `DynamicTip` from `src/routes/_authed/index.tsx`:
+- Delete the `<DynamicTip ... />` JSX usage at the bottom of `HomePage`.
+- Delete the `DynamicTip` component definition.
+- Delete the `ONBOARDING_TIPS` constant and `RANK_ORDER` constant (only used by the tip).
+- Drop now-unused imports: `Lightbulb`, `RANK_CONFIG` (still used by `StreakRankStrip` — keep it), recheck before removing.
+- Drop now-unused destructured values from `data`: `totalSessions`, `bestSession`, `xpTotal`.
 
-```tsx
-// before
-`${(nextConfig!.minXp - xp).toLocaleString()} XP to ${nextConfig!.label}`
+Keep: `StreakRankStrip` (visual separator + identity touch between hero and banners), everything else unchanged.
 
-// after
-`${(nextConfig!.minXp - xp).toLocaleString()} XP to unlock ${nextConfig!.label}`
+### Resulting home flow
+
+```
+TopBar
+DrawHeroCard
+StreakRankStrip   ← kept as separator
+BannerStack
+MissionsSection
+Play Now grid
 ```
 
-One-line change, no other files affected.
+### Files touched
+
+- `src/routes/_authed/index.tsx` — single-file cleanup, ~40 lines removed, no behavior change elsewhere.
 
