@@ -274,36 +274,33 @@ export type Database = {
       }
       winam_player_missions: {
         Row: {
-          assigned_date_wat: string
-          coins_awarded: number
           completed_at: string | null
           draw_week_id: string
           entries_awarded: number
           id: string
           mission_id: string
           player_id: string
+          progress_current: number
           status: Database["public"]["Enums"]["mission_status"]
         }
         Insert: {
-          assigned_date_wat: string
-          coins_awarded?: number
           completed_at?: string | null
           draw_week_id: string
           entries_awarded?: number
           id?: string
           mission_id: string
           player_id: string
+          progress_current?: number
           status?: Database["public"]["Enums"]["mission_status"]
         }
         Update: {
-          assigned_date_wat?: string
-          coins_awarded?: number
           completed_at?: string | null
           draw_week_id?: string
           entries_awarded?: number
           id?: string
           mission_id?: string
           player_id?: string
+          progress_current?: number
           status?: Database["public"]["Enums"]["mission_status"]
         }
         Relationships: [
