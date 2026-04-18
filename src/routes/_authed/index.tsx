@@ -178,8 +178,9 @@ function DrawHeroCard({
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-5 shadow-card">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+    <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
+      <p className="relative text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
       <div className="flex items-end gap-1.5">
