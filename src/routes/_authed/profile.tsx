@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
@@ -208,7 +208,7 @@ function ProfilePage() {
 // ── Identity + rank merged hero ──────────────────────────────────────
 function IdentityHero({
   nickname,
-  msisdnLast4,
+  msisdnLast4: _msisdnLast4,
   xp,
   tier,
 }: {
@@ -218,7 +218,6 @@ function IdentityHero({
   tier: RankTier;
 }) {
   const config = RANK_CONFIG[tier] ?? RANK_CONFIG.starter;
-  const RankIcon = config.icon;
 
   const RANK_ORDER: RankTier[] = [
     "starter", "recruit", "sergeant", "veteran", "champion", "icon", "legend", "immortal",
@@ -227,46 +226,32 @@ function IdentityHero({
   const next = idx >= 0 && idx < RANK_ORDER.length - 1 ? RANK_ORDER[idx + 1] : null;
   const nextConfig = next ? RANK_CONFIG[next] : null;
   const isMax = !next;
-  const currentMin = config.minXp;
-  const nextMin = nextConfig ? nextConfig.minXp : config.minXp;
-  const progress = isMax ? 100 : Math.min(100, ((xp - currentMin) / (nextMin - currentMin)) * 100);
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-6 shadow-card">
-      <div className="flex flex-col items-center text-center">
-        <div className="relative mb-4">
-          <div className="h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center">
-            <User className="h-10 w-10 text-primary" />
-          </div>
-          <div
-            className={`absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-0.5 rounded-full ${config.bgColor} ${
-              config.glow ? "shadow-glow ring-1 ring-xp/30" : ""
-            }`}
-          >
-            <RankIcon className={`h-3 w-3 ${config.color}`} />
-            <span className={`text-[10px] font-semibold uppercase tracking-wide ${config.color}`}>
-              {config.label}
-            </span>
-          </div>
+    <div className="flex flex-col items-center text-center py-4">
+      <div className="relative mb-4">
+        <div className="h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center">
+          <User className="h-10 w-10 text-primary" />
         </div>
-
-        <h2 className="text-lg font-bold truncate max-w-full">{nickname}</h2>
-        <p className="text-sm text-muted-foreground mb-5">****{msisdnLast4}</p>
-
-        <div className="w-full">
-          <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${isMax ? "bg-xp" : "bg-primary"}`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2 tabular-nums">
-            {isMax
-              ? "Maximum rank reached"
-              : `${(nextMin - xp).toLocaleString()} XP to ${nextConfig!.label}`}
-          </p>
-        </div>
+        <span
+          className={`absolute -top-1 -right-2 px-2 py-0.5 rounded-full ring-2 ring-background text-[10px] font-semibold uppercase tracking-wide ${config.bgColor} ${config.color} ${
+            config.glow ? "shadow-glow" : ""
+          }`}
+        >
+          {config.label}
+        </span>
       </div>
+
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <h2 className="text-lg font-bold truncate max-w-[260px]">{nickname}</h2>
+        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+
+      <p className="text-sm text-muted-foreground tabular-nums">
+        {isMax
+          ? "Maximum rank reached"
+          : `${(nextConfig!.minXp - xp).toLocaleString()} XP to ${nextConfig!.label}`}
+      </p>
     </div>
   );
 }
