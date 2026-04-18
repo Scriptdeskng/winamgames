@@ -95,6 +95,9 @@ function HomePage() {
   const bestSession = data?.playerResult?.success ? data.playerResult.bestSession : 0;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
+  const streak = player?.currentStreak ?? 0;
+  const tier: RankTier = player?.rankTier ?? "starter";
+  const xpTotal = player?.xpTotal ?? 0;
 
   if (!data) {
     return (
