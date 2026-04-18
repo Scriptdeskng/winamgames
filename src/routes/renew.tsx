@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Crown, Clock, CheckCircle2 } from "lucide-react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { AlertTriangle, Crown, Clock, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getSession } from "@/lib/session";
 import { renewSubscription } from "@/utils/auth.functions";
@@ -48,7 +48,15 @@ function RenewPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
-      <div className="flex-1 flex flex-col px-6 pt-12 pb-8">
+      <div className="px-4 pt-4">
+        <Link
+          to="/profile"
+          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </Link>
+      </div>
+      <div className="flex-1 flex flex-col px-6 pt-6 pb-8">
         <div className="flex items-center gap-3 mb-8">
           <div className="h-12 w-12 rounded-xl bg-warning/15 flex items-center justify-center">
             <AlertTriangle className="h-6 w-6 text-warning" />

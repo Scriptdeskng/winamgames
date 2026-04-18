@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Trophy, Coins, Flame, Target, Sparkles, Check, ArrowUp } from "lucide-react";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
+import { TopBar } from "@/components/layout/TopBar";
 
 const resultsSearchSchema = z.object({
   entries: fallback(z.number(), 0).default(0),
@@ -47,7 +48,9 @@ function ResultsPage() {
   ];
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col items-center justify-center px-6">
+    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
+      <TopBar backTo="/" />
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
       <div className="h-16 w-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
         <Trophy className="h-8 w-8 text-primary" />
       </div>
@@ -102,6 +105,7 @@ function ResultsPage() {
       >
         Back to Home
       </Link>
+      </div>
     </div>
   );
 }
