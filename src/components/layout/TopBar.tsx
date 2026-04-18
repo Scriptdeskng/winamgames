@@ -31,7 +31,7 @@ export function TopBar({ backTo }: TopBarProps) {
 
       <span className="text-base font-bold text-foreground">WinamGames</span>
 
-      <MenuSheet />
+      {backTo ? <div className="h-10 w-10" aria-hidden /> : <MenuSheet />}
     </div>
   );
 }
