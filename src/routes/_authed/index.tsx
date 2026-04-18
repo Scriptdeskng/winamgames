@@ -88,13 +88,10 @@ function HomePage() {
   const weekTotal = data?.playerResult?.success ? data.playerResult.weekTotal : 0;
   const weekCap = data?.playerResult?.success ? data.playerResult.weekCap : 50;
   const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
-  const totalSessions = data?.playerResult?.success ? data.playerResult.totalSessions : 0;
-  const bestSession = data?.playerResult?.success ? data.playerResult.bestSession : 0;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
   const streak = player?.currentStreak ?? 0;
   const tier: RankTier = player?.rankTier ?? "starter";
-  const xpTotal = player?.xpTotal ?? 0;
 
   if (!data) {
     return (
