@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Trophy, ArrowUp, Flame } from "lucide-react";
+import { Trophy, ArrowUp } from "lucide-react";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
 import { TopBar } from "@/components/layout/TopBar";
@@ -31,20 +31,12 @@ export const Route = createFileRoute("/_authed/results")({
   }),
 });
 
-function streakBonusFor(streak: number): number {
-  if (streak >= 14) return 3;
-  if (streak >= 7) return 2;
-  if (streak >= 3) return 1;
-  return 0;
-}
-
 function ResultsPage() {
   useAllowScroll();
   const navigate = useNavigate();
   const {
     entries,
     baseEntries,
-    streak,
     weekTotal,
     weekCap,
     rankTier,
@@ -85,15 +77,6 @@ function ResultsPage() {
     nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} next session for another entry`;
   }
 
-  // Streak pill
-  const bonus = streakBonusFor(streak);
-  let streakPill: string | null = null;
-  if (streak >= 3) {
-    streakPill = `Day ${streak} streak — earning +${bonus} bonus ${bonus === 1 ? "entry" : "entries"} per session`;
-  } else if (streak >= 1) {
-    streakPill = `Day ${streak} — reach day 3 for bonus entries`;
-  }
-
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
 
   const handlePlayAgain = () => {
@@ -124,50 +107,48 @@ function ResultsPage() {
           </div>
         )}
 
-        {/* Element 1 — Entries hero */}
-        <div className="w-full rounded-2xl bg-surface-1 border border-border p-6 text-center">
-          {entries > 0 ? (
-            <>
-              <p className="text-4xl font-bold tabular-nums text-primary">
-                +{entries} {entries === 1 ? "entry" : "entries"}
-              </p>
-              {breakdownParts.length > 0 && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {breakdownParts.join("  ·  ")}
+        {/* Unified session card */}
+        <div className="w-full rounded-2xl bg-surface-1 border border-border p-6">
+          {/* Hero */}
+          <div className="text-center">
+            {entries > 0 ? (
+              <>
+                <p className="text-4xl font-bold tabular-nums text-primary">
+                  +{entries} {entries === 1 ? "entry" : "entries"}
                 </p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="text-xl font-semibold">No entries this session</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Solve 5 puzzles in a session to earn your first entry
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* Element 2 — Weekly progress */}
-        <div className="w-full mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Entries this week</span>
-            <span className="text-sm font-semibold tabular-nums">
-              {weekTotal} / {weekCap}
-            </span>
+                {breakdownParts.length > 0 && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {breakdownParts.join("  ·  ")}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xl font-semibold">No entries this session</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Solve 5 puzzles in a session to earn your first entry
+                </p>
+              </>
+            )}
           </div>
-          <Progress value={weekPct} />
-        </div>
 
-        {/* Element 3 — Next session nudge */}
-        <p className="w-full mt-4 text-center text-sm text-muted-foreground">{nudge}</p>
+          {/* Divider */}
+          <div className="my-5 h-px bg-border/60" />
 
-        {/* Streak pill (conditional) */}
-        {streakPill && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-surface-1 border border-border px-3 py-1.5">
-            <Flame className="h-4 w-4 text-streak" />
-            <span className="text-xs font-medium">{streakPill}</span>
+          {/* Weekly progress */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">Entries this week</span>
+              <span className="text-sm font-semibold tabular-nums">
+                {weekTotal} / {weekCap}
+              </span>
+            </div>
+            <Progress value={weekPct} />
           </div>
-        )}
+
+          {/* Nudge */}
+          <p className="mt-5 text-center text-xs text-muted-foreground">{nudge}</p>
+        </div>
 
         {/* Buttons */}
         <button
