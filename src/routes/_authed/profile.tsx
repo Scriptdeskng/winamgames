@@ -8,9 +8,10 @@ import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
-import { getPlayerData } from "@/utils/mission.functions";
-import { getSession, clearSession } from "@/lib/session";
+import { getPlayerData, updateNickname } from "@/utils/mission.functions";
+import { getSession, clearSession, updateSessionNickname } from "@/lib/session";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import { toast } from "sonner";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/profile")({
