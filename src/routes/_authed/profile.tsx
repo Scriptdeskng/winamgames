@@ -320,8 +320,8 @@ function WeeklyEntriesCard({
         to="/"
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
       >
-        <Play className="h-4 w-4 fill-current" />
         Play to earn more
+        <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );
