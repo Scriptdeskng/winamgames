@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
-  { to: "/checkmate", icon: Swords, label: "Games" },
+  { to: "/", icon: Swords, label: "Games" },
   { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
   { to: "/entries", icon: Ticket, label: "My Entries" },
   { to: "/winners", icon: Award, label: "Winners" },
@@ -35,9 +35,9 @@ export function MenuSheet() {
           <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive =
-                location.pathname === item.to ||
-                (item.to === "/checkmate" &&
-                  (location.pathname === "/checkmate" || location.pathname === "/wisdomdrop"));
+                item.label === "Games"
+                  ? location.pathname === "/checkmate" || location.pathname === "/wisdomdrop"
+                  : location.pathname === item.to;
               return (
                 <Link
                   key={item.to}
