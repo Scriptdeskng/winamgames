@@ -5,6 +5,7 @@ import { getPlayerData, getDailyMissions, getActiveBanners } from "@/utils/missi
 import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/")({
@@ -63,6 +64,7 @@ function CountdownColon() {
 }
 
 function HomePage() {
+  useAllowScroll();
   const session = getSession();
   const [data, setData] = React.useState<{
     playerResult: any;
