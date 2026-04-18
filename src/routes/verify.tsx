@@ -100,11 +100,14 @@ function VerifyPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex justify-center">
               <InputOTP maxLength={4} value={otp} onChange={setOtp}>
-                <InputOTPGroup className="gap-2">
-                  <InputOTPSlot index={0} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
-                  <InputOTPSlot index={1} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
-                  <InputOTPSlot index={2} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
-                  <InputOTPSlot index={3} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
+                <InputOTPGroup>
+                  {[0, 1, 2, 3].map((i) => (
+                    <InputOTPSlot
+                      key={i}
+                      index={i}
+                      className="w-14 h-14 text-2xl font-semibold bg-surface-2 text-foreground border-border first:rounded-l-xl last:rounded-r-xl"
+                    />
+                  ))}
                 </InputOTPGroup>
               </InputOTP>
             </div>
