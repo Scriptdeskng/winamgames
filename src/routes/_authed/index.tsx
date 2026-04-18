@@ -80,7 +80,7 @@ function HomePage() {
     if (!session) return;
     Promise.all([
       getPlayerData({ data: { playerId: session.playerId } }),
-      getDailyMissions({ data: { playerId: session.playerId } }),
+      getActiveMissions({ data: { playerId: session.playerId } }),
       getActiveBanners(),
     ]).then(([playerResult, missionsResult, bannersResult]) => {
       setData({ playerResult, missionsResult, bannersResult });
