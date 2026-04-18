@@ -29,6 +29,7 @@ interface DrawWeek {
   label: string;
   cashWinners: Winner[];
   airtimeTiers: { label: string; winners: Winner[] }[];
+  isPlaceholder?: boolean;
 }
 
 const DRAW_WEEKS: DrawWeek[] = [
