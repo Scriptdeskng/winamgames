@@ -448,7 +448,15 @@ export type Database = {
         | "game_type_mix"
       mission_status: "pending" | "completed" | "expired"
       puzzle_result: "correct" | "incorrect" | "hint_used" | "timeout"
-      rank_tier: "pawn" | "knight" | "bishop" | "rook" | "queen" | "king"
+      rank_tier:
+        | "starter"
+        | "recruit"
+        | "sergeant"
+        | "veteran"
+        | "champion"
+        | "icon"
+        | "legend"
+        | "immortal"
       reward_type: "coins" | "entries"
       subscription_plan: "daily" | "weekly"
       subscription_status:
@@ -595,7 +603,16 @@ export const Constants = {
       ],
       mission_status: ["pending", "completed", "expired"],
       puzzle_result: ["correct", "incorrect", "hint_used", "timeout"],
-      rank_tier: ["pawn", "knight", "bishop", "rook", "queen", "king"],
+      rank_tier: [
+        "starter",
+        "recruit",
+        "sergeant",
+        "veteran",
+        "champion",
+        "icon",
+        "legend",
+        "immortal",
+      ],
       reward_type: ["coins", "entries"],
       subscription_plan: ["daily", "weekly"],
       subscription_status: [
