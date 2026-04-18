@@ -75,26 +75,25 @@ function VerifyPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="px-5 pt-5">
-        <Link to="/" className="text-lg font-bold text-gradient-emerald">
-          WinamGames
-        </Link>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center px-5 pb-10">
-        <div className="w-full max-w-sm space-y-6">
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-3 h-3" /> Back
+      <div className="flex-1 flex flex-col pt-16 px-5 pb-10">
+        <div className="w-full max-w-sm mx-auto space-y-8">
+          <Link to="/" className="block text-lg font-bold text-gradient-emerald">
+            WinamGames
           </Link>
 
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold text-foreground">Enter your code</h1>
-            <p className="text-sm text-muted-foreground">
-              We sent a code to •••{last4}
-            </p>
+          <div>
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+            >
+              <ArrowLeft className="w-3 h-3" /> Back
+            </Link>
+            <div className="space-y-2 text-center">
+              <h1 className="text-2xl font-bold text-foreground">Enter your code</h1>
+              <p className="text-sm text-muted-foreground">
+                We sent a code to •••{last4}
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -122,19 +121,21 @@ function VerifyPage() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify →"}
             </button>
 
-            {countdown > 0 ? (
-              <p className="text-center text-xs text-muted-foreground">
-                Resend in {countdown}s
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                className="w-full text-center text-xs text-primary hover:underline"
-              >
-                Didn't get a code? Resend →
-              </button>
-            )}
+            <div className="pt-2">
+              {countdown > 0 ? (
+                <p className="text-center text-xs text-muted-foreground">
+                  Resend in {countdown}s
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  className="w-full text-center text-xs text-primary hover:underline"
+                >
+                  Didn't get a code? Resend →
+                </button>
+              )}
+            </div>
           </form>
         </div>
       </div>
