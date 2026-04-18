@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame,
+  ChevronRight, Swords, BookOpen, Check, Flame,
   Sparkles, Shuffle, Ticket, Calendar,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
