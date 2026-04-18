@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
 import { getSession, updateSessionNickname } from "@/lib/session";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -56,39 +59,48 @@ function OnboardingPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
       <div className="flex-1 flex flex-col justify-center px-6">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="h-12 w-12 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Sparkles className="h-6 w-6 text-primary" />
+        <div className="rounded-2xl border border-border bg-surface-1 shadow-card p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Choose your name</h1>
+              <p className="text-xs text-muted-foreground">This is how others see you</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Choose your name</h1>
-            <p className="text-sm text-muted-foreground">This is how others see you</p>
-          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nickname">Nickname</Label>
+              <Input
+                id="nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
+                placeholder="e.g. NaijaChamp"
+                autoFocus
+                maxLength={16}
+                className="h-11 rounded-xl bg-surface-2 border-border"
+              />
+              {error ? (
+                <p className="text-sm text-destructive">{error}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">3–16 chars · letters, numbers, underscores</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading || nickname.trim().length < 3}
+              className="w-full h-12 rounded-xl shadow-glow"
+            >
+              {loading ? "Saving..." : "Let's play"}
+              {!loading && <ArrowRight className="h-4 w-4" />}
+            </Button>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
-              placeholder="e.g. NaijaChamp"
-              className="w-full h-14 px-4 rounded-xl bg-surface-1 border border-border text-foreground text-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              autoFocus
-              maxLength={16}
-            />
-            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || nickname.trim().length < 3}
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-glow"
-          >
-            {loading ? "Saving..." : "Let's play"}
-            {!loading && <ArrowRight className="h-5 w-5" />}
-          </button>
-        </form>
       </div>
     </div>
   );
