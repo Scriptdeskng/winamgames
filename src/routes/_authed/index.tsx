@@ -157,7 +157,7 @@ function DrawHeroCard({
   }, []);
 
   const remaining = targetDate.getTime() - now;
-  const hms = formatHMS(remaining);
+  const hms = formatCountdown(remaining);
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   return (
@@ -165,7 +165,7 @@ function DrawHeroCard({
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
-      <p className="font-mono text-5xl font-bold tabular-nums text-foreground leading-none">
+      <p className="font-mono text-4xl font-bold tabular-nums text-foreground leading-none">
         {hms}
       </p>
       <p className="text-sm text-foreground mt-4 tabular-nums">
