@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useCallback } from "react";
 import React from "react";
 import { ChessBoard } from "@/components/games/ChessBoard";
@@ -7,7 +7,7 @@ import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { Swords, Check, X } from "lucide-react";
+import { Swords, Check, X, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
