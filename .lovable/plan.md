@@ -1,28 +1,56 @@
 
 
-Update the viewport meta tag in `src/routes/__root.tsx` to disable iOS Safari's auto-zoom on input focus, matching StaySharp's behaviour.
+## Plan
 
-### Change
+Adopt StaySharp's global viewport lock + per-route opt-in scroll pattern.
 
-In `src/routes/__root.tsx` (line 31), replace:
+### 1. Global CSS lock — `src/styles.css`
 
-```ts
-{ name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+Add inside `@layer base`:
+
+```css
+html, body {
+  height: 100dvh;
+  overflow: hidden;
+}
+html.allow-scroll, html.allow-scroll body {
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
 ```
 
-with:
+### 2. New hook — `src/hooks/useAllowScroll.ts`
 
 ```ts
-{ name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
+import { useEffect } from "react";
+export function useAllowScroll() {
+  useEffect(() => {
+    document.documentElement.classList.add("allow-scroll");
+    return () => document.documentElement.classList.remove("allow-scroll");
+  }, []);
+}
 ```
 
-### Effect
+### 3. Opt-in routes — add `useAllowScroll()` call
 
-- iOS Safari will no longer auto-zoom into the phone input (or any other input) on focus across the entire app.
-- Pinch-zoom is disabled app-wide. This is the same trade-off StaySharp made.
-- No other files change. No DB changes. No new dependencies.
+Routes whose content can exceed viewport height:
+- `src/routes/_authed/index.tsx` (home — banners, missions, tip)
+- `src/routes/_authed/leaderboard.tsx`
+- `src/routes/_authed/entries.tsx`
+- `src/routes/_authed/results.tsx`
+- `src/routes/_authed/winners.tsx`
+- `src/routes/_authed/profile.tsx`
+- `src/routes/renew.tsx` (plan list + features can overflow on small screens)
 
-### Files touched
+### Routes deliberately left locked (no scroll)
 
-- `src/routes/__root.tsx` — single-line edit to the viewport meta tag.
+- `src/routes/login.tsx`, `src/routes/verify.tsx`, `src/routes/onboarding.tsx` — single-viewport auth screens
+- `src/routes/_authed/checkmate.tsx`, `src/routes/_authed/wisdomdrop.tsx` — game screens designed to fit one viewport
+
+### Notes
+
+- No `#root` in the CSS rule — TanStack Start renders directly into `<body>`.
+- Hook cleanup removes the class on unmount, so navigating from a scroll page back to a locked page (e.g. results → home → login on logout) restores the lock automatically.
+- No DB changes. No new dependencies.
 
