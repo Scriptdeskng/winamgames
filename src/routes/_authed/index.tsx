@@ -91,7 +91,7 @@ function HomePage() {
               </p>
             </div>
           </div>
-          <RankBadge tier={(player?.rankTier as RankTier) ?? "pawn"} />
+          <RankBadge tier={(player?.rankTier as RankTier) ?? "starter"} />
         </div>
 
         <div>
