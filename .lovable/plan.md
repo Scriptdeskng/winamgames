@@ -2,26 +2,40 @@
 
 ## Plan
 
-Two small changes to align the top bar with the StaySharp pattern (single nav control per screen) and remove duplicate menu entries.
+Single-file refactor of `src/routes/winners.tsx` to remove all airtime/data interactivity while keeping the past-week expand/collapse behavior for the cash top 3.
 
-### 1. Hide hamburger on sub-pages — `src/components/layout/TopBar.tsx`
-- When `backTo` is set, render the back arrow on the left and a placeholder spacer (same `h-10 w-10`) on the right so the centered "WinamGames" wordmark stays visually centered.
-- When `backTo` is not set (home only), keep the avatar (left) + `MenuSheet` (right) as today.
+### Changes
 
-### 2. Clean up menu items — `src/components/layout/MenuSheet.tsx`
-Current list has Home, Games, Leaderboard, My Entries, Winners — Home and Games both route to `/`, which is the duplicate.
+**1. Delete `AirtimeSection` component entirely**
+It's no longer needed — no collapsible, no list, no search, no chevron, no per-tier breakdown.
 
-New list (4 items, all distinct destinations):
-- Home → `/`
-- Leaderboard → `/leaderboard`
-- My Entries → `/entries`
-- Winners → `/winners`
+**2. Replace it with a static summary line**
+A single muted text line rendered directly inside `DrawWeekCard`'s expanded content:
 
-Remove the special-case active logic for "Games" (no longer needed). Active state becomes a simple `location.pathname === item.to` check.
+```tsx
+<p className="text-xs text-muted-foreground px-1">
+  + {totalAirtimeWinners} airtime & data winners
+</p>
+```
+
+Where `totalAirtimeWinners = draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0)` (= 75 per the current data: 5 + 10 + 60).
+
+No `Collapsible`, no `CollapsibleTrigger`, no chevron icon, no click handler. Pure static text.
+
+**3. Keep `DrawWeekCard` collapsible behavior unchanged**
+- Collapsed row still shows date label + total winner count + chevron.
+- Expanded view still shows the 3 cash winners fully (already always visible when the week is expanded — no nested collapse there today).
+- The new static airtime line replaces the old `<AirtimeSection>` call inside the expanded content.
+
+**4. Imports cleanup**
+Remove `useState` if no longer needed in the file (still needed by `DrawWeekCard` for week-level open state — keep it). Remove the `ChevronDown` usage from the deleted `AirtimeSection` only; the week-level chevron stays.
 
 ### Files touched
-- `src/components/layout/TopBar.tsx` — conditional right slot
-- `src/components/layout/MenuSheet.tsx` — drop Games entry, simplify active check
+- `src/routes/winners.tsx` — single edit: delete `AirtimeSection`, replace its call site with the static `<p>` line.
 
-No new components, no new routes, no logic changes elsewhere. The menu still only renders on `/` since `TopBar` is the only place `MenuSheet` is mounted.
+### What stays exactly the same
+- `DRAW_WEEKS` data structure (we keep `airtimeTiers` only to compute the count — could simplify later, but no need now).
+- Hero card, bottom CTA, page layout, `TopBar`.
+- Cash prize winner rendering with position badges (1st/2nd/3rd), phone, entry hash, prize amount.
+- Past-week collapse behavior — first week open by default, others collapsed.
 
