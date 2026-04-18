@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, Play, Clock,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info,
 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/components/ui/accordion";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession, clearSession } from "@/lib/session";
