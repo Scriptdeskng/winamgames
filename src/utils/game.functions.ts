@@ -360,11 +360,14 @@ export const closeSession = createServerFn({ method: "POST" })
     // Rank tier calculation
     const newXp = player.xp_total + xpGained;
     let newTier = player.rank_tier;
-    if (newXp >= 5000) newTier = "king";
-    else if (newXp >= 2500) newTier = "queen";
-    else if (newXp >= 1000) newTier = "rook";
-    else if (newXp >= 400) newTier = "bishop";
-    else if (newXp >= 100) newTier = "knight";
+    if (newXp >= 10000) newTier = "immortal";
+    else if (newXp >= 7000) newTier = "legend";
+    else if (newXp >= 4500) newTier = "icon";
+    else if (newXp >= 2500) newTier = "champion";
+    else if (newXp >= 1200) newTier = "veteran";
+    else if (newXp >= 500) newTier = "sergeant";
+    else if (newXp >= 150) newTier = "recruit";
+    else newTier = "starter";
 
     await supabaseAdmin
       .from("winam_players")
