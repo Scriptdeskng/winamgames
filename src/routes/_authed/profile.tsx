@@ -232,46 +232,40 @@ function IdentityHero({
   const progress = isMax ? 100 : Math.min(100, ((xp - currentMin) / (nextMin - currentMin)) * 100);
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-5 shadow-card space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-surface-2 flex items-center justify-center border border-border">
-          <User className="h-8 w-8 text-primary" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold truncate">{nickname}</h2>
-          <p className="text-sm text-muted-foreground">****{msisdnLast4}</p>
-        </div>
-      </div>
-
-      <div className="h-px bg-border" />
-
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-7 w-7 rounded-lg ${config.bgColor} flex items-center justify-center ${
-                config.glow ? "shadow-glow ring-1 ring-xp/30" : ""
-              }`}
-            >
-              <RankIcon className={`h-3.5 w-3.5 ${config.color}`} />
-            </div>
-            <span className={`text-sm font-semibold ${config.color}`}>{config.label}</span>
+    <div className="rounded-2xl bg-surface-1 border border-border p-6 shadow-card">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative mb-4">
+          <div className="h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center">
+            <User className="h-10 w-10 text-primary" />
           </div>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {isMax ? `${xp.toLocaleString()} XP` : `${xp.toLocaleString()} / ${nextMin.toLocaleString()} XP`}
-          </span>
-        </div>
-        <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${isMax ? "bg-xp" : "bg-primary"}`}
-            style={{ width: `${progress}%` }}
-          />
+            className={`absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-0.5 rounded-full ${config.bgColor} ${
+              config.glow ? "shadow-glow ring-1 ring-xp/30" : ""
+            }`}
+          >
+            <RankIcon className={`h-3 w-3 ${config.color}`} />
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${config.color}`}>
+              {config.label}
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-1.5">
-          {isMax
-            ? "Maximum rank reached"
-            : `${(nextMin - xp).toLocaleString()} XP to ${nextConfig!.label}`}
-        </p>
+
+        <h2 className="text-lg font-bold truncate max-w-full">{nickname}</h2>
+        <p className="text-sm text-muted-foreground mb-5">****{msisdnLast4}</p>
+
+        <div className="w-full">
+          <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${isMax ? "bg-xp" : "bg-primary"}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 tabular-nums">
+            {isMax
+              ? "Maximum rank reached"
+              : `${(nextMin - xp).toLocaleString()} XP to ${nextConfig!.label}`}
+          </p>
+        </div>
       </div>
     </div>
   );
