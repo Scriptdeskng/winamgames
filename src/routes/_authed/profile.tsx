@@ -227,14 +227,20 @@ function IdentityHero({
   const nextConfig = next ? RANK_CONFIG[next] : null;
   const isMax = !next;
 
+  const currentMin = config.minXp;
+  const nextMin = nextConfig ? nextConfig.minXp : config.minXp;
+  const progress = isMax
+    ? 100
+    : Math.min(100, Math.max(0, ((xp - currentMin) / (nextMin - currentMin)) * 100));
+
   return (
     <div className="flex flex-col items-center text-center py-4">
-      <div className="relative mb-4">
-        <div className="h-20 w-20 rounded-full bg-primary/15 flex items-center justify-center">
-          <User className="h-10 w-10 text-primary" />
+      <div className="relative mb-5">
+        <div className="h-20 w-20 rounded-full bg-primary flex items-center justify-center">
+          <User className="h-10 w-10 text-primary-foreground" />
         </div>
         <span
-          className={`absolute -top-1 -right-2 px-2 py-0.5 rounded-full ring-2 ring-background text-[10px] font-semibold uppercase tracking-wide ${config.bgColor} ${config.color} ${
+          className={`absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full ring-2 ring-background text-[10px] font-semibold uppercase tracking-wide ${config.bgColor} ${config.color} ${
             config.glow ? "shadow-glow" : ""
           }`}
         >
@@ -242,12 +248,21 @@ function IdentityHero({
         </span>
       </div>
 
-      <div className="flex items-center gap-1.5 mb-1.5">
+      <div className="flex items-center gap-1.5 mb-3">
         <h2 className="text-lg font-bold truncate max-w-[260px]">{nickname}</h2>
         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
 
-      <p className="text-sm text-muted-foreground tabular-nums">
+      {!isMax && (
+        <div className="w-full max-w-[240px] h-1.5 rounded-full bg-surface-2 overflow-hidden mb-1.5">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground tabular-nums">
         {isMax
           ? "Maximum rank reached"
           : `${(nextConfig!.minXp - xp).toLocaleString()} XP to ${nextConfig!.label}`}
