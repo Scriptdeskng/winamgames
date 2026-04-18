@@ -235,8 +235,8 @@ function IdentityHero({
   return (
     <div className="flex flex-col items-center text-center py-4">
       <div className="relative mb-5">
-        <div className="h-20 w-20 rounded-full bg-primary flex items-center justify-center">
-          <User className="h-10 w-10 text-primary-foreground" />
+        <div className="h-20 w-20 rounded-full bg-surface-2 flex items-center justify-center">
+          <User className="h-10 w-10 text-muted-foreground" />
         </div>
         <span
           className={`absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full ring-2 ring-background text-[10px] font-semibold uppercase tracking-wide ${config.bgColor} ${config.color} ${
