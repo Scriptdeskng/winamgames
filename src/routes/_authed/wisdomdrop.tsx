@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { BookOpen, Check, X } from "lucide-react";
+import { BookOpen, Check, X, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
