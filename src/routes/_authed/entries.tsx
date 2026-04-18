@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { Ticket, ChevronRight } from "lucide-react";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_authed/entries")({
 });
 
 function EntriesPage() {
+  useAllowScroll();
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar backTo="/" />

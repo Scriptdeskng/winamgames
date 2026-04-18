@@ -149,6 +149,18 @@
     border-color: var(--color-border);
   }
 
+  html, body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  html.allow-scroll,
+  html.allow-scroll body {
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
   html {
     background-color: var(--color-background);
     color-scheme: dark;

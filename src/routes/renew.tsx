@@ -3,6 +3,7 @@ import { Crown, Clock, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getSession } from "@/lib/session";
 import { renewSubscription } from "@/utils/auth.functions";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/renew")({
   component: RenewPage,
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/renew")({
 });
 
 function RenewPage() {
+  useAllowScroll();
   const navigate = useNavigate();
   const [playerId, setPlayerId] = useState("");
   const [selected, setSelected] = useState<"daily" | "weekly">("weekly");

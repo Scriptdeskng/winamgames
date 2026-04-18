@@ -5,6 +5,7 @@ import { XpProgressBar, RankBadge } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession, clearSession } from "@/lib/session";
 import type { RankTier } from "@/components/profile/RankBadge";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/profile")({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authed/profile")({
 });
 
 function ProfilePage() {
+  useAllowScroll();
   const navigate = useNavigate();
   const session = getSession();
   const [data, setData] = React.useState<any>(null);

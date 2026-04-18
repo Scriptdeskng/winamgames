@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/_authed/leaderboard")({
   component: LeaderboardPage,
@@ -32,6 +33,7 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "same" }) {
 }
 
 function LeaderboardPage() {
+  useAllowScroll();
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar backTo="/" />

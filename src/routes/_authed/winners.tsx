@@ -7,6 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState } from "react";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/_authed/winners")({
   component: WinnersPage,
@@ -202,6 +203,7 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
 }
 
 function WinnersPage() {
+  useAllowScroll();
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar backTo="/" />
