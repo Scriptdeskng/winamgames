@@ -175,10 +175,10 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       });
 
       if (result.success) {
-        // Encode completed missions as "title|type|amount;;..." for search params
+        // Encode completed missions as "title|amount;;..." for search params (entries-only)
         const missionsStr = (result.completedMissions ?? [])
-          .map((m: { title: string; rewardType: string; rewardAmount: number }) =>
-            `${m.title}|${m.rewardType}|${m.rewardAmount}`
+          .map((m: { title: string; rewardAmount: number }) =>
+            `${m.title}|${m.rewardAmount}`
           )
           .join(";;");
 

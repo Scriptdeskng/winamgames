@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame } from "lucide-react";
-import { getPlayerData, getDailyMissions, getActiveBanners } from "@/utils/mission.functions";
+import {
+  Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame,
+  Sparkles, Shuffle, Ticket, Calendar,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { getPlayerData, getActiveMissions, getActiveBanners } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
@@ -76,7 +80,7 @@ function HomePage() {
     if (!session) return;
     Promise.all([
       getPlayerData({ data: { playerId: session.playerId } }),
-      getDailyMissions({ data: { playerId: session.playerId } }),
+      getActiveMissions({ data: { playerId: session.playerId } }),
       getActiveBanners(),
     ]).then(([playerResult, missionsResult, bannersResult]) => {
       setData({ playerResult, missionsResult, bannersResult });
@@ -118,7 +122,7 @@ function HomePage() {
 
         <BannerStack banners={banners} />
 
-        <DailyMissionsSection missions={missions} />
+        <MissionsSection playerId={session?.playerId ?? ""} initialMissions={missions} />
 
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Play Now</h2>
@@ -247,42 +251,142 @@ function StreakRankStrip({ streak, tier }: { streak: number; tier: RankTier }) {
   );
 }
 
-// ── DailyMissionsSection ──────────────────────────────────────────────
-function DailyMissionsSection({ missions }: { missions: any[] }) {
+// ── MissionsSection ───────────────────────────────────────────────────
+type Mission = {
+  id: string;
+  title: string;
+  conditionType: string;
+  conditionValue: number;
+  progressCurrent: number;
+  rewardAmount: number;
+  status: string;
+};
+
+const MISSION_META: Record<string, { icon: LucideIcon; tint: string }> = {
+  puzzles_solved: { icon: Swords,   tint: "bg-primary/15 text-primary" },
+  no_hints:       { icon: Sparkles, tint: "bg-xp/15 text-xp" },
+  streak_day:     { icon: Flame,    tint: "bg-streak/15 text-streak" },
+  game_type_mix:  { icon: Shuffle,  tint: "bg-primary/15 text-primary" },
+};
+
+function pluralizeEntries(n: number) {
+  return `${n} ${n === 1 ? "entry" : "entries"}`;
+}
+
+function MissionsSection({
+  playerId,
+  initialMissions,
+}: {
+  playerId: string;
+  initialMissions: Mission[];
+}) {
+  const [missions, setMissions] = React.useState<Mission[]>(initialMissions);
+  const [exitingIds, setExitingIds] = React.useState<Set<string>>(new Set());
+  const replacedRef = React.useRef<Set<string>>(new Set());
+
+  // Keep state in sync if parent reloads (e.g. on first mount completion)
+  React.useEffect(() => {
+    setMissions(initialMissions);
+  }, [initialMissions]);
+
+  // After 3s, fade out completed missions and refetch for replacements.
+  React.useEffect(() => {
+    if (!playerId) return;
+    const completedToReplace = missions.filter(
+      (m) => m.status === "completed" && !replacedRef.current.has(m.id)
+    );
+    if (completedToReplace.length === 0) return;
+
+    completedToReplace.forEach((m) => replacedRef.current.add(m.id));
+
+    const holdMs = 3000;
+    const exitMs = 350;
+    const t1 = setTimeout(() => {
+      setExitingIds((prev) => {
+        const next = new Set(prev);
+        completedToReplace.forEach((m) => next.add(m.id));
+        return next;
+      });
+    }, holdMs);
+
+    const t2 = setTimeout(async () => {
+      const res = await getActiveMissions({ data: { playerId } });
+      if (res.success) {
+        setMissions(res.missions);
+        setExitingIds(new Set());
+      }
+    }, holdMs + exitMs);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [missions, playerId]);
+
+  const completedCount = missions.filter((m) => m.status === "completed").length;
+
   return (
     <div>
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-        Daily Missions
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Missions
+          {completedCount > 0 && (
+            <span className="ml-2 text-muted-foreground/70 normal-case font-normal tracking-normal">
+              · {completedCount} of {missions.length} done
+            </span>
+          )}
+        </h2>
+      </div>
+
       {missions.length === 0 ? (
-        <div className="rounded-2xl bg-surface-1 border border-border p-4 text-center">
-          <p className="text-sm font-semibold">Missions reset at midnight</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Play now to build your streak and earn entries
-          </p>
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-center gap-3">
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">New missions coming soon</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {missions.map((mission: { id: string; title: string; rewardAmount: number; rewardType: string; status: string; progress: string }) => (
-            <div key={mission.id} className="rounded-xl bg-surface-1 border border-border p-3 flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium">{mission.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {mission.rewardAmount} {mission.rewardType}
-                </p>
-              </div>
-              {mission.status === "completed" ? (
-                <div className="flex items-center gap-1 text-success">
-                  <Check className="h-4 w-4" />
-                  <span className="text-xs font-medium">Done</span>
-                </div>
-              ) : (
-                <span className="text-xs font-medium tabular-nums text-primary">{mission.progress}</span>
-              )}
-            </div>
+          {missions.map((m) => (
+            <MissionRow key={m.id} mission={m} exiting={exitingIds.has(m.id)} />
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }) {
+  const meta = MISSION_META[mission.conditionType] ?? MISSION_META.puzzles_solved;
+  const Icon = meta.icon;
+  const isCompleted = mission.status === "completed";
+  const progress = Math.min(mission.progressCurrent, mission.conditionValue);
+
+  return (
+    <div
+      className={`rounded-xl border p-3 flex items-center gap-3 transition-all duration-300 ${
+        isCompleted
+          ? "bg-success/5 border-success/30"
+          : "bg-surface-1 border-border"
+      } ${exiting ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"}`}
+    >
+      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${meta.tint}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium line-clamp-1">{mission.title}</p>
+        {isCompleted ? (
+          <p className="text-xs text-success flex items-center gap-1 mt-0.5">
+            <Check className="h-3 w-3" /> Reward claimed
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
+            {progress}/{mission.conditionValue}
+          </p>
+        )}
+      </div>
+      <div className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-xs font-semibold">
+        <Ticket className="h-3 w-3" />
+        {pluralizeEntries(mission.rewardAmount)}
+      </div>
     </div>
   );
 }
@@ -291,7 +395,7 @@ function DailyMissionsSection({ missions }: { missions: any[] }) {
 const ONBOARDING_TIPS = [
   "Streaks of 3+ days earn a bonus entry each game",
   "Solving puzzles without hints gives 2x coins",
-  "Complete all 3 daily missions for extra entries",
+  "Complete missions to earn extra entries into the draw",
   "Your rank tier upgrades as you earn more XP",
   "Each correct answer earns entries into the weekly draw",
   "Play both CheckMate and WisdomDrop to complete the game mix mission",

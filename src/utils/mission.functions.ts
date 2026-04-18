@@ -84,8 +84,10 @@ export const getPlayerData = createServerFn({ method: "POST" })
     };
   });
 
-// ── getDailyMissions ──────────────────────────────────────────────────
-export const getDailyMissions = createServerFn({ method: "POST" })
+// ── getActiveMissions ─────────────────────────────────────────────────
+// Persistent missions: player always has up to 3 pending. Completed ones
+// are replaced lazily on next fetch (with a variety guard).
+export const getActiveMissions = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       playerId: z.string().uuid(),
@@ -94,62 +96,10 @@ export const getDailyMissions = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // WAT date (UTC+1)
-    const now = new Date();
-    const watDate = new Date(now.getTime() + 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    const TARGET_PENDING = 3;
+    const RECENT_EXCLUDE = 3;
 
-    // Check for existing assignments today
-    const { data: existing } = await supabaseAdmin
-      .from("winam_player_missions")
-      .select(`
-        id,
-        mission_id,
-        status,
-        coins_awarded,
-        entries_awarded,
-        winam_missions (
-          title,
-          condition_type,
-          condition_value,
-          reward_type,
-          reward_amount,
-          game_type
-        )
-      `)
-      .eq("player_id", data.playerId)
-      .eq("assigned_date_wat", watDate);
-
-    if (existing && existing.length > 0) {
-      // Get progress stats
-      const { getTodaySessionStats } = await import("@/utils/mission.server");
-      const stats = await getTodaySessionStats(supabaseAdmin, data.playerId, watDate);
-
-      return {
-        success: true as const,
-        missions: existing.map((pm) => {
-          const m = pm.winam_missions as unknown as {
-            title: string;
-            condition_type: string;
-            condition_value: number;
-            reward_type: string;
-            reward_amount: number;
-            game_type: string | null;
-          };
-          return {
-            id: pm.id,
-            title: m?.title ?? "",
-            status: pm.status,
-            rewardType: m?.reward_type ?? "coins",
-            rewardAmount: m?.reward_amount ?? 0,
-            progress: getProgress(m?.condition_type, m?.condition_value, stats),
-          };
-        }),
-      };
-    }
-
-    // Assign 3 random missions
+    // Need a draw week id to insert new player_mission rows (FK requires it).
     const { data: drawWeek } = await supabaseAdmin
       .from("winam_draw_weeks")
       .select("id")
@@ -157,66 +107,94 @@ export const getDailyMissions = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    if (!drawWeek) {
-      return { success: false as const, error: "No active draw week" };
+    // Helper to fetch full active set (pending + recent completed for display)
+    const loadActive = async () => {
+      const { data: pending } = await supabaseAdmin
+        .from("winam_player_missions")
+        .select(`
+          id,
+          mission_id,
+          status,
+          progress_current,
+          entries_awarded,
+          completed_at,
+          winam_missions (
+            title,
+            condition_type,
+            condition_value,
+            reward_amount
+          )
+        `)
+        .eq("player_id", data.playerId)
+        .eq("status", "pending")
+        .order("id", { ascending: true });
+
+      return pending ?? [];
+    };
+
+    let pending = await loadActive();
+
+    // Replenish if below target and we have a draw week to anchor new rows
+    if (pending.length < TARGET_PENDING && drawWeek) {
+      const pendingIds = pending.map((p) => p.mission_id);
+
+      // Recent completions to avoid immediate repeats
+      const { data: recentCompleted } = await supabaseAdmin
+        .from("winam_player_missions")
+        .select("mission_id")
+        .eq("player_id", data.playerId)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(RECENT_EXCLUDE);
+      const recentIds = (recentCompleted ?? []).map((r) => r.mission_id);
+
+      const exclude = new Set<string>([...pendingIds, ...recentIds]);
+
+      let pool: Array<{ id: string }> = [];
+      const { data: candidates } = await supabaseAdmin
+        .from("winam_missions")
+        .select("id")
+        .eq("is_active", true);
+      pool = (candidates ?? []).filter((m) => !exclude.has(m.id));
+
+      // If exclude pool is too aggressive (player has done everything recently),
+      // relax to just exclude currently pending.
+      if (pool.length === 0) {
+        pool = (candidates ?? []).filter((m) => !pendingIds.includes(m.id));
+      }
+
+      const needed = TARGET_PENDING - pending.length;
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, needed);
+
+      if (shuffled.length > 0) {
+        const inserts = shuffled.map((m) => ({
+          player_id: data.playerId,
+          mission_id: m.id,
+          draw_week_id: drawWeek.id,
+          progress_current: 0,
+        }));
+        await supabaseAdmin.from("winam_player_missions").insert(inserts);
+        pending = await loadActive();
+      }
     }
-
-    const { data: activeMissions } = await supabaseAdmin
-      .from("winam_missions")
-      .select("*")
-      .eq("is_active", true);
-
-    if (!activeMissions || activeMissions.length === 0) {
-      return { success: true as const, missions: [] };
-    }
-
-    // Pick 3 (or fewer if not enough missions)
-    const shuffled = [...activeMissions].sort(() => Math.random() - 0.5);
-    const picked = shuffled.slice(0, 3);
-
-    const inserts = picked.map((m) => ({
-      player_id: data.playerId,
-      mission_id: m.id,
-      draw_week_id: drawWeek.id,
-      assigned_date_wat: watDate,
-    }));
-
-    const { data: inserted } = await supabaseAdmin
-      .from("winam_player_missions")
-      .insert(inserts)
-      .select(`
-        id,
-        mission_id,
-        status,
-        coins_awarded,
-        entries_awarded,
-        winam_missions (
-          title,
-          condition_type,
-          condition_value,
-          reward_type,
-          reward_amount,
-          game_type
-        )
-      `);
 
     return {
       success: true as const,
-      missions: (inserted ?? []).map((pm) => {
+      missions: pending.map((pm) => {
         const m = pm.winam_missions as unknown as {
           title: string;
           condition_type: string;
           condition_value: number;
-          reward_type: string;
           reward_amount: number;
-        };
+        } | null;
         return {
           id: pm.id,
           title: m?.title ?? "",
-          status: pm.status,
-          rewardType: m?.reward_type ?? "coins",
+          conditionType: m?.condition_type ?? "puzzles_solved",
+          conditionValue: m?.condition_value ?? 1,
+          progressCurrent: pm.progress_current,
           rewardAmount: m?.reward_amount ?? 0,
-          progress: "0/" + (m?.condition_value ?? 1),
+          status: pm.status,
         };
       }),
     };
@@ -249,7 +227,6 @@ export const getLeaderboard = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Get current draw week
     const { data: drawWeek } = await supabaseAdmin
       .from("winam_draw_weeks")
       .select("id")
@@ -259,7 +236,6 @@ export const getLeaderboard = createServerFn({ method: "POST" })
 
     if (!drawWeek) return { success: true as const, players: [] };
 
-    // Get top players by entry total this week
     const { data: entries } = await supabaseAdmin
       .from("winam_entry_ledger")
       .select("player_id, week_total_after")
@@ -269,7 +245,6 @@ export const getLeaderboard = createServerFn({ method: "POST" })
 
     if (!entries || entries.length === 0) return { success: true as const, players: [] };
 
-    // Deduplicate by player (take highest week_total_after)
     const playerMap = new Map<string, number>();
     for (const e of entries) {
       const current = playerMap.get(e.player_id) ?? 0;
@@ -297,24 +272,3 @@ export const getLeaderboard = createServerFn({ method: "POST" })
 
     return { success: true as const, players: sorted };
   });
-
-// Helper: compute mission progress string
-function getProgress(
-  conditionType: string | undefined,
-  conditionValue: number | undefined,
-  stats: { totalPuzzlesSolved: number; hasNoHintsSession: boolean; distinctGameTypes: number; currentStreak: number }
-): string {
-  const target = conditionValue ?? 1;
-  switch (conditionType) {
-    case "puzzles_solved":
-      return `${Math.min(stats.totalPuzzlesSolved, target)}/${target}`;
-    case "no_hints":
-      return stats.hasNoHintsSession ? "1/1" : "0/1";
-    case "streak_day":
-      return `${Math.min(stats.currentStreak, target)}/${target}`;
-    case "game_type_mix":
-      return `${Math.min(stats.distinctGameTypes, target)}/${target}`;
-    default:
-      return `0/${target}`;
-  }
-}

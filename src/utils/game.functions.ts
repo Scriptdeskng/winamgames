@@ -263,7 +263,7 @@ export const closeSession = createServerFn({ method: "POST" })
     // Get session to find draw_week_id
     const { data: session } = await supabaseAdmin
       .from("winam_game_sessions")
-      .select("draw_week_id, session_date_wat")
+      .select("draw_week_id, session_date_wat, game_type")
       .eq("id", data.sessionId)
       .single();
 
@@ -284,20 +284,10 @@ export const closeSession = createServerFn({ method: "POST" })
     else if (streak >= 7) streakBonus = 2;
     else if (streak >= 3) streakBonus = 1;
 
-    // Mission bonus: check today's completed missions for this player
+    // Mission bonus is now awarded directly by evaluatePendingMissions (which
+    // writes its own ledger rows). Session-level rawEntries excludes missions.
     const watDate = session.session_date_wat;
-    const { data: priorCompletedMissions } = await supabaseAdmin
-      .from("winam_player_missions")
-      .select("entries_awarded")
-      .eq("player_id", data.playerId)
-      .eq("assigned_date_wat", watDate)
-      .eq("status", "completed");
-
-    const missionBonus = priorCompletedMissions
-      ? priorCompletedMissions.reduce((sum: number, m: { entries_awarded: number }) => sum + m.entries_awarded, 0)
-      : 0;
-
-    const rawEntries = baseEntries + streakBonus + missionBonus;
+    const rawEntries = baseEntries + streakBonus;
 
     // Get current week total
     const { data: weekEntries } = await supabaseAdmin
@@ -380,13 +370,23 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.playerId);
 
-    // ── Evaluate missions ──
+    // ── Evaluate missions (writes its own ledger rows for entry rewards) ──
     const { evaluatePendingMissions } = await import("@/utils/mission.server");
     const completedMissions = await evaluatePendingMissions(
       supabaseAdmin,
       data.playerId,
       session.draw_week_id,
-      watDate
+      watDate,
+      {
+        puzzlesSolved: data.puzzlesSolved,
+        hintsUsed: data.hintsUsed,
+        gameType: session.game_type,
+      }
+    );
+
+    const missionEntriesAdded = completedMissions.reduce(
+      (sum, m) => sum + m.entriesAdded,
+      0
     );
 
     return {
@@ -395,7 +395,7 @@ export const closeSession = createServerFn({ method: "POST" })
       coins: totalCoins,
       xp: xpGained,
       streak: newStreak,
-      weekTotal: weekSoFar + entriesToAdd,
+      weekTotal: weekSoFar + entriesToAdd + missionEntriesAdded,
       weekCap,
       overflow,
       netPuzzles,
@@ -403,7 +403,6 @@ export const closeSession = createServerFn({ method: "POST" })
       previousRank: player.rank_tier,
       completedMissions: completedMissions.map((m) => ({
         title: m.title,
-        rewardType: m.rewardType,
         rewardAmount: m.rewardAmount,
       })),
     };

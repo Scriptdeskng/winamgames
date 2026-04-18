@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Trophy, Coins, Flame, Target, Sparkles, Check, ArrowUp } from "lucide-react";
+import { Trophy, Coins, Flame, Target, Sparkles, Check, ArrowUp, Ticket } from "lucide-react";
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
 import { TopBar } from "@/components/layout/TopBar";
@@ -27,17 +27,21 @@ export const Route = createFileRoute("/_authed/results")({
   }),
 });
 
+function pluralizeEntries(n: number) {
+  return `${n} ${n === 1 ? "entry" : "entries"}`;
+}
+
 function ResultsPage() {
   useAllowScroll();
   const { entries, coins, xp, streak, weekTotal, weekCap, rankTier, previousRank, missions } = Route.useSearch();
 
   const rankedUp = rankTier !== previousRank;
 
-  // Parse missions: "title1|type1|amount1;;title2|type2|amount2"
+  // Parse missions: "title1|amount1;;title2|amount2" (entries-only)
   const completedMissions = missions
     ? missions.split(";;").filter(Boolean).map((m: string) => {
-        const [title, rewardType, rewardAmount] = m.split("|");
-        return { title, rewardType, rewardAmount: parseInt(rewardAmount) || 0 };
+        const [title, rewardAmount] = m.split("|");
+        return { title, rewardAmount: parseInt(rewardAmount) || 0 };
       })
     : [];
 
@@ -89,12 +93,14 @@ function ResultsPage() {
       {completedMissions.length > 0 && (
         <div className="w-full mt-4 space-y-2">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Missions Completed</h2>
-          {completedMissions.map((m: { title: string; rewardType: string; rewardAmount: number }, i: number) => (
+          {completedMissions.map((m: { title: string; rewardAmount: number }, i: number) => (
             <div key={i} className="rounded-xl bg-success/10 border border-success/20 p-3 flex items-center gap-3">
               <Check className="h-4 w-4 text-success" />
               <div className="flex-1">
                 <p className="text-sm font-medium">{m.title}</p>
-                <p className="text-xs text-muted-foreground">+{m.rewardAmount} {m.rewardType}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Ticket className="h-3 w-3" /> +{pluralizeEntries(m.rewardAmount)}
+                </p>
               </div>
             </div>
           ))}
