@@ -64,7 +64,7 @@ function ResultsPage() {
       })
     : [];
 
-  const missionEntries = completedMissions.reduce((sum, m) => sum + m.rewardAmount, 0);
+  const missionEntries = completedMissions.reduce((sum: number, m: { rewardAmount: number }) => sum + m.rewardAmount, 0);
   const streakBonusEntries = Math.max(0, entries - baseEntries - missionEntries);
 
   // Build breakdown chips
