@@ -30,15 +30,35 @@ function getNextSundayWAT(): Date {
   return target;
 }
 
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return "00:00:00";
-  const totalSec = Math.floor(ms / 1000);
-  const days = Math.floor(totalSec / 86400);
-  const h = Math.floor((totalSec % 86400) / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const hms = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return days > 0 ? `${days}d ${hms}` : hms;
+function getCountdownParts(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(total / 86400),
+    hours: Math.floor((total % 86400) / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+    seconds: total % 60,
+  };
+}
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[10px] text-muted-foreground lowercase mt-0.5 leading-none">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function CountdownColon() {
+  return (
+    <span className="font-mono text-4xl font-bold leading-none text-foreground pb-[14px]">
+      :
+    </span>
+  );
 }
 
 function HomePage() {
@@ -157,7 +177,7 @@ function DrawHeroCard({
   }, []);
 
   const remaining = targetDate.getTime() - now;
-  const hms = formatCountdown(remaining);
+  const { days, hours, minutes, seconds } = getCountdownParts(remaining);
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   return (
@@ -165,10 +185,20 @@ function DrawHeroCard({
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
-      <p className="font-mono text-4xl font-bold tabular-nums text-foreground leading-none">
-        {hms}
-      </p>
-      <p className="text-sm text-foreground mt-4 tabular-nums">
+      <div className="flex items-end gap-1.5">
+        {days > 0 && (
+          <>
+            <CountdownUnit value={days} label="day" />
+            <CountdownColon />
+          </>
+        )}
+        <CountdownUnit value={hours} label="hr" />
+        <CountdownColon />
+        <CountdownUnit value={minutes} label="min" />
+        <CountdownColon />
+        <CountdownUnit value={seconds} label="sec" />
+      </div>
+      <p className="text-sm text-foreground mt-3 tabular-nums">
         <span className="font-bold text-primary">{weekTotal}</span>
         <span className="text-muted-foreground"> / {weekCap} entries this week</span>
       </p>
