@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Menu, Home, Swords, Trophy, Ticket, Award } from "lucide-react";
+import { Menu, Home, Trophy, Ticket, Award } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
-  { to: "/", icon: Swords, label: "Games" },
   { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
   { to: "/entries", icon: Ticket, label: "My Entries" },
   { to: "/winners", icon: Award, label: "Winners" },
@@ -34,10 +33,7 @@ export function MenuSheet() {
           </SheetHeader>
           <nav className="space-y-1">
             {navItems.map((item) => {
-              const isActive =
-                item.label === "Games"
-                  ? location.pathname === "/checkmate" || location.pathname === "/wisdomdrop"
-                  : location.pathname === item.to;
+              const isActive = location.pathname === item.to;
               return (
                 <Link
                   key={item.to}
