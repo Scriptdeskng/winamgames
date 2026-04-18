@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { sendOtp } from "@/utils/auth.functions";
 import { getSession } from "@/lib/session";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -52,14 +53,12 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="px-5 pt-5">
-        <Link to="/" className="text-lg font-bold text-gradient-emerald">
-          WinamGames
-        </Link>
-      </div>
+      <div className="flex-1 flex flex-col pt-16 px-5 pb-10">
+        <div className="w-full max-w-sm mx-auto space-y-8">
+          <Link to="/" className="block text-lg font-bold text-gradient-emerald">
+            WinamGames
+          </Link>
 
-      <div className="flex-1 flex items-center justify-center px-5 pb-10">
-        <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
             <p className="text-sm text-muted-foreground">
@@ -72,14 +71,14 @@ function LoginPage() {
               <label htmlFor="phone" className="text-xs text-muted-foreground">
                 Phone number
               </label>
-              <input
+              <Input
                 id="phone"
                 type="tel"
                 value={msisdn}
                 onChange={(e) => setMsisdn(e.target.value)}
                 placeholder="08012345678"
                 autoFocus
-                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-12 px-4 rounded-xl bg-input border-border text-foreground text-sm placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring shadow-none"
               />
             </div>
 
