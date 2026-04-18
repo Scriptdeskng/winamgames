@@ -161,28 +161,34 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* ── How entries work ────────────────────────────────── */}
-        <div className="rounded-2xl bg-surface-1 border border-border p-5">
-          <h3 className="text-sm font-semibold mb-4">How entries work</h3>
-          <ol className="space-y-3.5">
-            {[
-              { lead: "Solve to earn", body: "Every 5 puzzles you solve in a session earns 1 draw entry." },
-              { lead: "Streak bonuses", body: "Day 3 adds +1 per session, day 7 adds +2, day 14 adds +3." },
-              { lead: "Mission rewards", body: "Complete missions for bonus entries on top." },
-              { lead: "Weekly draw", body: "Entries reset Monday. Draw is Sunday 20:00 WAT — more entries, better odds." },
-            ].map((rule, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center tabular-nums">
-                  {i + 1}
-                </span>
-                <div className="flex-1 -mt-0.5">
-                  <p className="text-sm font-medium text-foreground">{rule.lead}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{rule.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
+        {/* ── How entries work (collapsible) ──────────────────── */}
+        <Accordion type="single" collapsible className="rounded-2xl bg-surface-1 border border-border px-5">
+          <AccordionItem value="how-entries" className="border-0">
+            <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
+              How entries work
+            </AccordionTrigger>
+            <AccordionContent className="pb-5 pt-1">
+              <ol className="space-y-3.5">
+                {[
+                  { lead: "Solve to earn", body: "Every 5 puzzles you solve in a session earns 1 weekly draw entry." },
+                  { lead: "Streak bonuses", body: "Day 3 adds +1 per session, day 7 adds +2, day 14 adds +3." },
+                  { lead: "Mission rewards", body: "Complete missions for bonus entries on top." },
+                  { lead: "Weekly draw", body: "Entries reset Monday. Draw is Sunday 20:00 WAT — more entries, better odds." },
+                ].map((rule, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center tabular-nums">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 -mt-0.5">
+                      <p className="text-sm font-medium text-foreground">{rule.lead}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{rule.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         {/* ── Logout (quiet, bottom) ──────────────────────────── */}
         <div className="pt-2">
