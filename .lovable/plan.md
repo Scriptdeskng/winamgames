@@ -1,58 +1,52 @@
 
 
-## Restructure Profile hero to a centered, vertical layout
+## Profile hero — final adjustments to match reference
 
-The reference screenshot shows a calmer, more focused hero: avatar centered, identity stacked beneath, rank progress as a thin bar at the bottom. The current side-by-side avatar + nickname + inline rank progress competes visually with the entries card below. Restructuring fixes the hierarchy.
+Two changes to the prior plan based on your feedback:
 
-### What to change
+### 1. Pill shows rank name, not a number
 
-**`IdentityHero` in `src/routes/_authed/profile.tsx`** — switch from horizontal layout to centered vertical:
+Replace the numeric level badge (`"5"`) with the **rank name** (`"Veteran"`, `"Champion"`, etc.) — same data the original pill showed, just restyled as a small chip at the avatar's top-right.
+
+- Shape: small rounded pill (`rounded-full px-2 py-0.5`), not a circle.
+- Content: just the rank label text — no icon inside.
+- Color: use `RANK_CONFIG[tier].bgColor` + `RANK_CONFIG[tier].color` so each tier keeps its identity color (emerald for Champion, orange for Veteran, etc.).
+- Position: absolute, top-right of avatar (`-top-1 -right-2`), with a thin `ring-2 ring-background` so it visually detaches from the avatar circle.
+
+### 2. Keep "to {RankName}" in the XP line
+
+Restore the next-tier name in the muted status line. Final copy:
+- Normal: **"440 XP to Champion"**
+- Max rank: **"Maximum rank reached"**
+
+### Everything else from prior plan stands
+
+- **Drop the card wrapper** — hero sits flat on page background, just vertical padding (`py-4`).
+- **Remove MSISDN line.**
+- **Add `Pencil` icon** (h-3.5, muted) inline after nickname, non-functional.
+- **Remove the progress bar** — single muted XP line only.
+- Avatar stays `h-20 w-20` with `bg-primary/15`.
+
+### Resulting structure
 
 ```
-┌─────────────────────────────────┐
-│                                 │
-│           ⊙ Avatar              │  ← centered, larger
-│           [Veteran]             │  ← rank chip overlaps
-│                                 │     bottom-right of avatar
-│           King Ed               │  ← centered, bold
-│           ****0000              │  ← centered, muted
-│                                 │
-│   ▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░       │  ← thin progress bar
-│   1,300 XP to Champion          │  ← single muted line
-│                                 │
-└─────────────────────────────────┘
+                              
+           ⊙ Avatar [Veteran]      ← rank pill top-right
+                                   
+         King Ed ✏️                ← name + pencil
+                                   
+       440 XP to Champion          ← single muted line
+                              
+   (flat — no card border/shadow)
 ```
-
-### Specific structural changes
-
-1. **Avatar**: keep current `User` icon, increase to ~h-20 w-20, center horizontally, add the `bg-primary/15` tint from reference (uses existing emerald token).
-2. **Rank chip overlay**: small pill (`bg-primary/20 text-primary text-xs font-semibold`) absolutely positioned at avatar's bottom-right, showing rank label. Replaces the inline rank icon + label row.
-3. **Identity text**: nickname + masked MSISDN stacked, centered, beneath avatar.
-4. **Progress bar**: keep existing 2px height bar but full-width, no inline header above it. Just the bar + a single subtle line below: `"1,300 XP to Champion"` (or `"Maximum rank reached"` at max). Drop the `"X / Y XP"` numeric readout — it's redundant with "X XP to next" and adds noise.
-5. **Remove** the horizontal divider (`h-px bg-border`) — vertical layout doesn't need a separator.
-
-### What stays
-
-- Same data inputs (`nickname`, `msisdnLast4`, `xp`, `tier`).
-- Same `RANK_CONFIG` lookup, same next-tier math.
-- Same `WeeklyEntriesCard` below — untouched.
-- Same Coins + Streak 2-up grid below that — untouched.
-- All other page sections — untouched.
-
-### Why this fixes the hierarchy issue
-
-- Identity card becomes shorter and visually quieter (centered, less dense).
-- Entries card remains the most visually loud element on the page (gradient, large numbers, CTA button) — which is correct, since it's the primary stat.
-- Reduces two competing "hero" cards to one true hero (entries) with a calmer identity header above it.
 
 ### Files touched
 
-- `src/routes/_authed/profile.tsx` — rewrite the `IdentityHero` component only.
+- `src/routes/_authed/profile.tsx` — rewrite `IdentityHero` only.
+- Add `Pencil` to lucide-react imports; remove unused `User` if no longer referenced elsewhere in the file (keep if still used).
 
-No new components, no new icons, no schema, no other files.
+### Out of scope
 
-### Out of scope (call out, don't auto-include)
-
-- The reference shows a small edit/pencil icon next to the nickname. Not included — current app has no nickname-edit flow. If you want one, that's a separate task (edit modal + server function + validation).
-- The reference uses an "Lvl 5" chip; we keep the rank tier label ("Veteran", etc.) since rank is your existing system, not a numeric level.
+- Pencil edit functionality (visual only).
+- `msisdnLast4` prop stays in signature but unused — clean up in a follow-up if desired.
 
