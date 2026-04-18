@@ -186,6 +186,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
           to: "/results",
           search: {
             entries: result.entries,
+            baseEntries: result.baseEntries ?? 0,
             coins: result.coins,
             xp: result.xp,
             streak: result.streak,
@@ -194,6 +195,8 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
             rankTier: result.rankTier ?? "starter",
             previousRank: result.previousRank ?? "starter",
             missions: missionsStr,
+            puzzlesSolved: finalSolved,
+            gameType,
           },
         });
       }

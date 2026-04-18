@@ -391,7 +391,11 @@ export const closeSession = createServerFn({ method: "POST" })
 
     return {
       success: true as const,
-      entries: entriesToAdd,
+      entries: entriesToAdd + missionEntriesAdded,
+      sessionEntries: entriesToAdd,
+      baseEntries,
+      streakBonus,
+      missionEntries: missionEntriesAdded,
       coins: totalCoins,
       xp: xpGained,
       streak: newStreak,
