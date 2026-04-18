@@ -222,6 +222,23 @@ export const getDailyMissions = createServerFn({ method: "POST" })
     };
   });
 
+// ── getActiveBanners ──────────────────────────────────────────────────
+export const getActiveBanners = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data, error } = await supabaseAdmin
+      .from("winam_banners")
+      .select("id, title, subtitle, icon_url, display_order")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .limit(3);
+
+    if (error) return { success: false as const, banners: [] };
+    return { success: true as const, banners: data ?? [] };
+  }
+);
+
 // ── getLeaderboard ────────────────────────────────────────────────────
 export const getLeaderboard = createServerFn({ method: "POST" })
   .inputValidator(
