@@ -30,13 +30,15 @@ function getNextSundayWAT(): Date {
   return target;
 }
 
-function formatHMS(ms: number): string {
+function formatCountdown(ms: number): string {
   if (ms <= 0) return "00:00:00";
   const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
+  const days = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  const hms = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return days > 0 ? `${days}d ${hms}` : hms;
 }
 
 function HomePage() {
@@ -155,7 +157,7 @@ function DrawHeroCard({
   }, []);
 
   const remaining = targetDate.getTime() - now;
-  const hms = formatHMS(remaining);
+  const hms = formatCountdown(remaining);
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   return (
@@ -163,7 +165,7 @@ function DrawHeroCard({
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
-      <p className="font-mono text-5xl font-bold tabular-nums text-foreground leading-none">
+      <p className="font-mono text-4xl font-bold tabular-nums text-foreground leading-none">
         {hms}
       </p>
       <p className="text-sm text-foreground mt-4 tabular-nums">
@@ -220,12 +222,6 @@ function DailyMissionsSection({ missions }: { missions: any[] }) {
           <p className="text-xs text-muted-foreground mt-1">
             Play now to build your streak and earn entries
           </p>
-          <Link
-            to="/checkmate"
-            className="inline-flex items-center justify-center mt-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 py-2 hover:shadow-glow transition-all"
-          >
-            Play now
-          </Link>
         </div>
       ) : (
         <div className="space-y-2">
