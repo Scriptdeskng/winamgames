@@ -144,14 +144,6 @@ function HomePage() {
           </div>
         </div>
 
-        <DynamicTip
-          totalSessions={totalSessions}
-          weekTotal={weekTotal}
-          weekCap={weekCap}
-          tier={tier}
-          xpTotal={xpTotal}
-          bestSession={bestSession}
-        />
       </div>
     </div>
   );
