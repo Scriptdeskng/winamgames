@@ -152,8 +152,9 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
             <Trophy className="h-4 w-4 text-primary" />
             <div className="text-left">
               <p className="text-sm font-semibold">{draw.label}</p>
-              <p className="text-[10px] text-muted-foreground">{totalWinners} winners</p>
-            </div>
+              <p className="text-[10px] text-muted-foreground">
+                {draw.isPlaceholder ? "50+ winners" : `${totalWinners} winners`}
+              </p>
           </div>
           <ChevronDown
             className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
