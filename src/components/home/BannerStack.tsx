@@ -16,6 +16,14 @@ const ICON_MAP: Record<string, LucideIcon> = {
   book: BookOpen,
 };
 
+const ICON_STYLES: Record<string, { bg: string; fg: string }> = {
+  trophy: { bg: "bg-coin/15", fg: "text-coin" },
+  flame: { bg: "bg-streak/15", fg: "text-streak" },
+  book: { bg: "bg-xp/15", fg: "text-xp" },
+};
+
+const FALLBACK_STYLE = { bg: "bg-primary/15", fg: "text-primary" };
+
 const ROTATE_MS = 5000;
 
 export function BannerStack({ banners }: { banners: Banner[] }) {
@@ -38,6 +46,7 @@ export function BannerStack({ banners }: { banners: Banner[] }) {
       {visible.map((banner, i) => {
         const slot = (i - activeIndex + N) % N;
         const Icon = (banner.icon_url && ICON_MAP[banner.icon_url]) || Sparkles;
+        const style = (banner.icon_url && ICON_STYLES[banner.icon_url]) || FALLBACK_STYLE;
 
         return (
           <motion.div
@@ -52,8 +61,8 @@ export function BannerStack({ banners }: { banners: Banner[] }) {
             transition={{ type: "spring", stiffness: 280, damping: 30 }}
           >
             <div className="relative rounded-2xl bg-surface-1 border border-border p-4 shadow-card flex items-start gap-3">
-              <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                <Icon className="h-6 w-6 text-primary" />
+              <div className={`h-12 w-12 rounded-xl ${style.bg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-6 w-6 ${style.fg}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-foreground leading-tight">
