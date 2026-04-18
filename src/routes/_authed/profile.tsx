@@ -264,7 +264,7 @@ function IdentityHero({
       <p className="text-xs text-muted-foreground tabular-nums">
         {isMax
           ? "Maximum rank reached"
-          : `${(nextConfig!.minXp - xp).toLocaleString()} XP to ${nextConfig!.label}`}
+          : `${(nextConfig!.minXp - xp).toLocaleString()} XP to unlock ${nextConfig!.label}`}
       </p>
     </div>
   );
