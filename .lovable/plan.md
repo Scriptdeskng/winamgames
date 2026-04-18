@@ -1,60 +1,88 @@
 
 
-## Comparison: Winam vs StaySharp Admin login
+## Misalignment with StaySharp screenshots
 
-| Aspect | Winam (current) | StaySharp Admin | Verdict |
-|---|---|---|---|
-| Form container | Fields directly on page bg | Elevated card on darker bg | **StaySharp wins** — clearer focal point |
-| Input primitive | Hand-rolled `<input>` h-14 with inline icon | shadcn `<Input>` + `<Label>` | **StaySharp wins** — consistent, accessible |
-| Header | Big gradient brand + tagline | Compact title + sub-purpose | StaySharp is more restrained, but Winam's gradient brand has personality |
-| Button | h-14, glow, arrow, marketing-loud | shadcn `<Button>`, brand block | StaySharp is calmer; Winam's glow CTA reads better on mobile |
-| Secondary action | Footer disclaimer | Inline text button | **StaySharp wins** for /verify "Resend" placement |
-| Auth model | Phone OTP (required for MTN VAS) | Email + password | Not comparable — keep Winam's OTP |
+What I shipped doesn't match. Two structural mistakes:
 
-**Direction (per your selections):** Adopt StaySharp's **container discipline + shadcn primitives + restrained styling**, but keep Winam's emerald accents, mobile-first 430px frame, OTP flow, and a slightly punchier primary CTA so it still feels like a consumer game app, not a back-office.
+1. **Frame ≠ card**. StaySharp's mobile frame itself IS the elevated dark card (rounded, bordered, the whole 430-wide column). I instead nested a small inner card inside the frame — a "card within a page" look.
+2. **Header pattern is different**. StaySharp uses a wordmark logo pinned top-left INSIDE the frame, then a large centered title (`Welcome back`) + subtitle, with generous vertical whitespace above. I used icon chips + small left-aligned headings, no top-pinned logo.
 
-## Design pattern (applied across all 4 screens)
+Plus several smaller gaps: phone field has no leading icon in StaySharp, OTP is a segmented connected group (shadcn `InputOTP`), back is a centered "← Back" text link, resend is a countdown timer, and there's a secondary "Don't have an account? Subscribe" link under the primary CTA.
 
-- **Card container**: centered on the mobile frame, `rounded-2xl border border-border bg-surface-1` with a soft `shadow-card`. Replaces fields-on-bg.
-- **Header inside card**: small icon chip (10x10) + compact title + one-line sub-purpose. Drop the giant gradient brand from /login — move "WinamGames" wordmark above the card as a small centered logo line.
-- **Inputs**: swap raw `<input>` for shadcn `<Input>` + `<Label>` (h-11, rounded-xl, surface-1 bg, border-border). Phone field keeps the leading icon via input wrapper. OTP digits stay as the existing 4-slot row but tightened to match input radius.
-- **Buttons**: shadcn `<Button size="lg">` for primary actions (h-12, rounded-xl, primary bg). Keep `shadow-glow` only on the primary submit so it still pops.
-- **Secondary actions inline in card**: "Resend code" on /verify, "Back to profile" on /renew header (already there) — render as muted text button beneath the primary CTA.
-- **Error state**: `text-destructive text-sm` directly under the relevant field/form, not floating.
-- **Footer microcopy**: kept under the card (terms / billing line), centered, muted.
+## Redo direction — match the screenshots
 
-## Per-screen changes
+### Shared frame (applies to all 4 auth screens)
+Replace the current `min-h-screen max-w-[430px]` plain background with an elevated rounded card frame, centered on the page with margin around it (so on desktop you see the same "phone-shaped card on dark bg" the screenshots show). Inside:
 
-**`/login`** (`src/routes/login.tsx`)
-- Wrap form in card. Above card: small "WinamGames" wordmark with emerald gradient + tagline.
-- Replace input with shadcn `<Input>` + `<Label htmlFor="phone">`. Keep the Phone icon as a left-pad adornment.
-- Primary `<Button>` "Get OTP" with arrow.
-- Disclaimer line stays below card.
+```
+┌──────────────────────────────┐
+│ WinamGames (logo, top-left)  │  ← wordmark, small emerald gradient
+│                              │
+│         (whitespace)         │
+│                              │
+│       Welcome back           │  ← text-3xl bold, centered
+│   Enter your number to       │  ← muted, centered
+│   access your account        │
+│                              │
+│   Phone number               │  ← small muted label, left-aligned
+│   ┌────────────────────┐     │
+│   │ 0801 234 5678      │     │  ← bare input, no icon, h-12, rounded-xl
+│   └────────────────────┘     │
+│   ┌────────────────────┐     │
+│   │ Send code  →       │     │  ← primary button, h-12, full-width
+│   └────────────────────┘     │
+│                              │
+│  Don't have an account?      │  ← muted + emerald link
+│         Subscribe            │
+└──────────────────────────────┘
+```
 
-**`/verify`** (`src/routes/verify.tsx`)
-- Move back link to a top bar above the card (consistent with other pages).
-- Card holds: icon chip + "Verify your number" + sub ("Enter 0000…"), 4 OTP slots, primary `<Button>` "Verify", and **inline "Resend code" text button** under it.
+Frame styles:
+- Outer page: `min-h-screen bg-background flex items-center justify-center p-4`
+- Frame: `w-full max-w-[430px] min-h-[680px] rounded-3xl border border-border bg-surface-1 shadow-card p-6 flex flex-col`
+- Logo: top-left, `text-lg font-bold text-gradient-emerald`
+- Title block: `mt-auto` block to push centered content down, then content, then `mt-auto` spacer below — gives the vertical balance from the screenshots
 
-**`/onboarding`** (`src/routes/onboarding.tsx`)
-- Same card pattern. Sparkles chip + "Choose your name" + sub.
-- shadcn `<Input>` + `<Label>`, helper line ("3–16 chars, letters/numbers/_") in muted text under the field.
-- Primary `<Button>` "Let's play" with arrow.
+### `/login` (login.tsx)
+- Frame as above. Logo top-left.
+- Centered hero: "Welcome back" (text-3xl bold) + "Enter your number to access your account" (muted).
+- Phone field: shadcn `<Label>` "Phone number" + bare `<Input>` (h-12, rounded-xl, surface-2, NO leading icon). Placeholder `08012345678`.
+- Primary `<Button size="lg">` "Send code →" (h-12, full-width, shadow-glow kept for our brand punch).
+- Below: muted text "Don't have an account?" + emerald `<Link to="/renew">Subscribe</Link>` inline.
+- Drop the "By continuing… MTN" disclaimer from this card; keep it OUTSIDE the frame as tiny muted text under the frame, OR drop it (StaySharp doesn't show one). Default: keep it outside frame, very small.
 
-**`/renew`** (`src/routes/renew.tsx`)
-- Keep the existing top back-button bar.
-- Wrap header chip + sub-copy + the two plan cards inside a single outer card so the whole renewal block reads as one decision surface (matches StaySharp's "everything in one card" feel).
-- Plan toggles, Subscribe `<Button>`, and billing footnote stay; just unify spacing and switch the bottom CTA to shadcn `<Button size="lg">` keeping the glow.
+### `/verify` (verify.tsx)
+- Same frame + top-left logo.
+- Centered "← Back" as a TEXT link (not the icon button in a top bar) above the title — `<Link to="/login">← Back</Link>` muted.
+- "Enter your code" (text-3xl bold, centered) + "We sent a code to ···{last4}" (muted) — derive last4 from the msisdn search param so it actually shows the user's number like the screenshot.
+- Replace the 4 hand-rolled inputs with the shadcn **`InputOTP`** primitive (already in the project) configured as 4 slots, segmented look.
+- Primary `<Button>` "Verify →".
+- Below: "Resend in {n}s" countdown (start at 25s, tick down each second). When countdown hits 0, swap to clickable "Resend code" button, then restart the 25s timer on click.
+- Drop the icon chip + "Enter 0000 to continue" hint (the dev hint is fine, but rephrase as the StaySharp-style subline using the actual masked number; keep "0000" as the bypass logic, just don't shout it in the UI — or keep a tiny dev-mode hint below the OTP if useful).
+
+### `/onboarding` (onboarding.tsx)
+- Same frame. Logo top-left.
+- Centered "Choose your name" + "This is how others will see you" subtitle.
+- shadcn `<Label>` "Nickname" + bare `<Input>` (no Sparkles icon chip). Helper text under field stays.
+- Primary `<Button>` "Let's play →".
+
+### `/renew` (renew.tsx)
+- Same frame. Logo top-left.
+- Centered "Renew subscription" (text-3xl) + sub-copy.
+- Plan toggle pills + Subscribe button inside the frame (no nested card).
+- Top-left "← Back" text link to profile (matching verify pattern).
+
+## Files to update
+- `src/routes/login.tsx` — restructure to frame-as-card with top-left logo + centered hero + bare input + secondary link.
+- `src/routes/verify.tsx` — same frame, swap OTP to shadcn `InputOTP`, add resend countdown timer, derive last4 from msisdn, "← Back" as text link.
+- `src/routes/onboarding.tsx` — same frame, drop icon chip, large centered title.
+- `src/routes/renew.tsx` — same frame, drop nested card, "← Back" text link.
+
+## Reusable bit (optional but recommended)
+Extract a small `<AuthFrame>` wrapper component at `src/components/auth/AuthFrame.tsx` that renders the card frame + top-left logo + the centered content slot, so all 4 routes stay consistent and we don't repeat the layout markup. Children render in the centered area; an optional `back` prop renders the "← Back" link above the title.
 
 ## What stays the same
-- MSISDN OTP auth flow, server functions, routing, prototype 0000 bypass.
-- Emerald color tokens, `shadow-glow` accent on primary CTAs, dark theme, max-w-430.
-- Existing back-button styling on /verify and /renew.
-
-## Files touched
-- `src/routes/login.tsx`
-- `src/routes/verify.tsx`
-- `src/routes/onboarding.tsx`
-- `src/routes/renew.tsx`
-
-No new components, no new dependencies — `Input`, `Label`, `Button`, `Card` already exist in `src/components/ui/`.
+- All auth logic, server functions, OTP bypass with `0000`, routing, MSISDN handling, emerald tokens, dark theme.
+- shadcn `Input`/`Label`/`Button` primitives (just used differently — bare, no icon adornment, full-width).
+- `shadow-glow` on primary CTAs (our brand difference vs StaySharp's flatter button).
 
