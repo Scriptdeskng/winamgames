@@ -1,37 +1,37 @@
 
 
-## Profile hero — tone down the avatar
+## Improve XP-to-next-rank copy
 
-Avatar is currently solid emerald (`bg-primary` + white icon) which competes with the weekly entries CTA. Revert to a muted, neutral-grey treatment so identity recedes and the entries card leads.
+Current: `"140 XP to Recruit"` — terse, reads like a debug label. Could be warmer, clearer, and more motivating without getting verbose.
 
-### Change to `IdentityHero` only
+### Options considered
 
-**Avatar styling**
-- Background: `bg-primary` → `bg-surface-2` (neutral grey surface token, already used elsewhere in the hero)
-- Icon: `text-primary-foreground` → `text-muted-foreground` (greyed out, matches secondary text)
-- Size, shape, ring on pill, rest of hero: unchanged
+1. `"140 XP until Recruit"` — minor, still flat.
+2. `"Earn 140 XP to reach Recruit"` — action-led, clearer intent. Slightly longer but still one line on mobile.
+3. `"140 XP to unlock Recruit"` — game-y, implies reward.
+4. `"Next: Recruit · 140 XP to go"` — two-part, scannable.
 
-### Why these tokens
+### Recommendation
 
-`bg-surface-2` + `text-muted-foreground` is the same pairing used for the streak/coins tile backgrounds and the XP bar track — keeps the avatar in the same visual layer as other secondary chrome instead of acting as a focal point. Pill (tier color) stays vivid so rank still pops.
+Go with **option 3**: `"140 XP to unlock Recruit"`.
 
-### Resulting hierarchy
+Why:
+- "Unlock" frames rank-up as a reward (matches the gamified tone of the app — coins, streaks, draws).
+- Still concise — fits on one line under the progress bar at mobile widths.
+- "to" + verb + noun reads more naturally than "to Recruit" alone.
+- Max-rank state stays as `"Maximum rank reached"` (already good).
 
+### Change
+
+In `src/routes/_authed/profile.tsx` → `IdentityHero`, the muted line under the XP bar:
+
+```tsx
+// before
+`${(nextConfig!.minXp - xp).toLocaleString()} XP to ${nextConfig!.label}`
+
+// after
+`${(nextConfig!.minXp - xp).toLocaleString()} XP to unlock ${nextConfig!.label}`
 ```
-   ⊙ (grey circle, grey icon — recedes)
-   [Veteran]              ← pill keeps tier color → only pop in hero
-   King Ed ✏️
-   ▓▓▓░░░░
-   440 XP to Champion
 
-──────────────────────────
-┃ THIS WEEK              ┃ ← clear primary
-┃ 12 / 50 entries        ┃
-┃ [Play to earn more →]  ┃
-──────────────────────────
-```
-
-### Files touched
-
-- `src/routes/_authed/profile.tsx` — `IdentityHero` avatar div only (2 className swaps).
+One-line change, no other files affected.
 
