@@ -16,6 +16,14 @@ const ICON_MAP: Record<string, LucideIcon> = {
   book: BookOpen,
 };
 
+const ICON_STYLES: Record<string, { bg: string; fg: string }> = {
+  trophy: { bg: "bg-coin/15", fg: "text-coin" },
+  flame: { bg: "bg-streak/15", fg: "text-streak" },
+  book: { bg: "bg-xp/15", fg: "text-xp" },
+};
+
+const FALLBACK_STYLE = { bg: "bg-primary/15", fg: "text-primary" };
+
 const ROTATE_MS = 5000;
 
 export function BannerStack({ banners }: { banners: Banner[] }) {
