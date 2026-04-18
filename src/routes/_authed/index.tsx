@@ -369,7 +369,7 @@ function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }
           </p>
         )}
       </div>
-      <div className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-xs font-semibold">
+      <div className="shrink-0 inline-flex items-center gap-1 rounded-full bg-coin/10 text-coin px-2.5 py-1 text-xs font-semibold">
         <Ticket className="h-3 w-3" />
         {pluralizeEntries(mission.rewardAmount)}
       </div>
