@@ -258,7 +258,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
           id: pid,
           name: p?.nickname ?? `****${p?.msisdn_last4 ?? "0000"}`,
           entries: playerMap.get(pid) ?? 0,
-          rankTier: p?.rank_tier ?? "pawn",
+          rankTier: p?.rank_tier ?? "starter",
         };
       })
       .sort((a, b) => b.entries - a.entries)

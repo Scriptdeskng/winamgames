@@ -13,8 +13,8 @@ const resultsSearchSchema = z.object({
   streak: fallback(z.number(), 0).default(0),
   weekTotal: fallback(z.number(), 0).default(0),
   weekCap: fallback(z.number(), 50).default(50),
-  rankTier: fallback(z.string(), "pawn").default("pawn"),
-  previousRank: fallback(z.string(), "pawn").default("pawn"),
+  rankTier: fallback(z.string(), "starter").default("starter"),
+  previousRank: fallback(z.string(), "starter").default("starter"),
   missions: fallback(z.string(), "").default(""),
 });
 

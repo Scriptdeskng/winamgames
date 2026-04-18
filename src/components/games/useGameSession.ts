@@ -191,8 +191,8 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
             streak: result.streak,
             weekTotal: result.weekTotal,
             weekCap: result.weekCap,
-            rankTier: result.rankTier ?? "pawn",
-            previousRank: result.previousRank ?? "pawn",
+            rankTier: result.rankTier ?? "starter",
+            previousRank: result.previousRank ?? "starter",
             missions: missionsStr,
           },
         });
