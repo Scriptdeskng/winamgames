@@ -30,15 +30,35 @@ function getNextSundayWAT(): Date {
   return target;
 }
 
-function formatCountdown(ms: number): string {
-  if (ms <= 0) return "00:00:00";
-  const totalSec = Math.floor(ms / 1000);
-  const days = Math.floor(totalSec / 86400);
-  const h = Math.floor((totalSec % 86400) / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const hms = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return days > 0 ? `${days}d ${hms}` : hms;
+function getCountdownParts(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(total / 86400),
+    hours: Math.floor((total % 86400) / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+    seconds: total % 60,
+  };
+}
+
+function CountdownUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[10px] text-muted-foreground lowercase mt-0.5 leading-none">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function CountdownColon() {
+  return (
+    <span className="font-mono text-4xl font-bold leading-none text-foreground pb-[14px]">
+      :
+    </span>
+  );
 }
 
 function HomePage() {
