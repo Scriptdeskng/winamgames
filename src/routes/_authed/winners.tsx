@@ -179,7 +179,8 @@ function AirtimeSection({ tiers }: { tiers: DrawWeek["airtimeTiers"] }) {
 
 function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
-  const totalWinners = draw.cashWinners.length + draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
+  const totalAirtimeWinners = draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
+  const totalWinners = draw.cashWinners.length + totalAirtimeWinners;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
