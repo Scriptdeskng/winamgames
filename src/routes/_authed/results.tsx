@@ -5,6 +5,7 @@ import { Trophy, Coins, Flame, Target, Sparkles, Check, ArrowUp } from "lucide-r
 import { RankBadge } from "@/components/profile/RankBadge";
 import type { RankTier } from "@/components/profile/RankBadge";
 import { TopBar } from "@/components/layout/TopBar";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 const resultsSearchSchema = z.object({
   entries: fallback(z.number(), 0).default(0),
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_authed/results")({
 });
 
 function ResultsPage() {
+  useAllowScroll();
   const { entries, coins, xp, streak, weekTotal, weekCap, rankTier, previousRank, missions } = Route.useSearch();
 
   const rankedUp = rankTier !== previousRank;
