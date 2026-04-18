@@ -4,6 +4,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { sendOtp, verifyOtp } from "@/utils/auth.functions";
 import { setSession } from "@/lib/session";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -56,14 +57,12 @@ function VerifyPage() {
         return;
       }
 
-      // Store session in localStorage
       setSession({
         playerId: result.playerId!,
         msisdnLast4: result.msisdnLast4!,
         nickname: null,
       });
 
-      // Navigate based on whether user needs onboarding
       if (result.needsOnboarding) {
         navigate({ to: "/onboarding" });
       } else {
@@ -93,57 +92,68 @@ function VerifyPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
       <div className="px-4 pt-4">
-        <Link to="/login" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <Link
+          to="/login"
+          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
         </Link>
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-12 w-12 rounded-xl bg-primary/15 flex items-center justify-center">
-            <ShieldCheck className="h-6 w-6 text-primary" />
+        <div className="rounded-2xl border border-border bg-surface-1 shadow-card p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">Verify your number</h1>
+              <p className="text-xs text-muted-foreground">
+                Enter <span className="font-mono font-bold text-primary">0000</span> to continue
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Verify your number</h1>
-            <p className="text-sm text-muted-foreground">Enter <span className="font-mono font-bold text-primary">0000</span> to continue</p>
-          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="flex gap-2 justify-center">
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  className="h-14 w-12 rounded-xl bg-surface-2 border border-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+              ))}
+            </div>
+
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading || otp.join("").length !== 4}
+              className="w-full h-12 rounded-xl shadow-glow"
+            >
+              {loading ? "Verifying..." : "Verify"}
+            </Button>
+
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full text-sm text-muted-foreground hover:text-primary text-center disabled:opacity-50 transition-colors"
+            >
+              {resending ? "Resending..." : "Resend code"}
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex gap-2 justify-center">
-            {otp.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                className="h-14 w-12 rounded-xl bg-surface-1 border border-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              />
-            ))}
-          </div>
-
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading || otp.join("").length !== 4}
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-glow"
-          >
-            {loading ? "Verifying..." : "Verify"}
-          </button>
-        </form>
-
-        <button
-          onClick={handleResend}
-          disabled={resending}
-          className="mt-4 text-sm text-primary text-center w-full hover:underline disabled:opacity-50"
-        >
-          {resending ? "Resending..." : "Resend code"}
-        </button>
       </div>
     </div>
   );
