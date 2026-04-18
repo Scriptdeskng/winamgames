@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, Play, Clock,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info,
 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionContent,
+} from "@/components/ui/accordion";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession, clearSession } from "@/lib/session";
@@ -96,10 +100,22 @@ function ProfilePage() {
 
         {/* ── Secondary stats: coins + streak ─────────────────── */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-surface-1 border border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Coins className="h-4 w-4 text-coin" />
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">Coins</span>
+          <div className="rounded-2xl bg-surface-1 border border-border p-4 relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-coin" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Coins</span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors -m-1 p-1" aria-label="About coins">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
+                  <span className="font-semibold text-foreground">Coins</span> are earned from sessions and from overflow when you've already hit the 50-entry weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
+                </PopoverContent>
+              </Popover>
             </div>
             <p className="text-2xl font-bold tabular-nums">
               {player?.coinBalance?.toLocaleString() ?? "0"}
@@ -145,28 +161,34 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* ── How entries work ────────────────────────────────── */}
-        <div className="rounded-2xl bg-surface-1 border border-border p-5">
-          <h3 className="text-sm font-semibold mb-4">How entries work</h3>
-          <ol className="space-y-3.5">
-            {[
-              { lead: "Solve to earn", body: "Every 5 puzzles you solve in a session earns 1 draw entry." },
-              { lead: "Streak bonuses", body: "Day 3 adds +1 per session, day 7 adds +2, day 14 adds +3." },
-              { lead: "Mission rewards", body: "Complete missions for bonus entries on top." },
-              { lead: "Weekly draw", body: "Entries reset Monday. Draw is Sunday 20:00 WAT — more entries, better odds." },
-            ].map((rule, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center tabular-nums">
-                  {i + 1}
-                </span>
-                <div className="flex-1 -mt-0.5">
-                  <p className="text-sm font-medium text-foreground">{rule.lead}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{rule.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
+        {/* ── How entries work (collapsible) ──────────────────── */}
+        <Accordion type="single" collapsible className="rounded-2xl bg-surface-1 border border-border px-5">
+          <AccordionItem value="how-entries" className="border-0">
+            <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4">
+              How entries work
+            </AccordionTrigger>
+            <AccordionContent className="pb-5 pt-1">
+              <ol className="space-y-3.5">
+                {[
+                  { lead: "Solve to earn", body: "Every 5 puzzles you solve in a session earns 1 weekly draw entry." },
+                  { lead: "Streak bonuses", body: "Day 3 adds +1 per session, day 7 adds +2, day 14 adds +3." },
+                  { lead: "Mission rewards", body: "Complete missions for bonus entries on top." },
+                  { lead: "Weekly draw", body: "Entries reset Monday. Draw is Sunday 20:00 WAT — more entries, better odds." },
+                ].map((rule, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center tabular-nums">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 -mt-0.5">
+                      <p className="text-sm font-medium text-foreground">{rule.lead}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{rule.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
 
         {/* ── Logout (quiet, bottom) ──────────────────────────── */}
         <div className="pt-2">
@@ -304,8 +326,8 @@ function WeeklyEntriesCard({
         to="/"
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
       >
-        <Play className="h-4 w-4 fill-current" />
         Play to earn more
+        <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );
@@ -317,10 +339,22 @@ function StreakTile({ streak }: { streak: number }) {
   const nextMilestone = streak < 3 ? 3 : streak < 7 ? 7 : streak < 14 ? 14 : null;
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Flame className={`h-4 w-4 ${streak > 0 ? "text-streak" : "text-muted-foreground"}`} />
-        <span className="text-xs text-muted-foreground uppercase tracking-wide">Streak</span>
+    <div className="rounded-2xl bg-surface-1 border border-border p-4 relative">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Flame className={`h-4 w-4 ${streak > 0 ? "text-streak" : "text-muted-foreground"}`} />
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">Streak</span>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="text-muted-foreground hover:text-foreground transition-colors -m-1 p-1" aria-label="About streaks">
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
+            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus weekly draw entry per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
+          </PopoverContent>
+        </Popover>
       </div>
       <p className="text-2xl font-bold tabular-nums">
         {streak > 0 ? `Day ${streak}` : "—"}
