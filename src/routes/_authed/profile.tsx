@@ -339,10 +339,22 @@ function StreakTile({ streak }: { streak: number }) {
   const nextMilestone = streak < 3 ? 3 : streak < 7 ? 7 : streak < 14 ? 14 : null;
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Flame className={`h-4 w-4 ${streak > 0 ? "text-streak" : "text-muted-foreground"}`} />
-        <span className="text-xs text-muted-foreground uppercase tracking-wide">Streak</span>
+    <div className="rounded-2xl bg-surface-1 border border-border p-4 relative">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Flame className={`h-4 w-4 ${streak > 0 ? "text-streak" : "text-muted-foreground"}`} />
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">Streak</span>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="text-muted-foreground hover:text-foreground transition-colors -m-1 p-1" aria-label="About streaks">
+              <Info className="h-3.5 w-3.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
+            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus weekly draw entry per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
+          </PopoverContent>
+        </Popover>
       </div>
       <p className="text-2xl font-bold tabular-nums">
         {streak > 0 ? `Day ${streak}` : "—"}
