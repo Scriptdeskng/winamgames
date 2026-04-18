@@ -216,15 +216,19 @@ function ProfilePage() {
 
 // ── Identity + rank merged hero ──────────────────────────────────────
 function IdentityHero({
+  playerId,
   nickname,
   msisdnLast4: _msisdnLast4,
   xp,
   tier,
+  onNicknameUpdated,
 }: {
+  playerId: string;
   nickname: string;
   msisdnLast4: string;
   xp: number;
   tier: RankTier;
+  onNicknameUpdated: (nickname: string) => void;
 }) {
   const config = RANK_CONFIG[tier] ?? RANK_CONFIG.starter;
 
@@ -242,6 +246,59 @@ function IdentityHero({
     ? 100
     : Math.min(100, Math.max(0, ((xp - currentMin) / (nextMin - currentMin)) * 100));
 
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(nickname);
+  const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const startEdit = () => {
+    setDraft(nickname);
+    setEditing(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  };
+
+  const cancelEdit = () => {
+    if (saving) return;
+    setEditing(false);
+    setDraft(nickname);
+  };
+
+  const save = async () => {
+    const trimmed = draft.trim();
+    if (!playerId) {
+      toast.error("Session expired. Please log in again.");
+      return;
+    }
+    if (trimmed === nickname) {
+      setEditing(false);
+      return;
+    }
+    if (trimmed.length < 2 || trimmed.length > 20) {
+      toast.error("Nickname must be 2–20 characters");
+      return;
+    }
+    if (!/^[a-zA-Z0-9 _-]+$/.test(trimmed)) {
+      toast.error("Only letters, numbers, spaces, _ and - allowed");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await updateNickname({ data: { playerId, nickname: trimmed } });
+      if (result.success) {
+        onNicknameUpdated(result.nickname);
+        setEditing(false);
+        toast.success("Nickname updated");
+      } else {
+        toast.error(result.error ?? "Could not update nickname");
+      }
+    } catch {
+      toast.error("Could not update nickname");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center text-center py-4">
       <div className="relative mb-5">
@@ -257,10 +314,53 @@ function IdentityHero({
         </span>
       </div>
 
-      <div className="flex items-center gap-1.5 mb-3">
-        <h2 className="text-lg font-bold truncate max-w-[260px]">{nickname}</h2>
-        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
+      {editing ? (
+        <div className="flex items-center gap-1.5 mb-3">
+          <input
+            ref={inputRef}
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") cancelEdit();
+            }}
+            disabled={saving}
+            maxLength={20}
+            className="text-lg font-bold text-center bg-surface-2 border border-border rounded-lg px-3 py-1 max-w-[200px] focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60"
+            aria-label="Edit nickname"
+          />
+          <button
+            onClick={save}
+            disabled={saving}
+            className="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors disabled:opacity-60"
+            aria-label="Save nickname"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            onClick={cancelEdit}
+            disabled={saving}
+            className="p-1.5 rounded-md text-muted-foreground hover:bg-surface-2 transition-colors disabled:opacity-60"
+            aria-label="Cancel edit"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={startEdit}
+          className="flex items-center gap-1.5 mb-3 group -mx-2 px-2 py-1 rounded-lg hover:bg-surface-2 transition-colors"
+          aria-label="Edit nickname"
+        >
+          <h2 className="text-lg font-bold truncate max-w-[260px]">{nickname}</h2>
+          <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </button>
+      )}
 
       {!isMax && (
         <div className="w-full max-w-[240px] h-1.5 rounded-full bg-surface-2 overflow-hidden mb-1.5">
