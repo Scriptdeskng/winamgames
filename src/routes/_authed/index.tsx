@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame,
+  ChevronRight, Swords, BookOpen, Check, Flame,
   Sparkles, Shuffle, Ticket, Calendar,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -16,9 +16,6 @@ export const Route = createFileRoute("/_authed/")({
   component: HomePage,
 });
 
-const RANK_ORDER: RankTier[] = [
-  "starter", "recruit", "sergeant", "veteran", "champion", "icon", "legend", "immortal",
-];
 
 // Compute next Sunday 20:00 WAT (UTC+1) → 19:00 UTC
 function getNextSundayWAT(): Date {
@@ -91,13 +88,10 @@ function HomePage() {
   const weekTotal = data?.playerResult?.success ? data.playerResult.weekTotal : 0;
   const weekCap = data?.playerResult?.success ? data.playerResult.weekCap : 50;
   const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
-  const totalSessions = data?.playerResult?.success ? data.playerResult.totalSessions : 0;
-  const bestSession = data?.playerResult?.success ? data.playerResult.bestSession : 0;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
   const streak = player?.currentStreak ?? 0;
   const tier: RankTier = player?.rankTier ?? "starter";
-  const xpTotal = player?.xpTotal ?? 0;
 
   if (!data) {
     return (
@@ -150,14 +144,6 @@ function HomePage() {
           </div>
         </div>
 
-        <DynamicTip
-          totalSessions={totalSessions}
-          weekTotal={weekTotal}
-          weekCap={weekCap}
-          tier={tier}
-          xpTotal={xpTotal}
-          bestSession={bestSession}
-        />
       </div>
     </div>
   );
@@ -390,66 +376,3 @@ function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }
   );
 }
 
-// ── DynamicTip ────────────────────────────────────────────────────────
-const ONBOARDING_TIPS = [
-  "Streaks of 3+ days earn a bonus entry each game",
-  "Solving puzzles without hints gives 2x coins",
-  "Complete missions to earn extra entries into the draw",
-  "Your rank tier upgrades as you earn more XP",
-  "Each correct answer earns entries into the weekly draw",
-  "Play both CheckMate and WisdomDrop to complete the game mix mission",
-];
-
-function DynamicTip({
-  totalSessions,
-  weekTotal,
-  weekCap,
-  tier,
-  xpTotal,
-  bestSession,
-}: {
-  totalSessions: number;
-  weekTotal: number;
-  weekCap: number;
-  tier: RankTier;
-  xpTotal: number;
-  bestSession: number;
-}) {
-  let label = "Did you know?";
-  let body: string;
-
-  if (totalSessions === 0) {
-    const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-    );
-    body = ONBOARDING_TIPS[dayOfYear % ONBOARDING_TIPS.length];
-  } else if (weekTotal < weekCap) {
-    label = "This week";
-    body = `${weekCap - weekTotal} more entries this week`;
-  } else {
-    const idx = RANK_ORDER.indexOf(tier);
-    const nextTier = idx >= 0 && idx < RANK_ORDER.length - 1 ? RANK_ORDER[idx + 1] : null;
-    if (nextTier) {
-      const nextMin = RANK_CONFIG[nextTier].minXp;
-      label = "Next rank";
-      body = `${Math.max(0, nextMin - xpTotal)} XP to ${RANK_CONFIG[nextTier].label}`;
-    } else {
-      label = "Personal best";
-      body = `Your best session: ${bestSession} puzzles`;
-    }
-  }
-
-  return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-start gap-3">
-      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
-        <Lightbulb className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-          {label}
-        </p>
-        <p className="text-sm text-foreground">{body}</p>
-      </div>
-    </div>
-  );
-}
