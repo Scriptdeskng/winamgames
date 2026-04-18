@@ -60,7 +60,7 @@ function ProfilePage() {
 
         <XpProgressBar
           xp={player?.xpTotal ?? 0}
-          tier={(player?.rankTier as RankTier) ?? "pawn"}
+          tier={(player?.rankTier as RankTier) ?? "starter"}
         />
 
         <div className="grid grid-cols-3 gap-3">
