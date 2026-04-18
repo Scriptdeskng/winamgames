@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
