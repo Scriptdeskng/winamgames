@@ -35,9 +35,9 @@ export function MenuSheet() {
           <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive =
-                location.pathname === item.to ||
-                (item.to === "/checkmate" &&
-                  (location.pathname === "/checkmate" || location.pathname === "/wisdomdrop"));
+                item.label === "Games"
+                  ? location.pathname === "/checkmate" || location.pathname === "/wisdomdrop"
+                  : location.pathname === item.to;
               return (
                 <Link
                   key={item.to}
