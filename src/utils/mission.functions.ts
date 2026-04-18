@@ -84,6 +84,36 @@ export const getPlayerData = createServerFn({ method: "POST" })
     };
   });
 
+// ── updateNickname ────────────────────────────────────────────────────
+export const updateNickname = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      playerId: z.string().uuid(),
+      nickname: z
+        .string()
+        .trim()
+        .min(2, "Nickname must be at least 2 characters")
+        .max(20, "Nickname must be 20 characters or less")
+        .regex(/^[a-zA-Z0-9 _-]+$/, "Only letters, numbers, spaces, _ and - allowed"),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const trimmed = data.nickname.trim();
+
+    const { error } = await supabaseAdmin
+      .from("winam_players")
+      .update({ nickname: trimmed })
+      .eq("id", data.playerId);
+
+    if (error) {
+      return { success: false as const, error: "Could not update nickname" };
+    }
+
+    return { success: true as const, nickname: trimmed };
+  });
+
 // ── getActiveMissions ─────────────────────────────────────────────────
 // Persistent missions: player always has up to 3 pending. Completed ones
 // are replaced lazily on next fetch (with a variety guard).
