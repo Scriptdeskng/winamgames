@@ -1,12 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { sendOtp } from "@/utils/auth.functions";
 import { getSession } from "@/lib/session";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { AuthFrame } from "@/components/auth/AuthFrame";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -26,9 +22,7 @@ function LoginPage() {
 
   useEffect(() => {
     const session = getSession();
-    if (session) {
-      navigate({ to: "/" });
-    }
+    if (session) navigate({ to: "/" });
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,46 +51,57 @@ function LoginPage() {
   };
 
   return (
-    <AuthFrame>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Welcome back</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enter your number to access your account
-        </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="px-5 pt-5">
+        <Link to="/" className="text-lg font-bold text-gradient-emerald">
+          WinamGames
+        </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-muted-foreground">Phone number</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={msisdn}
-            onChange={(e) => setMsisdn(e.target.value)}
-            placeholder="08012345678"
-            autoFocus
-            className="h-12 rounded-xl bg-surface-2 border-border"
-          />
-          {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="flex-1 flex items-center justify-center px-5 pb-10">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+            <p className="text-sm text-muted-foreground">
+              Enter your number to access your account
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-xs text-muted-foreground">
+                Phone number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={msisdn}
+                onChange={(e) => setMsisdn(e.target.value)}
+                placeholder="08012345678"
+                autoFocus
+                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            {error && <p className="text-xs text-destructive">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading || !msisdn.trim()}
+              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-glow transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send code →"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="/renew" className="text-primary hover:underline">
+              Subscribe
+            </Link>
+          </p>
         </div>
-
-        <Button
-          type="submit"
-          size="lg"
-          disabled={loading || msisdn.length < 10}
-          className="w-full h-12 rounded-xl shadow-glow"
-        >
-          {loading ? "Sending..." : "Send code"}
-          {!loading && <ArrowRight className="h-4 w-4" />}
-        </Button>
-      </form>
-
-      <p className="mt-6 text-sm text-center text-muted-foreground">
-        Don't have an account?{" "}
-        <Link to="/renew" className="text-primary font-medium hover:underline">
-          Subscribe
-        </Link>
-      </p>
-    </AuthFrame>
+      </div>
+    </div>
   );
 }
