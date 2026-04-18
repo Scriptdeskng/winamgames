@@ -370,13 +370,23 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.playerId);
 
-    // ── Evaluate missions ──
+    // ── Evaluate missions (writes its own ledger rows for entry rewards) ──
     const { evaluatePendingMissions } = await import("@/utils/mission.server");
     const completedMissions = await evaluatePendingMissions(
       supabaseAdmin,
       data.playerId,
       session.draw_week_id,
-      watDate
+      watDate,
+      {
+        puzzlesSolved: data.puzzlesSolved,
+        hintsUsed: data.hintsUsed,
+        gameType: session.game_type,
+      }
+    );
+
+    const missionEntriesAdded = completedMissions.reduce(
+      (sum, m) => sum + m.entriesAdded,
+      0
     );
 
     return {
@@ -385,7 +395,7 @@ export const closeSession = createServerFn({ method: "POST" })
       coins: totalCoins,
       xp: xpGained,
       streak: newStreak,
-      weekTotal: weekSoFar + entriesToAdd,
+      weekTotal: weekSoFar + entriesToAdd + missionEntriesAdded,
       weekCap,
       overflow,
       netPuzzles,
@@ -393,7 +403,6 @@ export const closeSession = createServerFn({ method: "POST" })
       previousRank: player.rank_tier,
       completedMissions: completedMissions.map((m) => ({
         title: m.title,
-        rewardType: m.rewardType,
         rewardAmount: m.rewardAmount,
       })),
     };
