@@ -17,13 +17,8 @@ function EntriesPage() {
   useAllowScroll();
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" />
+      <TopBar backTo="/" title="My Entries" />
       <div className="px-4 pb-6 space-y-5">
-        <div className="flex items-center gap-2">
-          <Ticket className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">My Entries</h1>
-        </div>
-
         <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
           <p className="text-4xl font-bold tabular-nums text-primary mt-1">12 / 50</p>
