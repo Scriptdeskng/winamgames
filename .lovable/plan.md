@@ -1,47 +1,44 @@
 
 
-## Goal
-Add back navigation to pages currently missing it. Reuse the existing TopBar `backTo` pattern (already styled with `ArrowLeft` icon in a 10×10 surface-1 rounded square — matches the staysharp lucide icon-button convention).
+The user wants more thematic, visually distinct icons for the 8 rank tiers. Current mapping uses generic icons (User, UserCheck, Award, Shield, Medal, Star, Trophy, Crown) — functional but flat progression.
 
-## Findings
-- `TopBar` already renders a back button when `backTo` is provided.
-- Pages **with** back button: `entries`, `profile`, `winners` → all `backTo="/"`.
-- Pages **without** back button (showing avatar/menu only):
-  - `/` (home) — root, no back needed ✓
-  - `/leaderboard` — missing, should go to `/`
-  - `/checkmate`, `/wisdomdrop` — use `GameHeader` with X-exit (intentional, leave as-is)
-  - `/results` — has Link home in body, no header back button
-- Pages with **no TopBar at all**:
-  - `/renew` — needs back to `/` (or `/profile`)
-  - `/login`, `/verify`, `/onboarding` — auth flow, back is contextual (verify → login already exists)
+Let me design a better icon ladder that tells a visual story of progression: from humble beginner → trained soldier → elite warrior → mythic figure. Icons should feel distinct at a glance and escalate in visual weight/drama.
 
-## Changes
+## Improved Icon Mapping
 
-**1. `src/routes/_authed/leaderboard.tsx`**
-- `<TopBar />` → `<TopBar backTo="/" />`
+| Tier | Icon | Rationale |
+|------|------|-----------|
+| Starter | `Sprout` | New growth, beginning — softer than generic User |
+| Recruit | `Swords` | Training, first weapon — clear "joined the fight" feel |
+| Sergeant | `ShieldHalf` | Earned defense, partial mastery |
+| Veteran | `Flame` | Battle-tested, fiery resolve |
+| Champion | `Trophy` | Peak competitive achievement |
+| Icon | `Gem` | Rare, precious, standout status |
+| Legend | `Sparkles` | Mythic aura, otherworldly |
+| Immortal | `Crown` | Ultimate sovereignty — apex of the ladder |
 
-**2. `src/routes/_authed/results.tsx`**
-- Add `<TopBar backTo="/" />` at top of page (currently has no TopBar).
+### Color progression (escalating saturation)
+| Tier | Color token |
+|------|-------------|
+| Starter | `text-muted-foreground` / `bg-muted/15` |
+| Recruit | `text-blue-400` / `bg-blue-400/15` |
+| Sergeant | `text-cyan-400` / `bg-cyan-400/15` |
+| Veteran | `text-orange-400` / `bg-orange-400/15` |
+| Champion | `text-coin` / `bg-coin/15` (gold) |
+| Icon | `text-purple-400` / `bg-purple-400/15` |
+| Legend | `text-streak` / `bg-streak/15` |
+| Immortal | `text-xp` / `bg-xp/15` (with shadow-glow accent) |
 
-**3. `src/routes/renew.tsx`**
-- Add a standalone back button in top-left (matches TopBar styling: 10×10, rounded-xl, bg-surface-1, border, ArrowLeft icon) linking to `/profile`. Standalone (not TopBar) since renew is outside `_authed` layout and has its own centered layout.
+### Why this is better
+- **Narrative arc**: organic growth → weapon → shield → fire → trophy → gem → magic → crown
+- **Visual variety**: not all "human/medal" icons; mixes nature, weaponry, elemental, mythic
+- **Color ladder** climbs the spectrum (cool → warm → gold → mystical), reinforcing rank prestige
+- **Immortal tier** gets a `shadow-glow` accent in `RankBadge` for that final flourish
 
-**4. `src/routes/onboarding.tsx`**
-- No back button — onboarding is mandatory after signup. Skip.
+## Files affected (same as prior plan, only icon/color values change)
+- `src/components/profile/RankBadge.tsx` — update `RANK_CONFIG` icons + colors, add glow for Immortal
+- All other changes from the previously approved rank-system plan remain identical (DB migration, XP thresholds in `game.functions.ts`, "pawn" → "starter" fallback replacements)
 
-**5. `src/routes/login.tsx`** and **`/verify.tsx`**
-- `verify` already has back-to-login link. `login` is the entry point. Skip both.
-
-## Styling
-Reuse exact TopBar back-button classes for consistency:
-```
-h-10 w-10 rounded-xl bg-surface-1 border border-border 
-flex items-center justify-center hover:border-primary/30 transition-colors
-```
-with `<ArrowLeft className="h-5 w-5 text-foreground" />` inside.
-
-## Files touched
-- `src/routes/_authed/leaderboard.tsx`
-- `src/routes/_authed/results.tsx`
-- `src/routes/renew.tsx`
+## Optional polish
+Add a subtle `shadow-glow` ring to the Immortal badge container so the top tier visually pops vs the others.
 
