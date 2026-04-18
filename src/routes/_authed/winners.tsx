@@ -29,6 +29,7 @@ interface DrawWeek {
   label: string;
   cashWinners: Winner[];
   airtimeTiers: { label: string; winners: Winner[] }[];
+  isPlaceholder?: boolean;
 }
 
 const DRAW_WEEKS: DrawWeek[] = [
@@ -151,7 +152,9 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
             <Trophy className="h-4 w-4 text-primary" />
             <div className="text-left">
               <p className="text-sm font-semibold">{draw.label}</p>
-              <p className="text-[10px] text-muted-foreground">{totalWinners} winners</p>
+              <p className="text-[10px] text-muted-foreground">
+                {draw.isPlaceholder ? "50+ winners" : `${totalWinners} winners`}
+              </p>
             </div>
           </div>
           <ChevronDown
@@ -208,7 +211,7 @@ function WinnersPage() {
           <Award className="h-8 w-8 text-primary mx-auto" />
           <h1 className="text-xl font-bold">Real people. Real wins.</h1>
           <p className="text-xs text-muted-foreground">
-            78 winners every week — cash, airtime & data
+            50+ winners every week — cash, airtime & data
           </p>
           <Link
             to="/"
