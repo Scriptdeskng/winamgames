@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Award, ChevronDown, Phone, Hash, Gamepad2, Trophy } from "lucide-react";
+import { Award, ChevronDown, Hash, Gamepad2, Trophy } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
