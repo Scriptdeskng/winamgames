@@ -73,16 +73,11 @@ export function BannerStack({ banners }: { banners: Banner[] }) {
           return (
             <motion.div
               key={banner.id}
-              custom={exitDir}
               className="absolute inset-x-0 top-0"
               style={{ zIndex: z }}
               initial={{ y: offsetY + 6, scale: scale - 0.04, opacity: 0 }}
               animate={{ y: offsetY, scale, opacity: 1 }}
-              exit={(dir: 1 | -1) => ({
-                x: dir * 400,
-                opacity: 0,
-                transition: { duration: 0.25 },
-              })}
+              exit={{ x: exitDir * 400, opacity: 0, transition: { duration: 0.25 } }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               drag={isFront ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
