@@ -157,7 +157,11 @@
   html.allow-scroll,
   html.allow-scroll body {
     height: auto !important;
-    overflow-y: auto !important;
+    overflow: visible !important;
+  }
+
+  html.allow-scroll {
+    scroll-behavior: smooth;
     overflow-x: hidden !important;
   }
 
