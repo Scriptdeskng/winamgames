@@ -395,7 +395,7 @@ function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }
 const ONBOARDING_TIPS = [
   "Streaks of 3+ days earn a bonus entry each game",
   "Solving puzzles without hints gives 2x coins",
-  "Complete all 3 daily missions for extra entries",
+  "Complete missions to earn extra entries into the draw",
   "Your rank tier upgrades as you earn more XP",
   "Each correct answer earns entries into the weekly draw",
   "Play both CheckMate and WisdomDrop to complete the game mix mission",
