@@ -206,7 +206,7 @@ function WinnersPage() {
   useAllowScroll();
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" />
+      <TopBar backTo="/" title="Winners" />
       <div className="px-4 pb-6 space-y-4">
         {/* Hero / Ad Card */}
         <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 text-center space-y-2">

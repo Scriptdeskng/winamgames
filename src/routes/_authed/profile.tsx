@@ -79,9 +79,8 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" />
+      <TopBar backTo="/" title="Profile" />
       <div className="px-4 pb-8 space-y-5">
-        <h1 className="text-xl font-bold">Profile</h1>
 
         {/* ── Identity + Rank hero ───────────────────────────── */}
         <IdentityHero
