@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { ArrowRight } from "lucide-react";
 import { sendOtp, verifyOtp } from "@/utils/auth.functions";
 import { setSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { AuthFrame } from "@/components/auth/AuthFrame";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -16,41 +17,34 @@ export const Route = createFileRoute("/verify")({
   }),
 });
 
+const RESEND_SECONDS = 25;
+
 function VerifyPage() {
   const { msisdn } = Route.useSearch();
   const navigate = useNavigate();
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [countdown, setCountdown] = useState(RESEND_SECONDS);
 
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-    if (value && index < 3) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
+  const last4 = msisdn.slice(-4);
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = otp.join("");
-    if (code.length !== 4) return;
+    if (otp.length !== 4) return;
 
     setLoading(true);
     setError("");
 
     try {
-      const result = await verifyOtp({ data: { msisdn, code } });
+      const result = await verifyOtp({ data: { msisdn, code: otp } });
       if (!result.success) {
         setError(result.error || "Verification failed. Try again.");
         setLoading(false);
@@ -68,7 +62,7 @@ function VerifyPage() {
       } else {
         navigate({ to: "/" });
       }
-    } catch (err: any) {
+    } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
@@ -81,6 +75,8 @@ function VerifyPage() {
       const result = await sendOtp({ data: { msisdn } });
       if (!result.success) {
         setError(result.error || "Failed to resend OTP");
+      } else {
+        setCountdown(RESEND_SECONDS);
       }
     } catch {
       setError("Failed to resend OTP");
@@ -90,71 +86,53 @@ function VerifyPage() {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background flex flex-col">
-      <div className="px-4 pt-4">
-        <Link
-          to="/login"
-          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </Link>
+    <AuthFrame back={{ to: "/login" }}>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Enter your code</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We sent a code to ···{last4}
+        </p>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center px-6">
-        <div className="rounded-2xl border border-border bg-surface-1 shadow-card p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">Verify your number</h1>
-              <p className="text-xs text-muted-foreground">
-                Enter <span className="font-mono font-bold text-primary">0000</span> to continue
-              </p>
-            </div>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="flex justify-center">
+          <InputOTP maxLength={4} value={otp} onChange={setOtp}>
+            <InputOTPGroup>
+              <InputOTPSlot index={0} className="h-14 w-12 rounded-xl text-xl" />
+              <InputOTPSlot index={1} className="h-14 w-12 rounded-xl text-xl" />
+              <InputOTPSlot index={2} className="h-14 w-12 rounded-xl text-xl" />
+              <InputOTPSlot index={3} className="h-14 w-12 rounded-xl text-xl" />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="flex gap-2 justify-center">
-              {otp.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={(el) => {
-                    inputRefs.current[i] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleChange(i, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="h-14 w-12 rounded-xl bg-surface-2 border border-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                />
-              ))}
-            </div>
+        {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
-            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        <Button
+          type="submit"
+          size="lg"
+          disabled={loading || otp.length !== 4}
+          className="w-full h-12 rounded-xl shadow-glow"
+        >
+          {loading ? "Verifying..." : "Verify"}
+          {!loading && <ArrowRight className="h-4 w-4" />}
+        </Button>
 
-            <Button
-              type="submit"
-              size="lg"
-              disabled={loading || otp.join("").length !== 4}
-              className="w-full h-12 rounded-xl shadow-glow"
-            >
-              {loading ? "Verifying..." : "Verify"}
-            </Button>
-
+        <div className="text-center text-sm">
+          {countdown > 0 ? (
+            <span className="text-muted-foreground">Resend in {countdown}s</span>
+          ) : (
             <button
               type="button"
               onClick={handleResend}
               disabled={resending}
-              className="w-full text-sm text-muted-foreground hover:text-primary text-center disabled:opacity-50 transition-colors"
+              className="text-primary font-medium hover:underline disabled:opacity-50"
             >
               {resending ? "Resending..." : "Resend code"}
             </button>
-          </form>
+          )}
         </div>
-      </div>
-    </div>
+      </form>
+    </AuthFrame>
   );
 }
