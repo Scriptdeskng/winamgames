@@ -1,52 +1,53 @@
 
 
-## Profile hero — final adjustments to match reference
+## Profile hero — restore XP meter, restyle rank pill, invert avatar colors
 
-Two changes to the prior plan based on your feedback:
+Three targeted fixes to `IdentityHero` in `src/routes/_authed/profile.tsx`.
 
-### 1. Pill shows rank name, not a number
+### 1. Restore the XP progress meter
 
-Replace the numeric level badge (`"5"`) with the **rank name** (`"Veteran"`, `"Champion"`, etc.) — same data the original pill showed, just restyled as a small chip at the avatar's top-right.
+Bring back the thin progress bar that was removed. It gives the "X XP to Champion" line visual weight and shows progress at a glance — without it, the rank line feels like an orphaned caption.
 
-- Shape: small rounded pill (`rounded-full px-2 py-0.5`), not a circle.
-- Content: just the rank label text — no icon inside.
-- Color: use `RANK_CONFIG[tier].bgColor` + `RANK_CONFIG[tier].color` so each tier keeps its identity color (emerald for Champion, orange for Veteran, etc.).
-- Position: absolute, top-right of avatar (`-top-1 -right-2`), with a thin `ring-2 ring-background` so it visually detaches from the avatar circle.
+- Thin bar (`h-1.5 rounded-full bg-surface-2`), full-width within a constrained container (`max-w-[240px] mx-auto`) so it doesn't stretch edge-to-edge under the centered name.
+- Fill: `bg-primary` (emerald), width = `((xp - currentMin) / (nextMin - currentMin)) * 100%`.
+- Sits **above** the muted "X XP to Champion" line.
 
-### 2. Keep "to {RankName}" in the XP line
+### 2. Reposition + restyle the rank pill
 
-Restore the next-tier name in the muted status line. Final copy:
-- Normal: **"440 XP to Champion"**
-- Max rank: **"Maximum rank reached"**
+Current pill at top-right with `ring-2 ring-background` reads as floating/disconnected. Move it to the **bottom-center** of the avatar so it visually anchors the circle.
 
-### Everything else from prior plan stands
+- Position: `absolute -bottom-2 left-1/2 -translate-x-1/2`.
+- Background: solid tier color (keep `RANK_CONFIG[tier].bgColor` + `color`) — drop the transparent feel by keeping the `ring-2 ring-background` so it sits cleanly on the page bg.
+- **Reduce text size**: `text-[10px]` (down from `text-xs`), keep `font-semibold uppercase tracking-wide`.
+- Padding stays compact: `px-2 py-0.5`.
 
-- **Drop the card wrapper** — hero sits flat on page background, just vertical padding (`py-4`).
-- **Remove MSISDN line.**
-- **Add `Pencil` icon** (h-3.5, muted) inline after nickname, non-functional.
-- **Remove the progress bar** — single muted XP line only.
-- Avatar stays `h-20 w-20` with `bg-primary/15`.
+### 3. Invert avatar colors
+
+Currently: light primary tint background (`bg-primary/15`) + emerald icon (`text-primary`). Reference shows the opposite — solid color circle with a contrasting icon.
+
+- Background: `bg-primary` (solid emerald).
+- Icon: `text-primary-foreground` (white/contrast token).
+- Keep size `h-20 w-20`.
+
+### 4. Minor — reduce rank-advance note size
+
+To keep hierarchy tight after restoring the bar, shrink the muted line one notch: `text-xs` (down from `text-sm`).
 
 ### Resulting structure
 
 ```
-                              
-           ⊙ Avatar [Veteran]      ← rank pill top-right
-                                   
-         King Ed ✏️                ← name + pencil
-                                   
-       440 XP to Champion          ← single muted line
-                              
-   (flat — no card border/shadow)
+              ⊙ Avatar (solid emerald, white icon)
+              [Veteran]              ← pill bottom-center, smaller text
+
+           King Ed ✏️                ← name + pencil
+
+         ▓▓▓▓▓░░░░░░░░░              ← restored progress bar
+        440 XP to Champion           ← smaller muted line
 ```
 
 ### Files touched
 
-- `src/routes/_authed/profile.tsx` — rewrite `IdentityHero` only.
-- Add `Pencil` to lucide-react imports; remove unused `User` if no longer referenced elsewhere in the file (keep if still used).
+- `src/routes/_authed/profile.tsx` — `IdentityHero` only.
 
-### Out of scope
-
-- Pencil edit functionality (visual only).
-- `msisdnLast4` prop stays in signature but unused — clean up in a follow-up if desired.
+No new imports, no other files.
 
