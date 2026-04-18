@@ -203,6 +203,7 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
 }
 
 function WinnersPage() {
+  useAllowScroll();
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
       <TopBar backTo="/" />
