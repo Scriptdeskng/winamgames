@@ -34,7 +34,7 @@ function TrendIcon({ trend }: { trend: "up" | "down" | "same" }) {
 function LeaderboardPage() {
   return (
     <div className="mx-auto min-h-screen max-w-[430px] bg-background">
-      <TopBar />
+      <TopBar backTo="/" />
       <div className="px-4 pb-6 space-y-5">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5 text-gold" />
