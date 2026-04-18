@@ -2,54 +2,73 @@
 
 ## Plan
 
-Update `DrawHeroCard` in `src/routes/_authed/index.tsx` to render the countdown as stacked number + label units instead of the current inline `Xd HH:MM:SS` string.
+Add a stacked, swipeable banner carousel to the home page between `StreakRankStrip` and `DailyMissions`.
 
-### Changes
+### 1. Database
 
-**1. Replace `formatCountdown` with `getCountdownParts`**
-Returns structured data instead of a string:
+New table `winam_banners` via migration:
+- `id` uuid PK default `gen_random_uuid()`
+- `title` text not null
+- `subtitle` text not null
+- `icon_url` text (nullable — we'll store a lucide icon name string here for the prototype, e.g. `"trophy"`, `"flame"`, `"book"`)
+- `is_active` boolean not null default true
+- `display_order` int not null default 0
+- `created_at` timestamptz not null default `now()`
+
+RLS: enable, add `SELECT` policy for `authenticated` where `is_active = true`. No insert/update/delete from clients.
+
+Seed 3 rows via insert tool:
+1. order 1 — "Draw closes Sunday" / "Play daily to maximise your entries before the draw" / `trophy`
+2. order 2 — "7-day streak bonus" / "Play 7 days in a row to earn 2 extra entries per session" / `flame`
+3. order 3 — "WisdomDrop is live" / "African proverbs game — earn entries across both games" / `book`
+
+### 2. Server function
+
+Add `getActiveBanners` to `src/utils/mission.functions.ts` (or new `banner.functions.ts`):
 ```ts
-function getCountdownParts(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  return {
-    days: Math.floor(total / 86400),
-    hours: Math.floor((total % 86400) / 3600),
-    minutes: Math.floor((total % 3600) / 60),
-    seconds: total % 60,
-  };
-}
+export const getActiveBanners = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("winam_banners")
+      .select("id, title, subtitle, icon_url, display_order")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .limit(3);
+    if (error) return { success: false, banners: [] };
+    return { success: true, banners: data ?? [] };
+  });
 ```
 
-**2. Replace the single `<p>` timer in `DrawHeroCard` with a stacked unit row**
-- Flex row, `items-end`, no gap on the colon separators (tight).
-- Each unit = a small flex column: number on top (`font-mono text-4xl font-bold tabular-nums leading-none`), label below (`text-[10px] text-muted-foreground lowercase mt-0.5`).
-- Colons are their own column, vertically aligned to the number row only (`text-4xl font-mono leading-none` with bottom padding equal to label height so the colon sits next to digits, not labels).
-- Conditionally render the `day` unit + its trailing colon only when `days > 0`.
+### 3. New component `BannerStack`
 
-Sketch:
-```tsx
-<div className="flex items-end gap-1.5">
-  {days > 0 && (
-    <>
-      <Unit value={days} label="day" />
-      <Colon />
-    </>
-  )}
-  <Unit value={hours} label="hr" />
-  <Colon />
-  <Unit value={minutes} label="min" />
-  <Colon />
-  <Unit value={seconds} label="sec" />
-</div>
-```
+`src/components/home/BannerStack.tsx` — handles the stacked-card swipe interaction directly (no embla-carousel; that lib doesn't give us the under-stack peek effect cleanly).
 
-**3. Spacing**
-- The current timer `<p>` had `mt-2` from the label and the entries line had `mt-4`. Keep both spacings exactly as they are — the new block replaces the `<p>` in place. The 10px label sits inside the unit column so it doesn't push the entries line down.
-- To prevent the labels from adding visible height vs the old single line, use `leading-none` on the number and `mt-0.5` on the label, then reduce the entries-line `mt-4` to `mt-3` so total visual height stays ~equal.
+Behaviour:
+- Holds an internal `order` state — array of banner indices, front-to-back. On swipe, the front card is removed and re-appended to the end (rotates the stack).
+- Renders all banners absolutely positioned in a `relative` container with fixed height (~88px to match the missions empty-state card).
+- Stack visuals: each card after the front is offset down by `~6px * stackIndex` and scaled `1 - 0.04 * stackIndex`, with `z-index` decreasing. Only show up to 3.
+- Front card uses `framer-motion`'s `motion.div` with `drag="x"`, `dragConstraints={{ left: 0, right: 0 }}`, `dragElastic={0.7}`. On drag end, if `|offset.x| > 80` or velocity threshold exceeded, animate exit (`x: direction * 400, opacity: 0`) then call `rotate()`.
+- `framer-motion` is already used widely in shadcn-style projects; verify it's installed. If not, add `framer-motion` dependency. (Will check in implementation.)
 
-**4. Sub-24h behaviour**
-Already handled by the conditional `days > 0` render — only `hr / min / sec` show in the final day.
+Card content:
+- Container: `rounded-2xl bg-surface-1 border border-border p-4 shadow-card flex items-start gap-3`
+- Left: 48×48 rounded-xl muted square holding the lucide icon (mapped from `icon_url` string: `trophy → Trophy`, `flame → Flame`, `book → BookOpen`; fallback `Sparkles`).
+- Right column: title (`text-[13px] font-bold`), subtitle (`text-xs text-muted-foreground mt-1`).
+- Top-right "Swipe" label (`text-[10px] text-muted-foreground absolute top-2 right-3`), hidden once `localStorage.getItem("winam_banner_swiped") === "1"`. On first successful swipe, set the flag and hide on re-render.
 
-### Files touched
-- `src/routes/_authed/index.tsx` — swap `formatCountdown` for `getCountdownParts`, replace timer `<p>` with stacked unit layout, tweak entries-line top margin from `mt-4` to `mt-3`.
+### 4. Wire into home page
+
+In `src/routes/_authed/index.tsx`:
+- Add `getActiveBanners` to the parallel `Promise.all` in the `useEffect`.
+- Insert `<BannerStack banners={banners} />` between `<StreakRankStrip />` and `<DailyMissionsSection />`.
+- If `banners.length === 0` (fetch failed or empty), the component renders `null` — carousel hidden entirely.
+
+### 5. Files touched
+
+- `src/routes/_authed/index.tsx` — fetch banners, render `BannerStack`
+- `src/utils/mission.functions.ts` — add `getActiveBanners` server fn
+- `src/components/home/BannerStack.tsx` — new file
+- DB migration — create `winam_banners` table + RLS
+- DB insert — seed 3 banner rows
+- `package.json` — add `framer-motion` if not already present
 
