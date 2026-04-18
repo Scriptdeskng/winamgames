@@ -247,7 +247,7 @@ function WinnersPage() {
             78 winners every week — cash, airtime & data
           </p>
           <Link
-            to="/checkmate"
+            to="/"
             className="inline-flex items-center gap-2 mt-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Gamepad2 className="h-4 w-4" />
