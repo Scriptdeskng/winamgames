@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame } from "lucide-react";
-import { getPlayerData, getDailyMissions, getActiveBanners } from "@/utils/mission.functions";
+import {
+  Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame,
+  Sparkles, Shuffle, Ticket, Calendar,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { getPlayerData, getActiveMissions, getActiveBanners } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
