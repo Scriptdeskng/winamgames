@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      winam_banners: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          subtitle: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          subtitle: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          subtitle?: string
+          title?: string
+        }
+        Relationships: []
+      }
       winam_draw_weeks: {
         Row: {
           draw_executes_at: string

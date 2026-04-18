@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { Lightbulb, ChevronRight, Swords, BookOpen, Check, Flame } from "lucide-react";
-import { getPlayerData, getDailyMissions } from "@/utils/mission.functions";
+import { getPlayerData, getDailyMissions, getActiveBanners } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
+import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/")({
@@ -66,6 +67,7 @@ function HomePage() {
   const [data, setData] = React.useState<{
     playerResult: any;
     missionsResult: any;
+    bannersResult: any;
   } | null>(null);
 
   React.useEffect(() => {
@@ -73,8 +75,9 @@ function HomePage() {
     Promise.all([
       getPlayerData({ data: { playerId: session.playerId } }),
       getDailyMissions({ data: { playerId: session.playerId } }),
-    ]).then(([playerResult, missionsResult]) => {
-      setData({ playerResult, missionsResult });
+      getActiveBanners(),
+    ]).then(([playerResult, missionsResult, bannersResult]) => {
+      setData({ playerResult, missionsResult, bannersResult });
     });
   }, []);
 
@@ -85,6 +88,7 @@ function HomePage() {
   const totalSessions = data?.playerResult?.success ? data.playerResult.totalSessions : 0;
   const bestSession = data?.playerResult?.success ? data.playerResult.bestSession : 0;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
+  const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
 
   if (!data) {
     return (
@@ -109,6 +113,8 @@ function HomePage() {
         />
 
         <StreakRankStrip streak={streak} tier={tier} />
+
+        <BannerStack banners={banners} />
 
         <DailyMissionsSection missions={missions} />
 
