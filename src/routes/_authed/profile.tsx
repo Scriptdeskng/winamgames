@@ -85,10 +85,19 @@ function ProfilePage() {
 
         {/* ── Identity + Rank hero ───────────────────────────── */}
         <IdentityHero
+          playerId={session?.playerId ?? ""}
           nickname={player?.nickname ?? session?.nickname ?? "Player"}
           msisdnLast4={player?.msisdnLast4 ?? session?.msisdnLast4 ?? "0000"}
           xp={player?.xpTotal ?? 0}
           tier={(player?.rankTier as RankTier) ?? "starter"}
+          onNicknameUpdated={(nick) => {
+            updateSessionNickname(nick);
+            setData((prev: any) =>
+              prev?.success
+                ? { ...prev, player: { ...prev.player, nickname: nick } }
+                : prev,
+            );
+          }}
         />
 
         {/* ── Weekly entries (primary stat) ───────────────────── */}
