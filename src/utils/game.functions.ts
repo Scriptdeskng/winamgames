@@ -263,7 +263,7 @@ export const closeSession = createServerFn({ method: "POST" })
     // Get session to find draw_week_id
     const { data: session } = await supabaseAdmin
       .from("winam_game_sessions")
-      .select("draw_week_id, session_date_wat")
+      .select("draw_week_id, session_date_wat, game_type")
       .eq("id", data.sessionId)
       .single();
 
