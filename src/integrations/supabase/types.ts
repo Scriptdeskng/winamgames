@@ -139,7 +139,6 @@ export type Database = {
           hints_used: number
           id: string
           is_free_session: boolean
-          net_puzzles: number
           player_id: string
           puzzles_solved: number
           session_date_wat: string
@@ -154,7 +153,6 @@ export type Database = {
           hints_used?: number
           id?: string
           is_free_session?: boolean
-          net_puzzles?: number
           player_id: string
           puzzles_solved?: number
           session_date_wat: string
@@ -169,7 +167,6 @@ export type Database = {
           hints_used?: number
           id?: string
           is_free_session?: boolean
-          net_puzzles?: number
           player_id?: string
           puzzles_solved?: number
           session_date_wat?: string

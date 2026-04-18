@@ -271,11 +271,11 @@ export const closeSession = createServerFn({ method: "POST" })
       return { success: false as const, error: "Session not found" };
     }
 
-    // ── Entry calculation per spec ──
+    // ── Entry calculation ──
+    // Hints cost coins only — they do NOT reduce puzzle count for entry math.
     const baseN = 5; // default divisor
     const weekCap = 50;
-    const netPuzzles = Math.max(0, data.puzzlesSolved - data.hintsUsed);
-    const baseEntries = Math.floor(netPuzzles / baseN);
+    const baseEntries = Math.floor(data.puzzlesSolved / baseN);
 
     // Streak bonus
     let streakBonus = 0;
@@ -315,7 +315,6 @@ export const closeSession = createServerFn({ method: "POST" })
       .update({
         puzzles_solved: data.puzzlesSolved,
         hints_used: data.hintsUsed,
-        net_puzzles: netPuzzles,
         entries_awarded: entriesToAdd,
         coins_awarded: totalCoins,
         duration_seconds: data.durationSeconds,
@@ -402,7 +401,6 @@ export const closeSession = createServerFn({ method: "POST" })
       weekTotal: weekSoFar + entriesToAdd + missionEntriesAdded,
       weekCap,
       overflow,
-      netPuzzles,
       rankTier: newTier,
       previousRank: player.rank_tier,
       completedMissions: completedMissions.map((m) => ({
