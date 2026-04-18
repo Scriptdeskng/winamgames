@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { sendOtp } from "@/utils/auth.functions";
 import { getSession } from "@/lib/session";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
