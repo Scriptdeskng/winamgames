@@ -21,6 +21,18 @@ export const getPlayerData = createServerFn({ method: "POST" })
       return { success: false as const, error: "Player not found" };
     }
 
+    // Get session stats for dynamic tips
+    const { data: sessions } = await supabaseAdmin
+      .from("winam_game_sessions")
+      .select("puzzles_solved")
+      .eq("player_id", data.playerId);
+
+    const totalSessions = sessions?.length ?? 0;
+    const bestSession = sessions?.reduce(
+      (m, s) => Math.max(m, s.puzzles_solved ?? 0),
+      0
+    ) ?? 0;
+
     // Get current draw week
     const { data: drawWeek } = await supabaseAdmin
       .from("winam_draw_weeks")
@@ -59,6 +71,8 @@ export const getPlayerData = createServerFn({ method: "POST" })
       },
       weekTotal,
       weekCap: 50,
+      totalSessions,
+      bestSession,
       drawWeek: drawWeek
         ? {
             id: drawWeek.id,
