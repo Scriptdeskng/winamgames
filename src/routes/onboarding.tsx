@@ -1,18 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
 import { getSession, updateSessionNickname } from "@/lib/session";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { AuthFrame } from "@/components/auth/AuthFrame";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
-  head: () => ({
-    meta: [{ title: "Choose Nickname — WinamGames" }],
-  }),
+  head: () => ({ meta: [{ title: "Choose Nickname — WinamGames" }] }),
 });
 
 function OnboardingPage() {
@@ -58,44 +52,54 @@ function OnboardingPage() {
   if (!playerId) return null;
 
   return (
-    <AuthFrame>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Choose your name</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This is how others will see you
-        </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="px-5 pt-5">
+        <Link to="/" className="text-lg font-bold text-gradient-emerald">
+          WinamGames
+        </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="nickname" className="text-muted-foreground">Nickname</Label>
-          <Input
-            id="nickname"
-            type="text"
-            value={nickname}
-            onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
-            placeholder="e.g. NaijaChamp"
-            autoFocus
-            maxLength={16}
-            className="h-12 rounded-xl bg-surface-2 border-border"
-          />
-          {error ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">3–16 chars · letters, numbers, underscores</p>
-          )}
-        </div>
+      <div className="flex-1 flex items-center justify-center px-5 pb-10">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold text-foreground">Choose your name</h1>
+            <p className="text-sm text-muted-foreground">
+              This is how others will see you
+            </p>
+          </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          disabled={loading || nickname.trim().length < 3}
-          className="w-full h-12 rounded-xl shadow-glow"
-        >
-          {loading ? "Saving..." : "Let's play"}
-          {!loading && <ArrowRight className="h-4 w-4" />}
-        </Button>
-      </form>
-    </AuthFrame>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="nickname" className="text-xs text-muted-foreground">
+                Nickname
+              </label>
+              <input
+                id="nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => { setNicknameValue(e.target.value); setError(""); }}
+                placeholder="e.g. NaijaChamp"
+                autoFocus
+                maxLength={16}
+                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              {error ? (
+                <p className="text-xs text-destructive">{error}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">3–16 chars · letters, numbers, underscores</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || nickname.trim().length < 3}
+              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-glow transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Let's play →"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

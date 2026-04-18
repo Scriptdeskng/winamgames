@@ -1,17 +1,13 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { sendOtp, verifyOtp } from "@/utils/auth.functions";
 import { setSession } from "@/lib/session";
-import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { AuthFrame } from "@/components/auth/AuthFrame";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
-  head: () => ({
-    meta: [{ title: "Verify OTP — WinamGames" }],
-  }),
+  head: () => ({ meta: [{ title: "Verify OTP — WinamGames" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     msisdn: (search.msisdn as string) || "",
   }),
@@ -24,7 +20,6 @@ function VerifyPage() {
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(RESEND_SECONDS);
 
@@ -42,7 +37,6 @@ function VerifyPage() {
 
     setLoading(true);
     setError("");
-
     try {
       const result = await verifyOtp({ data: { msisdn, code: otp } });
       if (!result.success) {
@@ -57,11 +51,7 @@ function VerifyPage() {
         nickname: null,
       });
 
-      if (result.needsOnboarding) {
-        navigate({ to: "/onboarding" });
-      } else {
-        navigate({ to: "/" });
-      }
+      navigate({ to: result.needsOnboarding ? "/onboarding" : "/" });
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
@@ -69,7 +59,7 @@ function VerifyPage() {
   };
 
   const handleResend = async () => {
-    setResending(true);
+    setOtp("");
     setError("");
     try {
       const result = await sendOtp({ data: { msisdn } });
@@ -80,59 +70,71 @@ function VerifyPage() {
       }
     } catch {
       setError("Failed to resend OTP");
-    } finally {
-      setResending(false);
     }
   };
 
   return (
-    <AuthFrame back={{ to: "/login" }}>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Enter your code</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          We sent a code to ···{last4}
-        </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="px-5 pt-5">
+        <Link to="/" className="text-lg font-bold text-gradient-emerald">
+          WinamGames
+        </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="flex justify-center">
-          <InputOTP maxLength={4} value={otp} onChange={setOtp}>
-            <InputOTPGroup>
-              <InputOTPSlot index={0} className="h-14 w-12 rounded-xl text-xl" />
-              <InputOTPSlot index={1} className="h-14 w-12 rounded-xl text-xl" />
-              <InputOTPSlot index={2} className="h-14 w-12 rounded-xl text-xl" />
-              <InputOTPSlot index={3} className="h-14 w-12 rounded-xl text-xl" />
-            </InputOTPGroup>
-          </InputOTP>
-        </div>
+      <div className="flex-1 flex items-center justify-center px-5 pb-10">
+        <div className="w-full max-w-sm space-y-6">
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-3 h-3" /> Back
+          </Link>
 
-        {error && <p className="text-sm text-destructive text-center">{error}</p>}
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold text-foreground">Enter your code</h1>
+            <p className="text-sm text-muted-foreground">
+              We sent a code to •••{last4}
+            </p>
+          </div>
 
-        <Button
-          type="submit"
-          size="lg"
-          disabled={loading || otp.length !== 4}
-          className="w-full h-12 rounded-xl shadow-glow"
-        >
-          {loading ? "Verifying..." : "Verify"}
-          {!loading && <ArrowRight className="h-4 w-4" />}
-        </Button>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex justify-center">
+              <InputOTP maxLength={4} value={otp} onChange={setOtp}>
+                <InputOTPGroup className="gap-2">
+                  <InputOTPSlot index={0} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
+                  <InputOTPSlot index={1} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
+                  <InputOTPSlot index={2} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
+                  <InputOTPSlot index={3} className="w-14 h-14 text-xl rounded-xl border bg-input border-border text-foreground" />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
 
-        <div className="text-center text-sm">
-          {countdown > 0 ? (
-            <span className="text-muted-foreground">Resend in {countdown}s</span>
-          ) : (
+            {error && <p className="text-xs text-destructive text-center">{error}</p>}
+
             <button
-              type="button"
-              onClick={handleResend}
-              disabled={resending}
-              className="text-primary font-medium hover:underline disabled:opacity-50"
+              type="submit"
+              disabled={loading || otp.length !== 4}
+              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-glow transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
             >
-              {resending ? "Resending..." : "Resend code"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify →"}
             </button>
-          )}
+
+            {countdown > 0 ? (
+              <p className="text-center text-xs text-muted-foreground">
+                Resend in {countdown}s
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                className="w-full text-center text-xs text-primary hover:underline"
+              >
+                Didn't get a code? Resend →
+              </button>
+            )}
+          </form>
         </div>
-      </form>
-    </AuthFrame>
+      </div>
+    </div>
   );
 }

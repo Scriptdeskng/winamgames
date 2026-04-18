@@ -1,16 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Crown, Clock, CheckCircle2 } from "lucide-react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { Crown, Clock, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getSession } from "@/lib/session";
 import { renewSubscription } from "@/utils/auth.functions";
-import { Button } from "@/components/ui/button";
-import { AuthFrame } from "@/components/auth/AuthFrame";
 
 export const Route = createFileRoute("/renew")({
   component: RenewPage,
-  head: () => ({
-    meta: [{ title: "Renew Subscription — WinamGames" }],
-  }),
+  head: () => ({ meta: [{ title: "Renew Subscription — WinamGames" }] }),
 });
 
 function RenewPage() {
@@ -49,83 +45,105 @@ function RenewPage() {
   if (!playerId) return null;
 
   return (
-    <AuthFrame back={{ to: "/profile" }}>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Renew subscription</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Keep playing & earning entries
-        </p>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="px-5 pt-5">
+        <Link to="/" className="text-lg font-bold text-gradient-emerald">
+          WinamGames
+        </Link>
       </div>
 
-      <div className="space-y-3">
-        <button
-          onClick={() => setSelected("weekly")}
-          className={`relative w-full rounded-2xl border-2 p-5 text-left transition-all ${
-            selected === "weekly"
-              ? "border-primary bg-primary/5 shadow-glow"
-              : "border-border bg-surface-2 hover:border-primary/40"
-          }`}
-        >
-          <div className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wide uppercase">Best Value</div>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Crown className="h-5 w-5 text-primary" />
-                <span className="font-bold text-lg">Weekly</span>
-              </div>
-              <p className="text-sm text-muted-foreground">7 days of full access</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">₦42.86/day — save 71%</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold tabular-nums">₦300</span>
-              <p className="text-xs text-muted-foreground">/week</p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> All games</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Draw entries</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Missions</span>
-          </div>
-        </button>
+      <div className="flex-1 flex items-center justify-center px-5 pb-10">
+        <div className="w-full max-w-sm space-y-6">
+          <Link
+            to="/profile"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-3 h-3" /> Back
+          </Link>
 
-        <button
-          onClick={() => setSelected("daily")}
-          className={`w-full rounded-2xl border-2 p-5 text-left transition-all ${
-            selected === "daily"
-              ? "border-primary bg-primary/5 shadow-glow"
-              : "border-border bg-surface-2 hover:border-primary/40"
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <span className="font-bold text-lg">Daily</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Access for today only</p>
-            </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold tabular-nums">₦150</span>
-              <p className="text-xs text-muted-foreground">/day</p>
-            </div>
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold text-foreground">Renew subscription</h1>
+            <p className="text-sm text-muted-foreground">
+              Keep playing & earning entries
+            </p>
           </div>
-        </button>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => setSelected("weekly")}
+              className={`relative w-full rounded-xl border p-4 text-left transition-all ${
+                selected === "weekly"
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-input hover:border-primary/40"
+              }`}
+            >
+              <div className="absolute -top-2 right-3 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold tracking-wide uppercase">
+                Best Value
+              </div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <span className="font-bold text-sm">Weekly</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">7 days of full access</p>
+                  <p className="mt-1 text-[10px] text-primary font-semibold">₦42.86/day — save 71%</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold tabular-nums">₦300</span>
+                  <p className="text-[10px] text-muted-foreground">/week</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> All games</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> Entries</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> Missions</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setSelected("daily")}
+              className={`w-full rounded-xl border p-4 text-left transition-all ${
+                selected === "daily"
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-input hover:border-primary/40"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-bold text-sm">Daily</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Access for today only</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-bold tabular-nums">₦150</span>
+                  <p className="text-[10px] text-muted-foreground">/day</p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {error && <p className="text-xs text-destructive text-center">{error}</p>}
+
+          <button
+            onClick={handleSubscribe}
+            disabled={loading}
+            className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-glow transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              `Subscribe — ${selected === "weekly" ? "₦300/week" : "₦150/day"} →`
+            )}
+          </button>
+
+          <p className="text-center text-[10px] text-muted-foreground">
+            MTN Nigeria carrier billing • Cancel anytime
+          </p>
+        </div>
       </div>
-
-      {error && <p className="mt-4 text-sm text-destructive text-center">{error}</p>}
-
-      <Button
-        onClick={handleSubscribe}
-        disabled={loading}
-        size="lg"
-        className="mt-6 w-full h-12 rounded-xl shadow-glow"
-      >
-        {loading ? "Activating..." : `Subscribe — ${selected === "weekly" ? "₦300/week" : "₦150/day"}`}
-      </Button>
-
-      <p className="mt-4 text-xs text-muted-foreground text-center">MTN Nigeria carrier billing • Cancel anytime</p>
-    </AuthFrame>
+    </div>
   );
 }
