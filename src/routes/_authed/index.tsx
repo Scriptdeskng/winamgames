@@ -217,7 +217,7 @@ function DrawHeroCard({
       <div className="mt-3 flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
         <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
-          View all entries <ChevronRight className="h-3 w-3" />
+          View my entries <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
