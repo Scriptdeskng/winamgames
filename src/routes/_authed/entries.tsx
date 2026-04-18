@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authed/entries")({
 function EntriesPage() {
   useAllowScroll();
   return (
-    <div className="mx-auto min-h-screen max-w-[430px] bg-background">
+    <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/" />
       <div className="px-4 pb-6 space-y-5">
         <div className="flex items-center gap-2">
