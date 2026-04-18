@@ -16,9 +16,6 @@ export const Route = createFileRoute("/_authed/")({
   component: HomePage,
 });
 
-const RANK_ORDER: RankTier[] = [
-  "starter", "recruit", "sergeant", "veteran", "champion", "icon", "legend", "immortal",
-];
 
 // Compute next Sunday 20:00 WAT (UTC+1) → 19:00 UTC
 function getNextSundayWAT(): Date {
