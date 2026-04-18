@@ -45,7 +45,13 @@ function CheckMatePage() {
 
   if (!session.sessionId) {
     return (
-      <div className="mx-auto min-h-screen max-w-[430px] bg-background">
+      <div className="mx-auto min-h-screen max-w-[430px] bg-background relative">
+        <Link
+          to="/"
+          className="absolute left-4 top-4 z-10 h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </Link>
         <div className="px-4 pt-6 pb-24 flex flex-col items-center justify-center min-h-screen">
           <div className="h-20 w-20 rounded-2xl bg-primary/15 flex items-center justify-center mb-6">
             <Swords className="h-10 w-10 text-primary" />
