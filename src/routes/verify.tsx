@@ -75,7 +75,7 @@ function VerifyPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex-1 flex flex-col pt-16 px-5 pb-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 pb-20">
         <div className="w-full max-w-sm mx-auto space-y-8">
           <Link to="/" className="block text-lg font-bold text-gradient-emerald">
             WinamGames
