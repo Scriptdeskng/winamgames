@@ -28,7 +28,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { title: "WinamGames — Play. Win. Repeat." },
       { name: "description", content: "Play puzzle games, earn draw entries, and win cash prizes weekly on WinamGames." },
       { name: "author", content: "WinamGames" },
