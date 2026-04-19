@@ -236,19 +236,6 @@ function WinnersPage() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="rounded-2xl bg-surface-1 border border-border p-4 text-center space-y-2">
-          <p className="text-sm font-semibold">Keep playing, keep winning</p>
-          <p className="text-[11px] text-muted-foreground">
-            More entries = better odds. Play daily to climb the ranks.
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-4 py-1.5 text-xs font-semibold hover:bg-primary/20 transition-colors"
-          >
-            Back to Games
-          </Link>
-        </div>
       </div>
     </div>
   );
