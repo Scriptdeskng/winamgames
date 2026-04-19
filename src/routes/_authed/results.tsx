@@ -69,20 +69,20 @@ function ResultsPage() {
 
   // Build breakdown chips
   const breakdownParts: string[] = [];
-  if (baseEntries > 0) breakdownParts.push(`Base ${baseEntries}`);
-  if (streakBonusEntries > 0) breakdownParts.push(`Streak bonus +${streakBonusEntries}`);
-  if (missionEntries > 0) breakdownParts.push(`Mission +${missionEntries}`);
+  if (baseEntries > 0) breakdownParts.push(`Solved ${puzzlesSolved} puzzles +${baseEntries}`);
+  if (streakBonusEntries > 0) breakdownParts.push(`Day ${streak} streak +${streakBonusEntries}`);
+  if (missionEntries > 0) breakdownParts.push(`Mission bonus +${missionEntries}`);
 
   // Next session nudge
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve 5 puzzles next session to earn a ticket";
+    nudge = "Solve 5 puzzles in a session to earn your first ticket";
   } else if (remainder === 0) {
-    nudge = "Great session — play again to keep earning";
+    nudge = "Nice rhythm — every 5 puzzles earns 1 ticket";
   } else {
     const need = 5 - remainder;
-    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} next session for another ticket`;
+    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} for your next ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
