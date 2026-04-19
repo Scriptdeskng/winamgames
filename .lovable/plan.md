@@ -1,43 +1,38 @@
 
 
-## Region as a colored pill at the top
+## Add thin separators between top 3 cash winners
 
-Currently the region (e.g. "Hausa") sits as plain muted text above the proverb, and is repeated below as "— Hausa" attribution under the original proverb in the reveal panel.
+In `src/routes/_authed/winners.tsx`, the three cash winners (1st/2nd/3rd) currently render in a `space-y-1.5` stack with no visual division. Add a subtle divider between rows so each position reads as its own line.
 
 ### Change
 
-In `src/routes/_authed/wisdomdrop.tsx`, replace the plain region label at the top of the puzzle card with an emerald-tinted pill, matching the app's existing chip style (see the landing screen's stat chips and the hint chip for visual precedent).
+In `DrawWeekCard`, the cash winners block (~lines 167–187) maps `draw.cashWinners` and renders each as a `<div>`. Add a bottom border to all but the last row:
 
-**Before** (line ~149):
 ```tsx
-<p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
+{draw.cashWinners.map((w, j) => (
+  <div
+    key={j}
+    className={`flex items-center justify-between py-2 ${
+      j < draw.cashWinners.length - 1 ? "border-b border-border/40" : ""
+    }`}
+  >
+    {/* unchanged inner content */}
+  </div>
+))}
 ```
 
-**After**:
-```tsx
-<div className="mb-4">
-  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald">
-    <Globe className="h-3 w-3" />
-    {puzzle.region}
-  </span>
-</div>
-```
-
-- Reuses the `Globe` icon already imported from lucide for region context (consistent with the landing screen's "9 regions" chip).
-- Uses the emerald token (`bg-emerald/10`, `border-emerald/20`, `text-emerald`) — the WisdomDrop signature color, distinct from the coin/amber hint chip below it.
-- Uppercase tracking gives it an eyebrow/tag feel so it reads as metadata rather than competing with the proverb.
-
-### Reveal panel (no change)
-
-The "— Hausa" attribution under the original proverb in the reveal stays — it's contextual ("this is the original Hausa version of what you just answered") and reads naturally there.
+- `border-border/40` — thin, muted (40% of token border color) so it whispers rather than competes with the card border.
+- Bumped `py-1` → `py-2` for a touch more breathing room around the divider (still compact).
+- Last row gets no border so it doesn't double up with the "+ N airtime & data winners" line below.
+- Outer `space-y-1.5` on the parent stays — the eyebrow label still gets its gap from the rows.
 
 ### Out of scope
 
-- Region color mapping per region (all regions use emerald for now — can be added later if useful).
-- Checkmate or any other screen.
-- Landing screen chips.
+- Airtime tier rendering (currently summarized as a single line).
+- Card borders, hero CTA, or other sections.
+- Other pages.
 
 ### File touched
 
-- `src/routes/_authed/wisdomdrop.tsx` (one block, ~lines 147–151)
+- `src/routes/_authed/winners.tsx` (one block inside `DrawWeekCard`)
 
