@@ -454,6 +454,42 @@ export type Database = {
           },
         ]
       }
+      winam_wisdom_puzzles: {
+        Row: {
+          blank: string
+          correct_index: number
+          created_at: string | null
+          difficulty: string
+          display_text: string
+          id: string
+          options: Json
+          original_proverb: string
+          region: string
+        }
+        Insert: {
+          blank: string
+          correct_index: number
+          created_at?: string | null
+          difficulty: string
+          display_text: string
+          id: string
+          options: Json
+          original_proverb: string
+          region: string
+        }
+        Update: {
+          blank?: string
+          correct_index?: number
+          created_at?: string | null
+          difficulty?: string
+          display_text?: string
+          id?: string
+          options?: Json
+          original_proverb?: string
+          region?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
