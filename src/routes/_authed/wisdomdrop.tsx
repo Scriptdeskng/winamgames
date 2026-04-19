@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authed/wisdomdrop")({
   head: () => ({
     meta: [
       { title: "WisdomDrop — WinamGames" },
-      { name: "description", content: "Complete African proverbs and earn draw entries." },
+      { name: "description", content: "Complete African proverbs and earn draw tickets." },
     ],
   }),
 });
@@ -87,7 +87,7 @@ function WisdomDropPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  Earn up to <span className="text-coin tabular-nums">5 entries</span> per round
+                  Earn up to <span className="text-coin tabular-nums">5 tickets</span> per round
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Plus XP, streak bonuses & weekly draws

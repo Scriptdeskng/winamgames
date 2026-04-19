@@ -66,7 +66,7 @@ function RenewPage() {
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold text-foreground">Renew subscription</h1>
             <p className="text-sm text-muted-foreground">
-              Keep playing & earning entries
+              Keep playing & earning tickets
             </p>
           </div>
 
@@ -98,7 +98,7 @@ function RenewPage() {
               </div>
               <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> All games</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> Entries</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> Tickets</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-primary" /> Missions</span>
               </div>
             </button>
