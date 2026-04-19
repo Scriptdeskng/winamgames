@@ -1,41 +1,39 @@
 
 
-## Refine Results page copy — keep "tickets" terminology
+## Tighten breakdown line hierarchy
 
-User feedback: keep the word **"tickets"** throughout (don't swap to "entries"). Just make the hero meaningful by adding the subtext that completes the thought, and clarify the breakdown/nudge copy.
+Currently the hero stack is three lines all sharing `text-sm text-muted-foreground`:
+1. `+3 tickets` (hero — large, primary)
+2. `Added to your weekly draw` (subtext — meaningful caption)
+3. `Solved 9 puzzles +1 · Mission bonus +2` (breakdown — supporting detail)
 
-### Copy changes (all in `src/routes/_authed/results.tsx`)
+Lines 2 and 3 look identical, so the breakdown competes with the subtext instead of sitting beneath it.
 
-| Where | Current | Proposed |
+### Fix
+
+Demote the breakdown line so the visual order matches the information hierarchy: hero → caption → supporting detail.
+
+| Line | Current | Proposed |
 |---|---|---|
-| Hero number | `+3 tickets` | `+3 tickets` (unchanged) |
-| Hero subtext (NEW) | — | `Added to your weekly draw` |
-| Breakdown — base | `Base 1` | `Solved {puzzlesSolved} puzzles +{baseEntries}` |
-| Breakdown — streak | `Streak bonus +1` | `Day {streak} streak +1` |
-| Breakdown — mission | `Mission +2` | `Mission bonus +2` |
-| Zero-tickets hero | `No tickets this session` | `No tickets earned this session` |
-| Zero-tickets subtext | `Solve 5 puzzles in a session to earn your first ticket` | `Every 5 puzzles solved earns 1 ticket toward the weekly draw` |
-| Weekly progress label | `Tickets this week` | `Tickets toward this week's draw` |
-| Weekly progress value | `4 / 50` | `4 of 50` |
-| Nudge — partial | `Solve 1 more puzzle next session for another ticket` | `Solve 1 more puzzle for your next ticket` |
-| Nudge — clean multiple | `Great session — play again to keep earning` | `Nice rhythm — every 5 puzzles earns 1 ticket` |
-| Nudge — zero | `Solve 5 puzzles next session to earn a ticket` | `Solve 5 puzzles in a session to earn your first ticket` |
-| Streak pill — day 1-2 | `Day 2 — reach day 3 for bonus entries` | `Day {streak} streak — reach day 3 for +1 bonus ticket per session` |
-| Streak pill — day 3-6 | `Day {n} — earning +1 bonus entry per session` | `Day {n} streak — +1 bonus ticket per session` |
-| Streak pill — day 7-13 | `Day {n} — earning +2 bonus entries per session` | `Day {n} streak — +2 bonus tickets per session` |
-| Streak pill — day 14+ | `Day {n} — earning +3 bonus entries per session` | `Day {n} streak — +3 bonus tickets per session` |
+| Hero subtext ("Added to your weekly draw") | `text-sm text-muted-foreground` | unchanged |
+| Breakdown chips | `text-sm text-muted-foreground` (mt-2) | `text-xs text-muted-foreground/70` (mt-1.5) |
 
-### Implementation notes
+Also separate items with a thin-space dot for a lighter rhythm: keep the existing ` · ` separator but the smaller size will already do most of the work.
 
-- All edits are copy-only inside `src/routes/_authed/results.tsx`.
-- Add a `<p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>` directly below the hero number (only when `entries > 0`).
-- Update `breakdownParts` construction to use the new phrasings, including pulling `streak` and `puzzlesSolved` into the strings.
-- Update streak pill block to consistently use "tickets" and "Day N streak" framing.
-- No layout, color, or component changes. No data-flow changes.
+### Implementation
+
+Single change in `src/routes/_authed/results.tsx` (the `<p>` rendering `breakdownParts.join(...)` directly under the "Added to your weekly draw" line):
+
+```tsx
+<p className="mt-1.5 text-xs text-muted-foreground/70">
+  {breakdownParts.join("  ·  ")}
+</p>
+```
+
+No other layout, spacing, or color changes. No data changes.
 
 ### Out of scope
 
-- CheckMate/WisdomDrop landing screens.
-- Buttons ("Play again", "Back to Home") unchanged.
-- No structural redesign — this is a pure copy pass.
+- Zero-tickets state (no breakdown line shown there).
+- Weekly progress, nudge, streak pill, buttons — all unchanged.
 
