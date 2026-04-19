@@ -535,6 +535,18 @@ export const closeSession = createServerFn({ method: "POST" })
     const coinsFromOverflow = overflow * 5;
     const totalCoins = coinsFromGameplay + coinsFromOverflow;
 
+    // Compute wisdom_accuracy from puzzle attempts (source of truth — handles early exit)
+    let wisdomAccuracy: number | null = null;
+    if (session.game_type === "wisdomdrop") {
+      const { data: attempts } = await supabaseAdmin
+        .from("winam_puzzle_attempts")
+        .select("result")
+        .eq("session_id", data.sessionId);
+      const total = attempts?.length ?? 0;
+      const correct = (attempts ?? []).filter((a) => a.result === "correct").length;
+      wisdomAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    }
+
     // Update game session
     await supabaseAdmin
       .from("winam_game_sessions")
@@ -544,6 +556,7 @@ export const closeSession = createServerFn({ method: "POST" })
         entries_awarded: entriesToAdd,
         coins_awarded: totalCoins,
         duration_seconds: data.durationSeconds,
+        ...(wisdomAccuracy !== null ? { wisdom_accuracy: wisdomAccuracy } : {}),
       })
       .eq("id", data.sessionId);
 
