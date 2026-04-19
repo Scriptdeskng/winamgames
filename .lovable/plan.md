@@ -1,50 +1,35 @@
 
 
-## Free up header space on game pages
+## Replace remaining "entries" copy with "tickets"
 
-### Problem
+The user-facing word is "tickets" everywhere. A few stragglers still say "entries". Path/URL `/entries` stays (changing routes breaks links/history); only visible copy changes.
 
-On `/wisdomdrop` (and `/checkmate`) the header packs three things into a tight row on a 390px viewport:
-- Exit button (left)
-- Centered title stack: `WisdomDrop` + `9 / 10`
-- Timer + lives (right)
+### Changes (visible UI strings only)
 
-The game name in the center column squeezes the puzzle count and competes with the timer/lives on the right. The player already knows which game they're in — they just tapped "Start Game" 30 seconds ago. The title is decorative weight, not informational.
+| File | Line | Current | New |
+|---|---|---|---|
+| `src/routes/_authed/wisdomdrop.tsx` | 90 | `5 entries` per round | `5 tickets` per round |
+| `src/routes/_authed/wisdomdrop.tsx` | 18 | meta description: `…earn draw entries.` | `…earn draw tickets.` |
+| `src/routes/_authed/checkmate.tsx` | 107 | `5 entries` per round | `5 tickets` per round |
+| `src/routes/_authed/checkmate.tsx` | 18 | meta description: `…earn draw entries.` | `…earn draw tickets.` |
+| `src/routes/renew.tsx` | 69 | `Keep playing & earning entries` | `Keep playing & earning tickets` |
+| `src/routes/renew.tsx` | 101 | feature chip `Entries` | `Tickets` |
+| `src/routes/_authed/profile.tsx` | 184 | `Tickets are your entries` | `Tickets are your draw entries` → simplify to remove the "entries" word entirely: rewrite as `Tickets are your shot at the draw` |
+| `src/routes/_authed/profile.tsx` | 464 | `+1 bonus weekly draw entry per session` | `+1 bonus ticket per session` (and `+2`, `+3` follow same pattern in same sentence) |
+| `src/routes/__root.tsx` | 33, 36, 41 | meta `…earn draw entries…` (×3: description, og:description, twitter:description) | `…earn draw tickets…` |
 
-### Proposal
+### Not changed (intentional)
 
-Drop the game-name line from `GameHeader` entirely. Promote the puzzle counter to the center role with a slightly larger, more legible treatment — it's the only piece of in-session info that actually changes and matters.
+- **Route path `/entries`** and `Link to="/entries"` references — internal URL, no user copy impact, changing breaks deep links / browser history.
+- **Database column names** (`entries_awarded`, `entries_delta`, `total_entries`, enum `entry_source_type`, `reward_type: "entries"`) — schema-level, not user-facing.
+- **Mock data field names** (`entries`, `entryId` in leaderboard/winners mock) — internal property names, not rendered as the word "entries" in UI.
+- **Component/function names** (`WeeklyEntriesCard`, `EntriesPage`) — internal identifiers.
 
-**Before** (center column, two stacked lines):
-```
-WisdomDrop
-9 / 10
-```
+### Files touched
 
-**After** (center column, single line):
-```
-9 / 10
-```
-
-Treatment: `text-sm font-semibold tabular-nums text-foreground` with the slash slightly muted (`text-muted-foreground`) for a subtle "current / total" visual rhythm — e.g. `9` strong, `/ 10` muted. This makes "where am I" instantly scannable without crowding the timer/lives.
-
-### Changes
-
-- **`src/components/games/GameHeader.tsx`**:
-  - Remove the `<span>` rendering `{title}`.
-  - Keep the `title` prop in the interface (still used for the document title / future use) but don't render it.
-  - Restyle the counter: `9 / 10` becomes the center element with `text-sm font-semibold tabular-nums`, slash dimmed.
-- No changes to `wisdomdrop.tsx`, `checkmate.tsx`, or any other consumer — they keep passing `title="WisdomDrop"` / `title="CheckMate"` and it just goes unused visually.
-
-### Why not move the title elsewhere?
-
-- TopBar isn't shown on game routes (game routes use `GameHeader` instead).
-- Adding it back as a small eyebrow above the counter re-creates the same crowding.
-- The session is short (≤10 puzzles, a few minutes) — the player won't forget what they're playing.
-
-### Out of scope
-
-- Exit button, timer, lives display — unchanged.
-- Header background, border, padding — unchanged.
-- The standalone landing screen (before `start()`) — unchanged; the big "WisdomDrop" hero stays there.
+- `src/routes/_authed/wisdomdrop.tsx`
+- `src/routes/_authed/checkmate.tsx`
+- `src/routes/renew.tsx`
+- `src/routes/_authed/profile.tsx`
+- `src/routes/__root.tsx`
 
