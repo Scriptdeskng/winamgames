@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
+import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
@@ -34,7 +36,6 @@ function WisdomDropPage() {
   if (!session.sessionId) {
     return (
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative overflow-hidden">
-        {/* Ambient glow */}
         <div
           aria-hidden
           className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0"
@@ -48,7 +49,6 @@ function WisdomDropPage() {
         </Link>
 
         <div className="relative z-10 px-6 pt-24 pb-10 flex flex-col items-center min-h-[100dvh]">
-          {/* Medallion */}
           <div className="relative mb-7">
             <div className="absolute inset-0 rounded-full bg-emerald/30 blur-2xl" aria-hidden />
             <div className="relative h-24 w-24 rounded-full border border-emerald/40 bg-gradient-to-br from-surface-2 to-surface-1 shadow-glow flex items-center justify-center">
@@ -56,7 +56,6 @@ function WisdomDropPage() {
             </div>
           </div>
 
-          {/* Title + tagline */}
           <h1 className="text-3xl font-bold tracking-tight text-gradient-emerald">
             WisdomDrop
           </h1>
@@ -64,7 +63,6 @@ function WisdomDropPage() {
             Finish the proverb. Inherit the wisdom.
           </p>
 
-          {/* Stat chips */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-1 border border-border px-3 py-1.5 text-xs font-medium">
               <Heart className="h-3.5 w-3.5 text-live" />
@@ -80,10 +78,8 @@ function WisdomDropPage() {
             </span>
           </div>
 
-          {/* Spacer pushes CTA toward lower-middle */}
           <div className="flex-1 min-h-6" />
 
-          {/* Reward preview */}
           <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-coin/15 border border-coin/20 flex items-center justify-center shrink-0">
@@ -100,7 +96,6 @@ function WisdomDropPage() {
             </div>
           </div>
 
-          {/* CTA */}
           <button
             onClick={() => session.start(coinBalance)}
             disabled={session.loading}
@@ -132,6 +127,9 @@ function WisdomDropPage() {
     ? session.hintData.eliminate.split(",")
     : [];
 
+  const isCorrect = session.feedback === "correct";
+  const correctAnswer = session.lastReveal?.blank;
+
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <GameHeader
@@ -144,99 +142,120 @@ function WisdomDropPage() {
         onExit={session.exitEarly}
       />
 
-      <div className="px-4 pt-6 pb-8 space-y-6">
-        {session.feedback && (
-          <div
-            className={cn(
-              "rounded-2xl border p-4 space-y-3",
-              session.feedback === "correct"
-                ? "bg-success/10 border-success/30"
-                : "bg-live/10 border-live/30"
-            )}
-          >
-            <div
-              className={cn(
-                "flex items-center gap-2 text-sm font-semibold",
-                session.feedback === "correct" ? "text-success" : "text-live"
-              )}
-            >
-              {session.feedback === "correct" ? (
-                <><Check className="h-4 w-4" /> Correct!</>
-              ) : (
-                <><X className="h-4 w-4" /> Wrong answer</>
-              )}
+      <div className="px-4 pt-6 pb-8 space-y-4">
+        {puzzle && (
+          <div className="rounded-2xl bg-surface-1 border border-border shadow-card overflow-hidden">
+            {/* Proverb prompt */}
+            <div className="p-6">
+              <p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
+              <p className="text-lg font-medium leading-relaxed text-foreground">
+                "{puzzle.displayText}"
+              </p>
             </div>
 
-            {session.lastReveal && (
-              <div className="space-y-2 pt-1">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Answer</p>
-                  <p className="text-xl font-bold text-primary">
-                    {session.lastReveal.blank}
-                  </p>
-                </div>
-                <p className="text-sm italic text-muted-foreground leading-relaxed">
-                  "{session.lastReveal.originalProverb}"
-                </p>
-                <p className="text-xs text-muted-foreground/70">
-                  — {session.lastReveal.region}
+            {/* Hint chip */}
+            {session.hintData && session.hintData.startsWidth && !session.feedback && (
+              <div className="mx-6 mb-4 rounded-xl bg-coin/10 border border-coin/20 p-3">
+                <p className="text-xs font-medium text-coin">
+                  Hint: The word starts with "{session.hintData.startsWidth}"
                 </p>
               </div>
             )}
-          </div>
-        )}
 
-        {puzzle && (
-          <div className="rounded-2xl bg-surface-1 border border-border p-6 shadow-card">
-            <p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
-            <p className="text-lg font-medium leading-relaxed text-foreground">
-              "{puzzle.displayText}"
-            </p>
-          </div>
-        )}
+            {/* Choices */}
+            <div className="px-4 pb-4 grid grid-cols-1 gap-3">
+              {puzzle.options.map((option, i) => {
+                const isEliminated = eliminatedOptions.includes(option);
+                const isCorrectChoice = session.feedback && option === correctAnswer;
+                const isWrongChoice = session.feedback === "incorrect" && option !== correctAnswer;
+                const showState = !!session.feedback;
 
-        {session.hintData && session.hintData.startsWidth && (
-          <div className="rounded-xl bg-coin/10 border border-coin/20 p-3">
-            <p className="text-xs font-medium text-coin">
-              Hint: The word starts with "{session.hintData.startsWidth}"
-            </p>
-          </div>
-        )}
+                return (
+                  <button
+                    key={i}
+                    onClick={() => session.submit(option)}
+                    disabled={session.loading || session.gameOver || isEliminated || showState}
+                    className={cn(
+                      "h-14 rounded-xl text-sm font-semibold transition-all border min-h-[44px]",
+                      showState && isCorrectChoice && "bg-success/15 border-success/40 text-success",
+                      showState && isWrongChoice && "bg-surface-1/40 border-border/40 text-muted-foreground/50",
+                      !showState && isEliminated && "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed",
+                      !showState && !isEliminated && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
+                    )}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
 
-        {puzzle && (
-          <div className="grid grid-cols-1 gap-3">
-            {puzzle.options.map((option, i) => {
-              const isEliminated = eliminatedOptions.includes(option);
-              return (
-                <button
-                  key={i}
-                  onClick={() => session.submit(option)}
-                  disabled={session.loading || session.gameOver || isEliminated}
-                  className={cn(
-                    "h-14 rounded-xl text-sm font-semibold transition-all border min-h-[44px]",
-                    isEliminated
-                      ? "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed"
-                      : "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
-                  )}
+            {/* Inline reveal — animated open below the choices */}
+            <AnimatePresence initial={false}>
+              {session.feedback && (
+                <motion.div
+                  key="reveal"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="overflow-hidden"
                 >
-                  {option}
-                </button>
-              );
-            })}
+                  <div
+                    className={cn(
+                      "border-t px-6 py-4 space-y-2",
+                      isCorrect ? "border-success/20 bg-success/5" : "border-live/20 bg-live/5"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-semibold",
+                        isCorrect ? "text-success" : "text-live"
+                      )}
+                    >
+                      {isCorrect ? (
+                        <><Check className="h-3.5 w-3.5" /> Correct</>
+                      ) : (
+                        <><X className="h-3.5 w-3.5" /> Not quite</>
+                      )}
+                      {!isCorrect && session.lastReveal && (
+                        <span className="ml-1 text-muted-foreground font-normal">
+                          — answer: <span className="text-foreground font-semibold">{session.lastReveal.blank}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {session.lastReveal && (
+                      <>
+                        <p className="text-sm italic text-foreground/90 leading-relaxed">
+                          "{session.lastReveal.originalProverb}"
+                        </p>
+                        <p className="text-xs text-muted-foreground/80">
+                          — {session.lastReveal.region}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
-        <HintButton
-          currentTier={session.currentHintTier}
-          coinBalance={session.coinBalance}
-          onUseHint={session.requestHint}
-          disabled={session.loading || session.gameOver}
+        <AnswerFooter
+          feedback={session.feedback}
+          isLastPuzzle={session.isLastPuzzle}
+          isGameOver={session.gameOver}
+          autoAdvanceMs={session.autoAdvanceMs}
+          onAdvance={session.advance}
         />
 
-        {session.gameOver && (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">Calculating results...</p>
-          </div>
+        {!session.feedback && (
+          <HintButton
+            currentTier={session.currentHintTier}
+            coinBalance={session.coinBalance}
+            onUseHint={session.requestHint}
+            disabled={session.loading || session.gameOver}
+          />
         )}
       </div>
     </div>

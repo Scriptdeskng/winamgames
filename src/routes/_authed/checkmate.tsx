@@ -4,6 +4,7 @@ import React from "react";
 import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
+import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
@@ -167,11 +168,11 @@ function CheckMatePage() {
             fen={puzzle.fen}
             selectedSquare={selectedSquare}
             onSquareClick={handleSquareClick}
-            disabled={session.loading || session.gameOver}
+            disabled={session.loading || session.gameOver || !!session.feedback}
           />
         )}
 
-        {session.hintData && (
+        {session.hintData && !session.feedback && (
           <div className="rounded-xl bg-coin/10 border border-coin/20 p-3">
             <p className="text-xs font-medium text-coin">
               {session.hintData.piece && `Piece: ${session.hintData.piece}`}
@@ -181,17 +182,21 @@ function CheckMatePage() {
           </div>
         )}
 
-        <HintButton
-          currentTier={session.currentHintTier}
-          coinBalance={session.coinBalance}
-          onUseHint={session.requestHint}
-          disabled={session.loading || session.gameOver}
+        <AnswerFooter
+          feedback={session.feedback}
+          isLastPuzzle={session.isLastPuzzle}
+          isGameOver={session.gameOver}
+          autoAdvanceMs={session.autoAdvanceMs}
+          onAdvance={session.advance}
         />
 
-        {session.gameOver && (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">Calculating results...</p>
-          </div>
+        {!session.feedback && (
+          <HintButton
+            currentTier={session.currentHintTier}
+            coinBalance={session.coinBalance}
+            onUseHint={session.requestHint}
+            disabled={session.loading || session.gameOver}
+          />
         )}
       </div>
     </div>
