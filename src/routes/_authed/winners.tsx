@@ -171,7 +171,12 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
                 Cash Prizes
               </p>
               {draw.cashWinners.map((w, j) => (
-                <div key={j} className="flex items-center justify-between py-1">
+                <div
+                  key={j}
+                  className={`flex items-center justify-between py-2 ${
+                    j < draw.cashWinners.length - 1 ? "border-b border-border/40" : ""
+                  }`}
+                >
                   <div className="flex items-center gap-2.5">
                     <div
                       className={`h-7 w-7 rounded-full ${POSITION_STYLES[j].bg} flex items-center justify-center text-[10px] font-bold ${POSITION_STYLES[j].text}`}
