@@ -23,10 +23,10 @@ export function GameHeader({ title, lives, startTime, running, puzzleIndex, tota
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <div className="flex flex-col items-center">
-          <span className="text-xs font-medium text-muted-foreground">{title}</span>
-          <span className="text-[10px] tabular-nums text-muted-foreground">
-            {puzzleIndex + 1} / {totalPuzzles}
+        <div className="flex items-center">
+          <span className="text-sm font-semibold tabular-nums text-foreground">
+            {puzzleIndex + 1}
+            <span className="text-muted-foreground font-normal"> / {totalPuzzles}</span>
           </span>
         </div>
 
