@@ -2,6 +2,13 @@ import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { startSession, submitMove, useHint, closeSession } from "@/utils/game.functions";
 
+interface RevealData {
+  correctAnswer: string;
+  blank: string;
+  originalProverb: string;
+  region: string;
+}
+
 interface GameSessionState {
   sessionId: string | null;
   drawWeekId: string | null;
@@ -20,6 +27,7 @@ interface GameSessionState {
   feedback: "correct" | "incorrect" | null;
   hintData: Record<string, string> | null;
   gameOver: boolean;
+  lastReveal: RevealData | null;
 }
 
 const INITIAL_STATE: GameSessionState = {
@@ -40,6 +48,7 @@ const INITIAL_STATE: GameSessionState = {
   feedback: null,
   hintData: null,
   gameOver: false,
+  lastReveal: null,
 };
 
 export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: string) {
