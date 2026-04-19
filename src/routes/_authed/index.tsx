@@ -199,7 +199,7 @@ function DrawHeroCard({
         <span className="font-bold text-primary">{weekTotal}</span>
         <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
       </p>
-      <div className="mt-2 h-2 rounded-full bg-surface-2 overflow-hidden">
+      <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
         <div
           className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${pct}%` }}

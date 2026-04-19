@@ -214,15 +214,16 @@ function WinnersPage() {
       <TopBar backTo="/" title="Winners" />
       <div className="px-4 pb-6 space-y-4">
         {/* Hero / Ad Card */}
-        <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 text-center space-y-2">
-          <Award className="h-8 w-8 text-primary mx-auto" />
-          <h1 className="text-xl font-bold">Real people. Real wins.</h1>
-          <p className="text-xs text-muted-foreground">
+        <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-2">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
+          <Award className="relative h-8 w-8 text-primary mx-auto" />
+          <h1 className="relative text-xl font-bold">Real people. Real wins.</h1>
+          <p className="relative text-xs text-muted-foreground">
             50+ winners every week — cash, airtime & data
           </p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 mt-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="relative inline-flex items-center gap-2 mt-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Gamepad2 className="h-4 w-4" />
             Play Now
