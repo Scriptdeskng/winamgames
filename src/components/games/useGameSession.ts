@@ -207,6 +207,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
           puzzlesSolved: finalSolved,
           hintsUsed: finalHints,
           durationSeconds: duration,
+          servedPuzzleIds: state.puzzleIds,
         },
       });
 
