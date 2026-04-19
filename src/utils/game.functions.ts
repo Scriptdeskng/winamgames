@@ -69,9 +69,6 @@ export const startSession = createServerFn({ method: "POST" })
       // Note: advanced pool is thin — Veteran+ (4/session) exhausts it in ~9 sessions before cascade kicks in.
       // Expand advanced pool in winam_wisdom_puzzles to 80+ for better Veteran+ experience.
 
-      // TODO: adaptive difficulty nudge — read last session wisdom_accuracy from
-      // winam_game_sessions and shift mix one step harder (>=90%) or easier (<50%)
-      // before applying RANK_DIFFICULTY_MIX. Implement as follow-up task.
       const RANK_DIFFICULTY_MIX: Record<string, { beginner: number; intermediate: number; advanced: number }> = {
         starter:   { beginner: 7, intermediate: 2, advanced: 1 },
         recruit:   { beginner: 5, intermediate: 4, advanced: 1 },
@@ -83,6 +80,40 @@ export const startSession = createServerFn({ method: "POST" })
         immortal:  { beginner: 1, intermediate: 5, advanced: 4 },
       };
       const mix = RANK_DIFFICULTY_MIX[rankTier] ?? RANK_DIFFICULTY_MIX.starter;
+
+      // Adaptive difficulty nudge based on previous session accuracy
+      const { data: lastSession } = await supabaseAdmin
+        .from("winam_game_sessions")
+        .select("wisdom_accuracy")
+        .eq("player_id", data.playerId)
+        .eq("game_type", "wisdomdrop")
+        .not("wisdom_accuracy", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const lastAccuracy = lastSession?.wisdom_accuracy ?? null;
+      let adjustedMix = { ...mix };
+      if (lastAccuracy !== null) {
+        if (lastAccuracy >= 90) {
+          // Harder: move 2 from beginner → advanced (clamp at 0)
+          const shift = Math.min(2, adjustedMix.beginner);
+          adjustedMix = {
+            beginner: adjustedMix.beginner - shift,
+            intermediate: adjustedMix.intermediate,
+            advanced: adjustedMix.advanced + shift,
+          };
+        } else if (lastAccuracy < 50) {
+          // Easier: move 2 from advanced → beginner (clamp at 0)
+          const shift = Math.min(2, adjustedMix.advanced);
+          adjustedMix = {
+            beginner: adjustedMix.beginner + shift,
+            intermediate: adjustedMix.intermediate,
+            advanced: adjustedMix.advanced - shift,
+          };
+        }
+        // 50–89: no change
+      }
 
       // Fetch seen puzzle IDs for this player
       const { data: seen } = await supabaseAdmin
@@ -149,12 +180,12 @@ export const startSession = createServerFn({ method: "POST" })
         return taken;
       };
 
-      const advTaken = takeFrom("advanced", mix.advanced);
-      let advShort = mix.advanced - advTaken;
-      const intTarget = mix.intermediate + advShort;
+      const advTaken = takeFrom("advanced", adjustedMix.advanced);
+      let advShort = adjustedMix.advanced - advTaken;
+      const intTarget = adjustedMix.intermediate + advShort;
       const intTaken = takeFrom("intermediate", intTarget);
       let intShort = intTarget - intTaken;
-      const begTarget = mix.beginner + intShort;
+      const begTarget = adjustedMix.beginner + intShort;
       const begTaken = takeFrom("beginner", begTarget);
       let begShort = begTarget - begTaken;
       // Last resort: refill from intermediate then advanced if beginner ran out
@@ -504,6 +535,18 @@ export const closeSession = createServerFn({ method: "POST" })
     const coinsFromOverflow = overflow * 5;
     const totalCoins = coinsFromGameplay + coinsFromOverflow;
 
+    // Compute wisdom_accuracy from puzzle attempts (source of truth — handles early exit)
+    let wisdomAccuracy: number | null = null;
+    if (session.game_type === "wisdomdrop") {
+      const { data: attempts } = await supabaseAdmin
+        .from("winam_puzzle_attempts")
+        .select("result")
+        .eq("session_id", data.sessionId);
+      const total = attempts?.length ?? 0;
+      const correct = (attempts ?? []).filter((a) => a.result === "correct").length;
+      wisdomAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    }
+
     // Update game session
     await supabaseAdmin
       .from("winam_game_sessions")
@@ -513,6 +556,7 @@ export const closeSession = createServerFn({ method: "POST" })
         entries_awarded: entriesToAdd,
         coins_awarded: totalCoins,
         duration_seconds: data.durationSeconds,
+        ...(wisdomAccuracy !== null ? { wisdom_accuracy: wisdomAccuracy } : {}),
       })
       .eq("id", data.sessionId);
 
