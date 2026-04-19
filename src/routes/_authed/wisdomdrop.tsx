@@ -5,7 +5,7 @@ import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { BookOpen, Check, X, ArrowLeft } from "lucide-react";
+import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
@@ -33,31 +33,88 @@ function WisdomDropPage() {
 
   if (!session.sessionId) {
     return (
-      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative">
+      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative overflow-hidden">
+        {/* Ambient glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0"
+        />
+
         <Link
           to="/"
-          className="absolute left-4 top-4 z-10 h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
+          className="absolute left-4 top-4 z-20 h-10 w-10 rounded-xl bg-surface-1/70 backdrop-blur border border-border flex items-center justify-center hover:border-primary/40 transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </Link>
-        <div className="px-4 pt-6 pb-24 flex flex-col items-center justify-center min-h-[100dvh]">
-          <div className="h-20 w-20 rounded-2xl bg-xp/15 flex items-center justify-center mb-6">
-            <BookOpen className="h-10 w-10 text-xp" />
+
+        <div className="relative z-10 px-6 pt-24 pb-10 flex flex-col items-center min-h-[100dvh]">
+          {/* Medallion */}
+          <div className="relative mb-7">
+            <div className="absolute inset-0 rounded-full bg-emerald/30 blur-2xl" aria-hidden />
+            <div className="relative h-24 w-24 rounded-full border border-emerald/40 bg-gradient-to-br from-surface-2 to-surface-1 shadow-glow flex items-center justify-center">
+              <BookOpen className="h-11 w-11 text-emerald" strokeWidth={1.75} />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">WisdomDrop</h1>
-          <p className="mt-2 text-sm text-muted-foreground text-center max-w-[280px]">
-            Complete African proverbs to earn draw entries. Test your wisdom!
+
+          {/* Title + tagline */}
+          <h1 className="text-3xl font-bold tracking-tight text-gradient-emerald">
+            WisdomDrop
+          </h1>
+          <p className="mt-3 text-sm italic text-muted-foreground text-center max-w-[280px] leading-relaxed">
+            Where ancient wisdom meets modern play.
           </p>
-          <div className="mt-4 space-y-1 text-center">
-            <p className="text-xs text-muted-foreground">3 lives per session</p>
-            <p className="text-xs text-muted-foreground">10 proverbs per round</p>
+
+          {/* Stat chips */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-1 border border-border px-3 py-1.5 text-xs font-medium">
+              <Heart className="h-3.5 w-3.5 text-live" />
+              <span className="tabular-nums">3 lives</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-1 border border-border px-3 py-1.5 text-xs font-medium">
+              <ScrollText className="h-3.5 w-3.5 text-xp" />
+              <span className="tabular-nums">10 proverbs</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-1 border border-border px-3 py-1.5 text-xs font-medium">
+              <Globe className="h-3.5 w-3.5 text-emerald" />
+              <span className="tabular-nums">9 regions</span>
+            </span>
           </div>
+
+          {/* Spacer pushes CTA toward lower-middle */}
+          <div className="flex-1 min-h-6" />
+
+          {/* Reward preview */}
+          <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-coin/15 border border-coin/20 flex items-center justify-center shrink-0">
+                <Coins className="h-5 w-5 text-coin" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  Earn up to <span className="text-coin tabular-nums">5 entries</span> per round
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Plus XP, streak bonuses & weekly draws
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
           <button
             onClick={() => session.start(coinBalance)}
             disabled={session.loading}
-            className="mt-8 h-14 w-full max-w-[280px] rounded-xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all shadow-glow disabled:opacity-50"
+            className="group relative mt-4 h-14 w-full max-w-[320px] rounded-xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all shadow-glow disabled:opacity-50 overflow-hidden"
           >
-            {session.loading ? "Starting..." : "Start Game"}
+            <span className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+            <span className="relative inline-flex items-center justify-center gap-2">
+              {session.loading ? "Starting..." : (
+                <>
+                  Start Game
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
+            </span>
           </button>
         </div>
       </div>
