@@ -77,12 +77,12 @@ function ResultsPage() {
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve 5 puzzles next session for an entry";
+    nudge = "Solve 5 puzzles next session to earn a ticket";
   } else if (remainder === 0) {
     nudge = "Great session — play again to keep earning";
   } else {
     const need = 5 - remainder;
-    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} next session for another entry`;
+    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} next session for another ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
@@ -122,7 +122,7 @@ function ResultsPage() {
             {entries > 0 ? (
               <>
                 <p className="text-4xl font-bold tabular-nums text-primary">
-                  +{entries} {entries === 1 ? "entry" : "entries"}
+                  +{entries} {entries === 1 ? "ticket" : "tickets"}
                 </p>
                 {breakdownParts.length > 0 && (
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -132,9 +132,9 @@ function ResultsPage() {
               </>
             ) : (
               <>
-                <p className="text-xl font-semibold">No entries this session</p>
+                <p className="text-xl font-semibold">No tickets this session</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Solve 5 puzzles in a session to earn your first entry
+                  Solve 5 puzzles in a session to earn your first ticket
                 </p>
               </>
             )}
@@ -146,7 +146,7 @@ function ResultsPage() {
           {/* Weekly progress */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Entries this week</span>
+              <span className="text-sm text-muted-foreground">Tickets this week</span>
               <span className="text-sm font-semibold tabular-nums">
                 {weekTotal} / {weekCap}
               </span>
