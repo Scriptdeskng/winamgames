@@ -5,7 +5,16 @@ import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getSession } from "@/lib/session";
 import { getPlayerEntries, type PlayerEntryWeek, type TicketSource } from "@/utils/entries.functions";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import React from "react";
+
+type SortMode = "by-source" | "recent" | "oldest";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
