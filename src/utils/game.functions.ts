@@ -100,22 +100,27 @@ export const submitMove = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       sessionId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(20),
-      answer: z.string().min(1).max(10),
+      puzzleId: z.string().min(1).max(30),
+      answer: z.string().min(1).max(50),
       timeMs: z.number().min(0).max(600000),
-      nextPuzzleId: z.string().min(1).max(20).optional(),
+      nextPuzzleId: z.string().min(1).max(30).optional(),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     // Determine game type from puzzle ID prefix
     const isCheckmate = data.puzzleId.startsWith("cm-");
 
     let isCorrect = false;
     let puzzleResult: "correct" | "incorrect" = "incorrect";
+    let revealData: {
+      correctAnswer: string;
+      blank: string;
+      originalProverb: string;
+      region: string;
+    } | null = null;
 
     if (isCheckmate) {
       const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
@@ -123,10 +128,21 @@ export const submitMove = createServerFn({ method: "POST" })
         isCorrect = data.answer === puzzle.solutionMove;
       }
     } else {
-      const puzzle = WISDOMDROP_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("options, correct_index, blank, original_proverb, region")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
-        // Answer is the selected option text
-        isCorrect = data.answer === puzzle.options[puzzle.correctIndex];
+        const opts = (puzzle.options as string[]) ?? [];
+        const correctAnswer = opts[puzzle.correct_index];
+        isCorrect = data.answer === correctAnswer;
+        revealData = {
+          correctAnswer,
+          blank: puzzle.blank,
+          originalProverb: puzzle.original_proverb,
+          region: puzzle.region,
+        };
       }
     }
 
@@ -154,14 +170,19 @@ export const submitMove = createServerFn({ method: "POST" })
         const p = CHECKMATE_PUZZLES.find((x) => x.id === data.nextPuzzleId);
         if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen };
       } else {
-        const p = WISDOMDROP_PUZZLES.find((x) => x.id === data.nextPuzzleId);
+        const { data: p } = await supabaseAdmin
+          .from("winam_wisdom_puzzles")
+          .select("id, display_text, options, region")
+          .eq("id", data.nextPuzzleId)
+          .maybeSingle();
         if (p) {
-          const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+          const opts = (p.options as string[]) ?? [];
+          const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
           nextPuzzle = {
             puzzleId: p.id,
-            proverb: p.proverb,
-            options: indices.map((i) => p.options[i]),
-            origin: p.origin,
+            displayText: p.display_text,
+            options: indices.map((i) => opts[i]),
+            region: p.region,
           };
         }
       }
@@ -170,6 +191,7 @@ export const submitMove = createServerFn({ method: "POST" })
     return {
       correct: isCorrect,
       nextPuzzle,
+      revealData,
     };
   });
 
