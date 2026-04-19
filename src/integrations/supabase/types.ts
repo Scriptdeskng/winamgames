@@ -142,6 +142,7 @@ export type Database = {
           player_id: string
           puzzles_solved: number
           session_date_wat: string
+          wisdom_accuracy: number | null
         }
         Insert: {
           coins_awarded?: number
@@ -156,6 +157,7 @@ export type Database = {
           player_id: string
           puzzles_solved?: number
           session_date_wat: string
+          wisdom_accuracy?: number | null
         }
         Update: {
           coins_awarded?: number
@@ -170,6 +172,7 @@ export type Database = {
           player_id?: string
           puzzles_solved?: number
           session_date_wat?: string
+          wisdom_accuracy?: number | null
         }
         Relationships: [
           {

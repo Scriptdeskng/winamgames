@@ -69,9 +69,6 @@ export const startSession = createServerFn({ method: "POST" })
       // Note: advanced pool is thin — Veteran+ (4/session) exhausts it in ~9 sessions before cascade kicks in.
       // Expand advanced pool in winam_wisdom_puzzles to 80+ for better Veteran+ experience.
 
-      // TODO: adaptive difficulty nudge — read last session wisdom_accuracy from
-      // winam_game_sessions and shift mix one step harder (>=90%) or easier (<50%)
-      // before applying RANK_DIFFICULTY_MIX. Implement as follow-up task.
       const RANK_DIFFICULTY_MIX: Record<string, { beginner: number; intermediate: number; advanced: number }> = {
         starter:   { beginner: 7, intermediate: 2, advanced: 1 },
         recruit:   { beginner: 5, intermediate: 4, advanced: 1 },
