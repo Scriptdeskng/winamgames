@@ -5,7 +5,16 @@ import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getSession } from "@/lib/session";
 import { getPlayerEntries, type PlayerEntryWeek, type TicketSource } from "@/utils/entries.functions";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import React from "react";
+
+type SortMode = "by-source" | "recent" | "oldest";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
@@ -165,6 +174,18 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
 }
 
 function TicketGroupedList({ tickets }: { tickets: { ticketId: string; source: TicketSource; earnedAt: string }[] }) {
+  const [sort, setSort] = React.useState<SortMode>("by-source");
+  const showSort = tickets.length > 3;
+
+  const sortedFlat = React.useMemo(() => {
+    const arr = [...tickets];
+    arr.sort((a, b) => {
+      const cmp = new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime();
+      return sort === "oldest" ? -cmp : cmp;
+    });
+    return arr;
+  }, [tickets, sort]);
+
   // Group by source so the list reads as: Puzzle (n) > id, id, id; Mission (n) > ...
   const groups = new Map<TicketSource, typeof tickets>();
   for (const t of tickets) {
@@ -176,47 +197,95 @@ function TicketGroupedList({ tickets }: { tickets: { ticketId: string; source: T
 
   return (
     <div className="space-y-3">
-      {order
-        .filter((s) => groups.has(s))
-        .map((source) => {
-          const items = groups.get(source)!;
-          const meta = SOURCE_META[source];
-          const Icon = meta.Icon;
-          return (
-            <div key={source} className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <Icon className={`h-3 w-3 ${meta.color}`} />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-                  {meta.label}
-                </p>
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  · {items.length}
-                </span>
-              </div>
-              <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
-                {items.map((t) => (
-                  <div
-                    key={t.ticketId}
-                    className="flex items-center justify-between px-3 py-2"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Hash className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs font-mono tabular-nums text-foreground">
-                        {t.ticketId}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+          Tickets
+        </p>
+        {showSort && (
+          <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
+            <SelectTrigger className="h-7 w-auto gap-1.5 border-border/60 bg-surface-2/60 px-2 text-[11px] shadow-none">
+              <span className="text-muted-foreground">Sort:</span>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end" className="text-[11px]">
+              <SelectItem value="by-source" className="text-[11px]">By source</SelectItem>
+              <SelectItem value="recent" className="text-[11px]">Newest first</SelectItem>
+              <SelectItem value="oldest" className="text-[11px]">Oldest first</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {sort === "by-source" ? (
+        order
+          .filter((s) => groups.has(s))
+          .map((source) => {
+            const items = groups.get(source)!;
+            const meta = SOURCE_META[source];
+            const Icon = meta.Icon;
+            return (
+              <div key={source} className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Icon className={`h-3 w-3 ${meta.color}`} />
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+                    {meta.label}
+                  </p>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">
+                    · {items.length}
+                  </span>
+                </div>
+                <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
+                  {items.map((t) => (
+                    <div
+                      key={t.ticketId}
+                      className="flex items-center justify-between px-3 py-2"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Hash className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs font-mono tabular-nums text-foreground">
+                          {t.ticketId}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">
+                        {new Date(t.earnedAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {new Date(t.earnedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+      ) : (
+        <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
+          {sortedFlat.map((t) => {
+            const meta = SOURCE_META[t.source];
+            const Icon = meta.Icon;
+            return (
+              <div
+                key={t.ticketId}
+                className="flex items-center justify-between px-3 py-2"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Icon className={`h-3 w-3 ${meta.color}`} />
+                  <Hash className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs font-mono tabular-nums text-foreground">
+                    {t.ticketId}
+                  </span>
+                </div>
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {new Date(t.earnedAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
