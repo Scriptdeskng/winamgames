@@ -49,10 +49,10 @@ function ResultsPage() {
 
   // Streak pill copy
   let streakPill: string | null = null;
-  if (streak >= 14) streakPill = `Day ${streak} — earning +3 bonus entries per session`;
-  else if (streak >= 7) streakPill = `Day ${streak} — earning +2 bonus entries per session`;
-  else if (streak >= 3) streakPill = `Day ${streak} — earning +1 bonus entry per session`;
-  else if (streak >= 1) streakPill = `Day ${streak} — reach day 3 for bonus entries`;
+  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus tickets per session`;
+  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus tickets per session`;
+  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus ticket per session`;
+  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus ticket per session`;
 
   const rankedUp = rankTier !== previousRank;
 
@@ -69,20 +69,20 @@ function ResultsPage() {
 
   // Build breakdown chips
   const breakdownParts: string[] = [];
-  if (baseEntries > 0) breakdownParts.push(`Base ${baseEntries}`);
-  if (streakBonusEntries > 0) breakdownParts.push(`Streak bonus +${streakBonusEntries}`);
-  if (missionEntries > 0) breakdownParts.push(`Mission +${missionEntries}`);
+  if (baseEntries > 0) breakdownParts.push(`Solved ${puzzlesSolved} puzzles +${baseEntries}`);
+  if (streakBonusEntries > 0) breakdownParts.push(`Day ${streak} streak +${streakBonusEntries}`);
+  if (missionEntries > 0) breakdownParts.push(`Mission bonus +${missionEntries}`);
 
   // Next session nudge
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve 5 puzzles next session to earn a ticket";
+    nudge = "Solve 5 puzzles in a session to earn your first ticket";
   } else if (remainder === 0) {
-    nudge = "Great session — play again to keep earning";
+    nudge = "Nice rhythm — every 5 puzzles earns 1 ticket";
   } else {
     const need = 5 - remainder;
-    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} next session for another ticket`;
+    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} for your next ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
@@ -124,6 +124,7 @@ function ResultsPage() {
                 <p className="text-4xl font-bold tabular-nums text-primary">
                   +{entries} {entries === 1 ? "ticket" : "tickets"}
                 </p>
+                <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
                 {breakdownParts.length > 0 && (
                   <p className="mt-2 text-sm text-muted-foreground">
                     {breakdownParts.join("  ·  ")}
@@ -132,9 +133,9 @@ function ResultsPage() {
               </>
             ) : (
               <>
-                <p className="text-xl font-semibold">No tickets this session</p>
+                <p className="text-xl font-semibold">No tickets earned this session</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Solve 5 puzzles in a session to earn your first ticket
+                  Every 5 puzzles solved earns 1 ticket toward the weekly draw
                 </p>
               </>
             )}
@@ -146,9 +147,9 @@ function ResultsPage() {
           {/* Weekly progress */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Tickets this week</span>
+              <span className="text-sm text-muted-foreground">Tickets toward this week's draw</span>
               <span className="text-sm font-semibold tabular-nums">
-                {weekTotal} / {weekCap}
+                {weekTotal} of {weekCap}
               </span>
             </div>
             <Progress value={weekPct} />
