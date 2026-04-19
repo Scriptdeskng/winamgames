@@ -180,12 +180,12 @@ export const startSession = createServerFn({ method: "POST" })
         return taken;
       };
 
-      const advTaken = takeFrom("advanced", mix.advanced);
-      let advShort = mix.advanced - advTaken;
-      const intTarget = mix.intermediate + advShort;
+      const advTaken = takeFrom("advanced", adjustedMix.advanced);
+      let advShort = adjustedMix.advanced - advTaken;
+      const intTarget = adjustedMix.intermediate + advShort;
       const intTaken = takeFrom("intermediate", intTarget);
       let intShort = intTarget - intTaken;
-      const begTarget = mix.beginner + intShort;
+      const begTarget = adjustedMix.beginner + intShort;
       const begTaken = takeFrom("beginner", begTarget);
       let begShort = begTarget - begTaken;
       // Last resort: refill from intermediate then advanced if beginner ran out
