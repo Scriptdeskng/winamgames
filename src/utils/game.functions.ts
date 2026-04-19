@@ -315,6 +315,7 @@ export const submitMove = createServerFn({ method: "POST" })
       blank: string;
       originalProverb: string;
       region: string;
+      explanation: string | null;
     } | null = null;
 
     if (isCheckmate) {
