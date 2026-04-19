@@ -81,6 +81,40 @@ export const startSession = createServerFn({ method: "POST" })
       };
       const mix = RANK_DIFFICULTY_MIX[rankTier] ?? RANK_DIFFICULTY_MIX.starter;
 
+      // Adaptive difficulty nudge based on previous session accuracy
+      const { data: lastSession } = await supabaseAdmin
+        .from("winam_game_sessions")
+        .select("wisdom_accuracy")
+        .eq("player_id", data.playerId)
+        .eq("game_type", "wisdomdrop")
+        .not("wisdom_accuracy", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const lastAccuracy = lastSession?.wisdom_accuracy ?? null;
+      let adjustedMix = { ...mix };
+      if (lastAccuracy !== null) {
+        if (lastAccuracy >= 90) {
+          // Harder: move 2 from beginner → advanced (clamp at 0)
+          const shift = Math.min(2, adjustedMix.beginner);
+          adjustedMix = {
+            beginner: adjustedMix.beginner - shift,
+            intermediate: adjustedMix.intermediate,
+            advanced: adjustedMix.advanced + shift,
+          };
+        } else if (lastAccuracy < 50) {
+          // Easier: move 2 from advanced → beginner (clamp at 0)
+          const shift = Math.min(2, adjustedMix.advanced);
+          adjustedMix = {
+            beginner: adjustedMix.beginner + shift,
+            intermediate: adjustedMix.intermediate,
+            advanced: adjustedMix.advanced - shift,
+          };
+        }
+        // 50–89: no change
+      }
+
       // Fetch seen puzzle IDs for this player
       const { data: seen } = await supabaseAdmin
         .from("winam_puzzle_history")
