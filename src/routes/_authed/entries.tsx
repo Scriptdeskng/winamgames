@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Ticket, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
   head: () => ({
     meta: [
-      { title: "My Entries — WinamGames" },
-      { name: "description", content: "View your weekly draw entries." },
+      { title: "My Tickets — WinamGames" },
+      { name: "description", content: "View your weekly draw tickets." },
     ],
   }),
 });
@@ -17,7 +17,7 @@ function EntriesPage() {
   useAllowScroll();
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="My Entries" />
+      <TopBar backTo="/" title="My Tickets" />
       <div className="px-4 pb-6 space-y-5">
         <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
@@ -31,14 +31,14 @@ function EntriesPage() {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Past Weeks</h2>
           <div className="space-y-2">
             {[
-              { week: "Mar 31 – Apr 6", entries: 42, result: "No win" },
-              { week: "Mar 24 – Mar 30", entries: 50, result: "Won ₦5,000!" },
-              { week: "Mar 17 – Mar 23", entries: 38, result: "No win" },
+              { week: "Mar 31 – Apr 6", tickets: 42, result: "No win" },
+              { week: "Mar 24 – Mar 30", tickets: 50, result: "Won ₦5,000!" },
+              { week: "Mar 17 – Mar 23", tickets: 38, result: "No win" },
             ].map((w, i) => (
               <div key={i} className="rounded-xl bg-surface-1 border border-border p-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">{w.week}</p>
-                  <p className="text-xs text-muted-foreground">{w.entries} entries</p>
+                  <p className="text-xs text-muted-foreground">{w.tickets} tickets</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs font-medium ${w.result.includes("Won") ? "text-primary" : "text-muted-foreground"}`}>
