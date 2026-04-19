@@ -198,7 +198,7 @@ function DrawHeroCard({
       </div>
       <p className="text-sm text-foreground mt-3 tabular-nums">
         <span className="font-bold text-primary">{weekTotal}</span>
-        <span className="text-muted-foreground"> / {weekCap} entries this week</span>
+        <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
       </p>
       <div className="mt-2 h-2 rounded-full bg-surface-2 overflow-hidden">
         <div
@@ -209,7 +209,7 @@ function DrawHeroCard({
       <div className="mt-3 flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
         <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
-          View my entries <ChevronRight className="h-3 w-3" />
+          View my tickets <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
@@ -255,8 +255,8 @@ const MISSION_META: Record<string, { icon: LucideIcon; tint: string }> = {
   game_type_mix:  { icon: Shuffle,  tint: "bg-primary/15 text-primary" },
 };
 
-function pluralizeEntries(n: number) {
-  return `${n} ${n === 1 ? "entry" : "entries"}`;
+function pluralizeTickets(n: number) {
+  return `${n} ${n === 1 ? "ticket" : "tickets"}`;
 }
 
 function MissionsSection({
@@ -371,7 +371,7 @@ function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }
       </div>
       <div className="shrink-0 inline-flex items-center gap-1 rounded-full bg-coin/10 text-coin px-2.5 py-1 text-xs font-semibold">
         <Ticket className="h-3 w-3" />
-        {pluralizeEntries(mission.rewardAmount)}
+        {pluralizeTickets(mission.rewardAmount)}
       </div>
     </div>
   );
