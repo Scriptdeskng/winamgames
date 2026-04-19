@@ -57,20 +57,25 @@ export const startSession = createServerFn({ method: "POST" })
         clientData: { fen: p.fen },
       }));
     } else {
-      const shuffled = [...WISDOMDROP_PUZZLES].sort(() => Math.random() - 0.5).slice(0, 10);
+      const { data: allPuzzles, error: pzErr } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("id, display_text, options, region");
+      if (pzErr || !allPuzzles || allPuzzles.length === 0) {
+        console.error("Failed to load wisdom puzzles:", pzErr);
+        return { success: false as const, error: "No puzzles available" };
+      }
+      const shuffled = [...allPuzzles].sort(() => Math.random() - 0.5).slice(0, 10);
       puzzleList = shuffled.map((p) => {
-        // Shuffle options but track new correct index server-side only
-        const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-        const shuffledOptions = indices.map((i) => p.options[i]);
+        const opts = (p.options as string[]) ?? [];
+        const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
+        const shuffledOptions = indices.map((i) => opts[i]);
         return {
           id: p.id,
           clientData: {
-            proverb: p.proverb,
+            displayText: p.display_text,
             options: shuffledOptions,
-            origin: p.origin,
+            region: p.region,
           },
-          // Store the shuffled correct index internally
-          _correctIdx: indices.indexOf(p.correctIndex),
         };
       });
     }
