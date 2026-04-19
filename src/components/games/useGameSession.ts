@@ -241,7 +241,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       console.error("Close session failed:", err);
       navigate({ to: "/" });
     }
-  }, [state.sessionId, state.startTime, state.puzzlesSolved, state.hintsUsed, playerId, navigate]);
+  }, [state.sessionId, state.startTime, state.puzzlesSolved, state.hintsUsed, state.puzzleIds, playerId, navigate, gameType]);
 
   const exitEarly = useCallback(() => {
     if (state.sessionId && state.running) {
