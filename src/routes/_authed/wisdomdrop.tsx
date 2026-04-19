@@ -147,7 +147,12 @@ function WisdomDropPage() {
           <div className="rounded-2xl bg-surface-1 border border-border shadow-card overflow-hidden">
             {/* Proverb prompt */}
             <div className="p-6">
-              <p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
+              <div className="mb-4">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald">
+                  <Globe className="h-3 w-3" />
+                  {puzzle.region}
+                </span>
+              </div>
               <p className="text-lg font-medium leading-relaxed text-foreground">
                 "{puzzle.displayText}"
               </p>
