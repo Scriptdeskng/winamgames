@@ -2,6 +2,13 @@ import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { startSession, submitMove, useHint, closeSession } from "@/utils/game.functions";
 
+interface RevealData {
+  correctAnswer: string;
+  blank: string;
+  originalProverb: string;
+  region: string;
+}
+
 interface GameSessionState {
   sessionId: string | null;
   drawWeekId: string | null;
@@ -20,6 +27,7 @@ interface GameSessionState {
   feedback: "correct" | "incorrect" | null;
   hintData: Record<string, string> | null;
   gameOver: boolean;
+  lastReveal: RevealData | null;
 }
 
 const INITIAL_STATE: GameSessionState = {
@@ -40,6 +48,7 @@ const INITIAL_STATE: GameSessionState = {
   feedback: null,
   hintData: null,
   gameOver: false,
+  lastReveal: null,
 };
 
 export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: string) {
@@ -82,7 +91,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
     const nextIdx = state.currentPuzzleIndex + 1;
     const nextPuzzleId = nextIdx < state.puzzleIds.length ? state.puzzleIds[nextIdx] : undefined;
 
-    setState((s) => ({ ...s, loading: true, feedback: null }));
+    setState((s) => ({ ...s, loading: true, feedback: null, lastReveal: null }));
 
     try {
       const result = await submitMove({
@@ -93,37 +102,64 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
           timeMs,
           nextPuzzleId,
         },
-      }) as { correct: boolean; nextPuzzle: Record<string, string | string[]> | null };
+      }) as {
+        correct: boolean;
+        nextPuzzle: Record<string, string | string[]> | null;
+        revealData: RevealData | null;
+      };
 
       const newSolved = result.correct ? state.puzzlesSolved + 1 : state.puzzlesSolved;
       const newLives = result.correct ? state.lives : state.lives - 1;
       const isLastPuzzle = !result.nextPuzzle;
       const isDead = newLives <= 0;
       const isGameOver = isDead || (result.correct && isLastPuzzle);
+      const hasReveal = !!result.revealData;
+      const advanceDelay = hasReveal && result.correct && !isGameOver ? 1800 : 0;
 
+      // Show feedback + reveal first; defer advance if reveal is present
       setState((s) => ({
         ...s,
-        loading: false,
+        loading: advanceDelay > 0 ? true : false,
         feedback: result.correct ? "correct" : "incorrect",
         puzzlesSolved: newSolved,
         lives: newLives,
-        currentPuzzleIndex: result.correct ? nextIdx : s.currentPuzzleIndex,
-        currentPuzzle: result.correct && result.nextPuzzle ? result.nextPuzzle : s.currentPuzzle,
-        currentHintTier: result.correct ? 0 : s.currentHintTier,
-        hintData: result.correct ? null : s.hintData,
         gameOver: isGameOver,
         running: !isGameOver,
+        lastReveal: result.revealData,
       }));
 
-      if (result.correct) {
-        puzzleStartRef.current = Date.now();
+      if (result.correct && !isGameOver) {
+        if (advanceDelay > 0) {
+          setTimeout(() => {
+            puzzleStartRef.current = Date.now();
+            setState((s) => ({
+              ...s,
+              loading: false,
+              feedback: null,
+              lastReveal: null,
+              currentPuzzleIndex: nextIdx,
+              currentPuzzle: result.nextPuzzle ?? s.currentPuzzle,
+              currentHintTier: 0,
+              hintData: null,
+            }));
+          }, advanceDelay);
+        } else {
+          puzzleStartRef.current = Date.now();
+          setState((s) => ({
+            ...s,
+            currentPuzzleIndex: nextIdx,
+            currentPuzzle: result.nextPuzzle ?? s.currentPuzzle,
+            currentHintTier: 0,
+            hintData: null,
+          }));
+        }
       }
 
       if (isGameOver) {
         const finalHints = state.hintsUsed;
         setTimeout(() => {
           endSession(newSolved, finalHints);
-        }, 1500);
+        }, hasReveal ? 2200 : 1500);
       }
     } catch (err) {
       console.error("Submit failed:", err);

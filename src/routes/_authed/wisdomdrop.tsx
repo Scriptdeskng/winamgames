@@ -66,9 +66,9 @@ function WisdomDropPage() {
 
   const puzzle = session.currentPuzzle as {
     puzzleId: string;
-    proverb: string;
+    displayText: string;
     options: string[];
-    origin: string;
+    region: string;
   } | null;
 
   const eliminatedOptions = session.hintData?.eliminate
@@ -89,24 +89,51 @@ function WisdomDropPage() {
 
       <div className="px-4 pt-6 pb-8 space-y-6">
         {session.feedback && (
-          <div className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold ${
-            session.feedback === "correct"
-              ? "bg-success/15 text-success"
-              : "bg-live/15 text-live"
-          }`}>
-            {session.feedback === "correct" ? (
-              <><Check className="h-4 w-4" /> Correct!</>
-            ) : (
-              <><X className="h-4 w-4" /> Wrong answer</>
+          <div
+            className={cn(
+              "rounded-2xl border p-4 space-y-3",
+              session.feedback === "correct"
+                ? "bg-success/10 border-success/30"
+                : "bg-live/10 border-live/30"
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center gap-2 text-sm font-semibold",
+                session.feedback === "correct" ? "text-success" : "text-live"
+              )}
+            >
+              {session.feedback === "correct" ? (
+                <><Check className="h-4 w-4" /> Correct!</>
+              ) : (
+                <><X className="h-4 w-4" /> Wrong answer</>
+              )}
+            </div>
+
+            {session.lastReveal && (
+              <div className="space-y-2 pt-1">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Answer</p>
+                  <p className="text-xl font-bold text-primary">
+                    {session.lastReveal.blank}
+                  </p>
+                </div>
+                <p className="text-sm italic text-muted-foreground leading-relaxed">
+                  "{session.lastReveal.originalProverb}"
+                </p>
+                <p className="text-xs text-muted-foreground/70">
+                  — {session.lastReveal.region}
+                </p>
+              </div>
             )}
           </div>
         )}
 
         {puzzle && (
           <div className="rounded-2xl bg-surface-1 border border-border p-6 shadow-card">
-            <p className="text-xs text-muted-foreground mb-3">{puzzle.origin}</p>
+            <p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
             <p className="text-lg font-medium leading-relaxed text-foreground">
-              "{puzzle.proverb}"
+              "{puzzle.displayText}"
             </p>
           </div>
         )}

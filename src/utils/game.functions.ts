@@ -12,7 +12,6 @@ export const startSession = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     // Get current open draw week
     const { data: drawWeek, error: dwErr } = await supabaseAdmin
@@ -58,20 +57,25 @@ export const startSession = createServerFn({ method: "POST" })
         clientData: { fen: p.fen },
       }));
     } else {
-      const shuffled = [...WISDOMDROP_PUZZLES].sort(() => Math.random() - 0.5).slice(0, 10);
+      const { data: allPuzzles, error: pzErr } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("id, display_text, options, region");
+      if (pzErr || !allPuzzles || allPuzzles.length === 0) {
+        console.error("Failed to load wisdom puzzles:", pzErr);
+        return { success: false as const, error: "No puzzles available" };
+      }
+      const shuffled = [...allPuzzles].sort(() => Math.random() - 0.5).slice(0, 10);
       puzzleList = shuffled.map((p) => {
-        // Shuffle options but track new correct index server-side only
-        const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
-        const shuffledOptions = indices.map((i) => p.options[i]);
+        const opts = (p.options as string[]) ?? [];
+        const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
+        const shuffledOptions = indices.map((i) => opts[i]);
         return {
           id: p.id,
           clientData: {
-            proverb: p.proverb,
+            displayText: p.display_text,
             options: shuffledOptions,
-            origin: p.origin,
+            region: p.region,
           },
-          // Store the shuffled correct index internally
-          _correctIdx: indices.indexOf(p.correctIndex),
         };
       });
     }
@@ -96,22 +100,27 @@ export const submitMove = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       sessionId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(20),
-      answer: z.string().min(1).max(10),
+      puzzleId: z.string().min(1).max(30),
+      answer: z.string().min(1).max(50),
       timeMs: z.number().min(0).max(600000),
-      nextPuzzleId: z.string().min(1).max(20).optional(),
+      nextPuzzleId: z.string().min(1).max(30).optional(),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     // Determine game type from puzzle ID prefix
     const isCheckmate = data.puzzleId.startsWith("cm-");
 
     let isCorrect = false;
     let puzzleResult: "correct" | "incorrect" = "incorrect";
+    let revealData: {
+      correctAnswer: string;
+      blank: string;
+      originalProverb: string;
+      region: string;
+    } | null = null;
 
     if (isCheckmate) {
       const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
@@ -119,10 +128,21 @@ export const submitMove = createServerFn({ method: "POST" })
         isCorrect = data.answer === puzzle.solutionMove;
       }
     } else {
-      const puzzle = WISDOMDROP_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("options, correct_index, blank, original_proverb, region")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
-        // Answer is the selected option text
-        isCorrect = data.answer === puzzle.options[puzzle.correctIndex];
+        const opts = (puzzle.options as string[]) ?? [];
+        const correctAnswer = opts[puzzle.correct_index];
+        isCorrect = data.answer === correctAnswer;
+        revealData = {
+          correctAnswer,
+          blank: puzzle.blank,
+          originalProverb: puzzle.original_proverb,
+          region: puzzle.region,
+        };
       }
     }
 
@@ -150,14 +170,19 @@ export const submitMove = createServerFn({ method: "POST" })
         const p = CHECKMATE_PUZZLES.find((x) => x.id === data.nextPuzzleId);
         if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen };
       } else {
-        const p = WISDOMDROP_PUZZLES.find((x) => x.id === data.nextPuzzleId);
+        const { data: p } = await supabaseAdmin
+          .from("winam_wisdom_puzzles")
+          .select("id, display_text, options, region")
+          .eq("id", data.nextPuzzleId)
+          .maybeSingle();
         if (p) {
-          const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+          const opts = (p.options as string[]) ?? [];
+          const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
           nextPuzzle = {
             puzzleId: p.id,
-            proverb: p.proverb,
-            options: indices.map((i) => p.options[i]),
-            origin: p.origin,
+            displayText: p.display_text,
+            options: indices.map((i) => opts[i]),
+            region: p.region,
           };
         }
       }
@@ -166,6 +191,7 @@ export const submitMove = createServerFn({ method: "POST" })
     return {
       correct: isCorrect,
       nextPuzzle,
+      revealData,
     };
   });
 
@@ -174,14 +200,13 @@ export const useHint = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       playerId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(20),
+      puzzleId: z.string().min(1).max(30),
       tier: z.number().min(1).max(3),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     const costs = { 1: 25, 2: 75, 3: 150 } as const;
     const cost = costs[data.tier as 1 | 2 | 3];
@@ -215,12 +240,17 @@ export const useHint = createServerFn({ method: "POST" })
         if (data.tier >= 3) hintData.move = puzzle.solutionMove;
       }
     } else {
-      const puzzle = WISDOMDROP_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("options, correct_index")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
-        const correctAnswer = puzzle.options[puzzle.correctIndex];
+        const opts = (puzzle.options as string[]) ?? [];
+        const correctAnswer = opts[puzzle.correct_index];
         if (data.tier >= 1) {
           // Remove 2 wrong options
-          const wrong = puzzle.options.filter((_, i) => i !== puzzle.correctIndex);
+          const wrong = opts.filter((_, i) => i !== puzzle.correct_index);
           hintData.eliminate = wrong.slice(0, 2).join(",");
         }
         if (data.tier >= 2) hintData.startsWidth = correctAnswer[0];
