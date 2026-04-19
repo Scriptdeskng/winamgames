@@ -1,79 +1,81 @@
 
 
-## Borrow Quiz Flash AI's answered-state UX for WisdomDrop
+## Make the Results page feel premium
 
-### Pattern from Quiz Flash AI (reference)
+### What's wrong now
 
-After a player answers:
-1. **Explanation panel animates open** beneath the choices (height + opacity tween) and auto-scrolls into view.
-2. **Footer changes**: tappable "Next" button always shown. On **correct** answers, an animated SVG ring counts down 5s next to the button, then auto-advances. On **wrong** answers, **no auto-advance** — player must tap Next to move on (so they can read the explanation).
-3. Tapping Next at any time cancels the timer and advances immediately.
-4. Manual advance also works on the last question — the button label flips to "See Results".
+Looking at the screenshot:
+1. **The big bordered card feels boxy and disconnected** — it's a heavy `surface-1` rectangle floating on a black canvas with the trophy + title sitting *outside* it. The card's framing competes with the hero number instead of supporting it.
+2. **The hero number (`+3 tickets`) is the moment**, but it's buried inside a generic container alongside weekly progress (a different concept). Two different ideas, one box → muddled hierarchy.
+3. **Vertical centering wastes the screen** — content floats mid-viewport with awkward emptiness above and below. Premium results screens (Apple Fitness, Duolingo end-of-lesson, Stripe receipts) anchor content to the top with intentional rhythm.
+4. **The trophy badge is generic** — a flat tinted square. No depth, no celebration energy.
+5. **The streak pill sits orphaned** between the card and CTAs with no visual relationship to either.
 
-### What's wrong with WisdomDrop today
+### Direction: dissolve the card, let the hero breathe
 
-- Reveal panel sits **above** the puzzle card — visually disconnected from where the player just tapped.
-- Auto-advance fires after a fixed `1800ms` on correct answers with **no countdown indicator** and **no way to skip ahead**.
-- On wrong answers there's no auto-advance OR next button — the screen just sits there until the next puzzle silently appears (actually it doesn't; it only advances on correct). The player can't progress on a wrong answer at all without losing a life and waiting for the implicit flow.
-- Reveal copy uses a different visual language (rounded card with X/Check icon) than the puzzle itself.
+Strip the heavy card chrome. Let the hero number be the page. Treat secondary info (weekly progress, breakdown) as supporting strata separated by space and subtle dividers — not boxed-in sub-sections.
 
-### Proposed changes
+### Layout (top → bottom, anchored to top, not centered)
 
-#### 1. Move reveal panel inline with the puzzle card
+```text
+┌─ TopBar ──────────────────────────────────┐
+│                                           │
+│         [trophy halo, larger]             │  ← celebratory medallion w/ glow
+│                                           │
+│         Session Complete                  │  ← smaller, muted label
+│         +3 tickets                        │  ← HERO, very large, primary
+│         Added to your weekly draw         │  ← caption
+│                                           │
+│   Solved 9 puzzles +1 · Mission +2        │  ← breakdown chips, tiny + muted
+│                                           │
+│   ─────────────────────────────────────   │  ← hairline, no card border
+│                                           │
+│   This week's draw            4 of 50     │
+│   ▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    │
+│   Solve 1 more puzzle for your next       │
+│                                           │
+│   🔥 Day 2 streak — reach day 3 …         │  ← inline below progress, related
+│                                           │
+│   [ Play again ]                          │  ← CTAs anchored bottom
+│   [ Back to Home ]                        │
+└───────────────────────────────────────────┘
+```
 
-Re-order the page so the puzzle card is the anchor. Render the reveal **inside / directly attached to the puzzle card** (just below the choices), animated open with framer-motion (`height: 0 → auto`, opacity fade). This matches the QuixFlash pattern where the explanation feels like part of the same surface the player just tapped.
+### Specific changes (`src/routes/_authed/results.tsx`)
 
-#### 2. Add an auto-advance countdown ring (correct answers only)
+1. **Remove the `surface-1` card wrapper** entirely. Use vertical spacing + a single hairline divider instead of a bordered container.
+2. **Anchor to top, not centered**: change `flex-1 ... justify-center` → `pt-8` with natural flow. CTAs pinned via `mt-auto`.
+3. **Upgrade the trophy medallion**:
+   - Larger: `h-20 w-20` (was 16).
+   - Layered glow: outer `bg-primary/10` ring + inner gradient `bg-gradient-to-b from-primary/25 to-primary/10`, `border border-primary/30`, `shadow-glow`.
+   - Trophy icon `h-10 w-10`.
+4. **Hero typography hierarchy**:
+   - Drop the existing "Session Complete!" h1 and replace with a small uppercase eyebrow: `text-xs font-medium tracking-[0.18em] uppercase text-muted-foreground` reading `Session Complete`.
+   - Hero number scales up: `text-5xl font-bold tabular-nums text-primary` with subtle drop-glow via `[text-shadow:_0_0_24px_hsl(var(--primary)/0.35)]`.
+   - Subtext stays `text-sm text-muted-foreground`.
+   - Breakdown chips stay tiny (`text-xs text-muted-foreground/70`).
+5. **Hairline divider** (no card): `mt-8 h-px w-full bg-border/40` between hero block and weekly-progress block.
+6. **Weekly progress** rendered as a flat block (no border, no surface fill) with the same label/value row + Progress bar + nudge underneath. Tighten the nudge to `text-xs text-muted-foreground` (no `text-center` — left-aligned beneath the bar reads more "receipt-like" and premium).
+7. **Streak pill** moves to sit directly under the nudge (still as the existing pill style) so it visually belongs to the weekly-progress section, not floating between concepts.
+8. **CTAs pinned to bottom** via `mt-auto pt-8` so they sit at the safe-area edge regardless of content height. Keep current button styling — they're already fine.
+9. **Rank-up notification** keeps its own bordered surface (it's a discrete event worth highlighting), but reduce visual weight: shrink padding `p-4 → p-3`, place it *above* the eyebrow so it doesn't break the hero rhythm.
 
-New small component `AutoAdvanceRing` (mirrors QuixFlash's, restyled in our emerald tokens):
-- 44px SVG ring, 5s linear stroke fill from 0 → full circumference.
-- Uses `hsl(var(--success))` / emerald token.
-- Renders only when `feedback === "correct"`.
+### Why this reads "premium"
 
-Bump the auto-advance window from **1800ms → 4000ms** (shorter than QuixFlash's 5s since proverbs are quicker to read, but long enough for the reveal to register).
-
-#### 3. Always-present "Next" button after answering
-
-A persistent footer button below the puzzle card whenever `feedback !== null`:
-- **Correct + not last**: `[ring countdown] Next →` (auto-advance armed, button skips it)
-- **Correct + last puzzle**: `[ring countdown] See Results →`
-- **Wrong + lives remaining**: `Continue →` (no ring, no auto-advance, player taps to proceed)
-- **Wrong + game over (0 lives)**: `See Results →` (no ring)
-
-This solves the current dead state on wrong answers — the player can read the reveal as long as they want, then tap to move on.
-
-#### 4. Hook changes (`useGameSession.ts`)
-
-Currently `submit()` auto-fires the next puzzle on a `setTimeout` for correct answers and never advances on wrong. We need to:
-- Expose an `advance()` method that flushes the pending advance immediately (clearing any timer).
-- For **wrong** answers (when not game over), no longer silently consume — keep the current puzzle visible, set `feedback: "incorrect"`, and wait for `advance()` to be called explicitly. Then `advance()` either moves to the next puzzle (lives remain) or triggers `endSession` (lives at 0).
-- For **correct** answers, keep the auto-advance `setTimeout` (now 4000ms) **and** allow `advance()` to clear it and advance early. Use a `pendingAdvanceRef` so both paths converge.
-- For game-over states, `advance()` calls `endSession` immediately.
-
-Add `advance` to the returned API. Both pages call it from the new Next button.
-
-#### 5. Tidy reveal styling
-
-- Inline the reveal beneath the choices (still inside the `surface-1` card border so it visually belongs).
-- Smaller icon row: `Check` / `X` in 16px, no big colored panel — just a tinted divider line + the existing reveal text (answer, full proverb, region).
-- Animate `height: 0 → auto` + opacity using `framer-motion` (already in `package.json`, used in `BannerStack`).
-
-### Files touched
-
-- **`src/components/games/useGameSession.ts`** — refactor `submit()` to defer wrong-answer advance; add `pendingAdvanceRef` + new `advance()` method; bump auto-advance to 4000ms; export `advance`.
-- **`src/components/games/AutoAdvanceRing.tsx`** *(new)* — 44px SVG countdown ring using emerald success token.
-- **`src/components/games/AnswerFooter.tsx`** *(new)* — sticky-ish footer block that renders the ring + Next/Continue/See Results button based on feedback + lives + last-puzzle state.
-- **`src/routes/_authed/wisdomdrop.tsx`** — move reveal inline beneath the choices inside the puzzle card; replace the standalone reveal block; add `<AnswerFooter>` after the choices; wire `session.advance` to it.
-- **`src/routes/_authed/checkmate.tsx`** — apply the same footer pattern (ring + Next button, auto-advance on correct, manual on wrong) for consistency. Reveal handling is simpler there (no proverb text), so just feedback chip + Continue/Next.
+- **One thing at a time**: the hero number owns the top of the screen with breathing room around it — the way Apple Wallet / Linear / Stripe present a single primary value.
+- **Hairlines instead of cards**: borders are heavy on dark UIs; thin dividers feel like fine print on a luxury receipt.
+- **Eyebrow + hero pattern** is the modern alternative to "big title + smaller stat" and reads more confident.
+- **Glow under the hero number** uses our emerald token for a subtle premium accent without being neon.
+- **Anchored CTAs** keep the action thumb-reachable and let upper content breathe at any height.
 
 ### Out of scope
 
-- Lives/coin/hint UI — unchanged.
-- GameHeader, timer, exit flow — unchanged.
-- Backend / `submitMove` / scoring — unchanged.
-- Onboarding / landing screens — unchanged.
+- Color tokens / Tailwind theme.
+- Buttons, RankBadge, Progress, TopBar internals.
+- Data flow, search params, navigation.
+- Animations (could be a follow-up: count-up on hero number, fade-in stagger).
 
-### Open question (will use defaults unless you say otherwise)
+### Files touched
 
-- **Auto-advance duration**: defaulting to **4s** for WisdomDrop (proverbs are short to re-read) and **5s** for CheckMate (board state takes longer to absorb). Say the word if you want both at 5s or both at 4s.
+- `src/routes/_authed/results.tsx` — single-file restructure.
 
