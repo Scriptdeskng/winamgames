@@ -57,27 +57,191 @@ export const startSession = createServerFn({ method: "POST" })
         clientData: { fen: p.fen },
       }));
     } else {
-      const { data: allPuzzles, error: pzErr } = await supabaseAdmin
-        .from("winam_wisdom_puzzles")
-        .select("id, display_text, options, region");
-      if (pzErr || !allPuzzles || allPuzzles.length === 0) {
-        console.error("Failed to load wisdom puzzles:", pzErr);
+      // Fetch player rank for difficulty mix
+      const { data: playerRow } = await supabaseAdmin
+        .from("winam_players")
+        .select("rank_tier")
+        .eq("id", data.playerId)
+        .single();
+      const rankTier = playerRow?.rank_tier ?? "starter";
+
+      // Difficulty values in winam_wisdom_puzzles: beginner (144), intermediate (120), advanced (36)
+      // Note: advanced pool is thin — Veteran+ (4/session) exhausts it in ~9 sessions before cascade kicks in.
+      // Expand advanced pool in winam_wisdom_puzzles to 80+ for better Veteran+ experience.
+
+      // TODO: adaptive difficulty nudge — read last session wisdom_accuracy from
+      // winam_game_sessions and shift mix one step harder (>=90%) or easier (<50%)
+      // before applying RANK_DIFFICULTY_MIX. Implement as follow-up task.
+      const RANK_DIFFICULTY_MIX: Record<string, { beginner: number; intermediate: number; advanced: number }> = {
+        starter:   { beginner: 7, intermediate: 2, advanced: 1 },
+        recruit:   { beginner: 5, intermediate: 4, advanced: 1 },
+        sergeant:  { beginner: 3, intermediate: 5, advanced: 2 },
+        veteran:   { beginner: 1, intermediate: 5, advanced: 4 },
+        champion:  { beginner: 1, intermediate: 5, advanced: 4 },
+        icon:      { beginner: 1, intermediate: 5, advanced: 4 },
+        legend:    { beginner: 1, intermediate: 5, advanced: 4 },
+        immortal:  { beginner: 1, intermediate: 5, advanced: 4 },
+      };
+      const mix = RANK_DIFFICULTY_MIX[rankTier] ?? RANK_DIFFICULTY_MIX.starter;
+
+      // Fetch seen puzzle IDs for this player
+      const { data: seen } = await supabaseAdmin
+        .from("winam_puzzle_history")
+        .select("puzzle_id")
+        .eq("player_id", data.playerId);
+      const seenIds = (seen ?? []).map((r) => r.puzzle_id);
+
+      // Fetch unseen pool (light columns only)
+      type PoolRow = { id: string; difficulty: string; region: string };
+      let unseen: PoolRow[];
+      {
+        let q = supabaseAdmin
+          .from("winam_wisdom_puzzles")
+          .select("id, difficulty, region");
+        if (seenIds.length > 0) {
+          const inList = `(${seenIds.map((id) => `"${id}"`).join(",")})`;
+          q = q.not("id", "in", inList);
+        }
+        const { data: rows, error: poolErr } = await q;
+        if (poolErr) {
+          console.error("Failed to load wisdom pool:", poolErr);
+          return { success: false as const, error: "No puzzles available" };
+        }
+        unseen = (rows ?? []) as PoolRow[];
+      }
+
+      // Cycle reset if too few unseen
+      if (unseen.length < 15) {
+        await supabaseAdmin
+          .from("winam_puzzle_history")
+          .delete()
+          .eq("player_id", data.playerId);
+        const { data: full, error: fullErr } = await supabaseAdmin
+          .from("winam_wisdom_puzzles")
+          .select("id, difficulty, region");
+        if (fullErr || !full || full.length === 0) {
+          console.error("Failed to load full wisdom pool:", fullErr);
+          return { success: false as const, error: "No puzzles available" };
+        }
+        unseen = full as PoolRow[];
+      }
+
+      // Bucket by difficulty + shuffle each bucket
+      const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+      const buckets: Record<"beginner" | "intermediate" | "advanced", PoolRow[]> = {
+        beginner: shuffle(unseen.filter((p) => p.difficulty === "beginner")),
+        intermediate: shuffle(unseen.filter((p) => p.difficulty === "intermediate")),
+        advanced: shuffle(unseen.filter((p) => p.difficulty === "advanced")),
+      };
+
+      // Pick with shortfall cascade: advanced -> intermediate -> beginner -> intermediate
+      const picked: PoolRow[] = [];
+      const pickedIds = new Set<string>();
+      const takeFrom = (key: "beginner" | "intermediate" | "advanced", n: number): number => {
+        let taken = 0;
+        while (taken < n && buckets[key].length > 0) {
+          const p = buckets[key].shift()!;
+          if (pickedIds.has(p.id)) continue;
+          picked.push(p);
+          pickedIds.add(p.id);
+          taken++;
+        }
+        return taken;
+      };
+
+      const advTaken = takeFrom("advanced", mix.advanced);
+      let advShort = mix.advanced - advTaken;
+      const intTarget = mix.intermediate + advShort;
+      const intTaken = takeFrom("intermediate", intTarget);
+      let intShort = intTarget - intTaken;
+      const begTarget = mix.beginner + intShort;
+      const begTaken = takeFrom("beginner", begTarget);
+      let begShort = begTarget - begTaken;
+      // Last resort: refill from intermediate then advanced if beginner ran out
+      if (begShort > 0) begShort -= takeFrom("intermediate", begShort);
+      if (begShort > 0) takeFrom("advanced", begShort);
+
+      // Region variety pass: cap 4 per region; aim for >=3 distinct regions
+      const regionCount: Record<string, number> = {};
+      picked.forEach((p) => {
+        regionCount[p.region] = (regionCount[p.region] ?? 0) + 1;
+      });
+      const overCapRegions = Object.entries(regionCount)
+        .filter(([, c]) => c > 4)
+        .map(([r]) => r);
+
+      for (const region of overCapRegions) {
+        let excess = regionCount[region] - 4;
+        // Indices of picked puzzles from this region (later ones first to swap out)
+        const indices = picked
+          .map((p, i) => ({ p, i }))
+          .filter((x) => x.p.region === region)
+          .map((x) => x.i)
+          .reverse();
+
+        for (const idx of indices) {
+          if (excess <= 0) break;
+          const target = picked[idx];
+          // Find replacement: same difficulty, different region, not already picked
+          const candidates = unseen.filter(
+            (u) =>
+              u.difficulty === target.difficulty &&
+              u.region !== region &&
+              !pickedIds.has(u.id)
+          );
+          if (candidates.length === 0) continue;
+          // Prefer regions absent from session, then lowest count
+          const sessionRegions = new Set(picked.map((p) => p.region));
+          candidates.sort((a, b) => {
+            const aAbsent = sessionRegions.has(a.region) ? 1 : 0;
+            const bAbsent = sessionRegions.has(b.region) ? 1 : 0;
+            if (aAbsent !== bAbsent) return aAbsent - bAbsent;
+            const aCount = regionCount[a.region] ?? 0;
+            const bCount = regionCount[b.region] ?? 0;
+            return aCount - bCount;
+          });
+          const replacement = candidates[0];
+          pickedIds.delete(target.id);
+          regionCount[region]--;
+          picked[idx] = replacement;
+          pickedIds.add(replacement.id);
+          regionCount[replacement.region] = (regionCount[replacement.region] ?? 0) + 1;
+          excess--;
+        }
+      }
+
+      if (picked.length === 0) {
         return { success: false as const, error: "No puzzles available" };
       }
-      const shuffled = [...allPuzzles].sort(() => Math.random() - 0.5).slice(0, 10);
-      puzzleList = shuffled.map((p) => {
-        const opts = (p.options as string[]) ?? [];
-        const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
-        const shuffledOptions = indices.map((i) => opts[i]);
-        return {
-          id: p.id,
-          clientData: {
-            displayText: p.display_text,
-            options: shuffledOptions,
-            region: p.region,
-          },
-        };
-      });
+
+      // Fetch full puzzle data for the picked IDs
+      const { data: fullPuzzles, error: fpErr } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("id, display_text, options, region")
+        .in("id", picked.map((p) => p.id));
+      if (fpErr || !fullPuzzles) {
+        console.error("Failed to load full puzzles:", fpErr);
+        return { success: false as const, error: "No puzzles available" };
+      }
+
+      // Preserve picked order
+      const byId = new Map(fullPuzzles.map((p) => [p.id, p]));
+      puzzleList = picked
+        .map((sel) => byId.get(sel.id))
+        .filter((p): p is NonNullable<typeof p> => !!p)
+        .map((p) => {
+          const opts = (p.options as string[]) ?? [];
+          const indices = opts.map((_, i) => i).sort(() => Math.random() - 0.5);
+          const shuffledOptions = indices.map((i) => opts[i]);
+          return {
+            id: p.id,
+            clientData: {
+              displayText: p.display_text,
+              options: shuffledOptions,
+              region: p.region,
+            },
+          };
+        });
     }
 
     // Return first puzzle only; store puzzle order in session metadata
@@ -274,6 +438,7 @@ export const closeSession = createServerFn({ method: "POST" })
       puzzlesSolved: z.number().min(0).max(100),
       hintsUsed: z.number().min(0).max(100),
       durationSeconds: z.number().min(0).max(7200),
+      servedPuzzleIds: z.array(z.string().min(1).max(30)).max(20).optional(),
     })
   )
   .handler(async ({ data }) => {
@@ -398,6 +563,18 @@ export const closeSession = createServerFn({ method: "POST" })
         rank_tier: newTier,
       })
       .eq("id", data.playerId);
+
+    // ── Record served puzzles in history (wisdomdrop only) ──
+    // TODO: switch to batch insert for puzzle history on session close
+    if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+      for (const puzzleId of data.servedPuzzleIds) {
+        await supabaseAdmin.from("winam_puzzle_history").insert({
+          player_id: data.playerId,
+          puzzle_id: puzzleId,
+          seen_at: new Date().toISOString(),
+        });
+      }
+    }
 
     // ── Evaluate missions (writes its own ledger rows for entry rewards) ──
     const { evaluatePendingMissions } = await import("@/utils/mission.server");

@@ -410,6 +410,35 @@ export type Database = {
           },
         ]
       }
+      winam_puzzle_history: {
+        Row: {
+          id: string
+          player_id: string | null
+          puzzle_id: string
+          seen_at: string | null
+        }
+        Insert: {
+          id?: string
+          player_id?: string | null
+          puzzle_id: string
+          seen_at?: string | null
+        }
+        Update: {
+          id?: string
+          player_id?: string | null
+          puzzle_id?: string
+          seen_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winam_puzzle_history_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "winam_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       winam_subscriptions: {
         Row: {
           carrier_ref: string | null
