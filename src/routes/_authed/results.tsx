@@ -94,92 +94,102 @@ function ResultsPage() {
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex flex-col">
       <TopBar backTo="/" title="Results" />
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-        <div className="h-16 w-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
-          <Trophy className="h-8 w-8 text-primary" />
-        </div>
-        <h1 className="text-2xl font-bold mb-6">Session Complete!</h1>
-
-        {/* Rank up notification */}
+      <div className="flex-1 flex flex-col px-6 pb-8 pt-8">
+        {/* Rank up notification — discrete event, kept as bordered chip above hero */}
         {rankedUp && (
-          <div className="w-full mb-4 rounded-xl bg-xp/10 border border-xp/20 p-4 flex items-center gap-3">
-            <ArrowUp className="h-5 w-5 text-xp" />
-            <div>
-              <p className="text-sm font-semibold text-xp">Rank Up!</p>
+          <div className="w-full mb-6 rounded-xl bg-xp/10 border border-xp/20 p-3 flex items-center gap-3">
+            <ArrowUp className="h-4 w-4 text-xp shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-xp">Rank Up!</p>
               <div className="flex items-center gap-2 mt-1">
                 <RankBadge tier={previousRank as RankTier} />
-                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground text-xs">→</span>
                 <RankBadge tier={rankTier as RankTier} />
               </div>
             </div>
           </div>
         )}
 
-        {/* Unified session card */}
-        <div className="w-full rounded-2xl bg-surface-1 border border-border p-6">
-          {/* Hero */}
-          <div className="text-center">
-            {entries > 0 ? (
-              <>
-                <p className="text-4xl font-bold tabular-nums text-primary">
-                  +{entries} {entries === 1 ? "ticket" : "tickets"}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
-                {breakdownParts.length > 0 && (
-                  <p className="mt-1.5 text-xs text-muted-foreground/70">
-                    {breakdownParts.join("  ·  ")}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-xl font-semibold">No tickets earned this session</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Every 5 puzzles solved earns 1 ticket toward the weekly draw
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="my-5 h-px bg-border/60" />
-
-          {/* Weekly progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Tickets toward this week's draw</span>
-              <span className="text-sm font-semibold tabular-nums">
-                {weekTotal} of {weekCap}
-              </span>
+        {/* Hero block */}
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" aria-hidden />
+            <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-b from-primary/25 to-primary/10 border border-primary/30 shadow-glow flex items-center justify-center">
+              <Trophy className="h-10 w-10 text-primary" />
             </div>
-            <Progress value={weekPct} />
           </div>
 
-          {/* Nudge */}
-          <p className="mt-5 text-center text-xs text-muted-foreground">{nudge}</p>
+          <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+            Session Complete
+          </p>
+
+          {entries > 0 ? (
+            <>
+              <p
+                className="mt-2 text-5xl font-bold tabular-nums text-primary"
+                style={{ textShadow: "0 0 24px hsl(var(--primary) / 0.35)" }}
+              >
+                +{entries}
+                <span className="ml-2 text-2xl font-semibold align-baseline">
+                  {entries === 1 ? "ticket" : "tickets"}
+                </span>
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
+              {breakdownParts.length > 0 && (
+                <p className="mt-3 text-xs text-muted-foreground/70">
+                  {breakdownParts.join("  ·  ")}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="mt-3 text-3xl font-bold">No tickets this time</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
+                Every 5 puzzles solved earns 1 ticket toward the weekly draw
+              </p>
+            </>
+          )}
         </div>
 
-        {/* Streak pill */}
-        {streakPill && (
-          <div className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
-            <Flame className="h-3.5 w-3.5 text-streak" />
-            <span className="text-xs font-medium text-streak">{streakPill}</span>
-          </div>
-        )}
+        {/* Hairline divider */}
+        <div className="mt-8 h-px w-full bg-border/40" />
 
-        {/* Buttons */}
-        <button
-          onClick={handlePlayAgain}
-          className="mt-8 w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center hover:bg-primary/90 transition-all shadow-glow"
-        >
-          Play again
-        </button>
-        <Link
-          to="/"
-          className="mt-3 w-full h-14 rounded-xl bg-surface-1 border border-border text-foreground font-semibold text-base flex items-center justify-center hover:bg-surface-2 transition-all"
-        >
-          Back to Home
-        </Link>
+        {/* Weekly progress — flat block, no card chrome */}
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between mb-2.5">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              This week's draw
+            </span>
+            <span className="text-sm font-semibold tabular-nums">
+              {weekTotal} <span className="text-muted-foreground font-normal">of {weekCap}</span>
+            </span>
+          </div>
+          <Progress value={weekPct} />
+          <p className="mt-3 text-xs text-muted-foreground">{nudge}</p>
+
+          {streakPill && (
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
+              <Flame className="h-3.5 w-3.5 text-streak" />
+              <span className="text-xs font-medium text-streak">{streakPill}</span>
+            </div>
+          )}
+        </div>
+
+        {/* CTAs anchored to bottom */}
+        <div className="mt-auto pt-8">
+          <button
+            onClick={handlePlayAgain}
+            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center hover:bg-primary/90 transition-all shadow-glow"
+          >
+            Play again
+          </button>
+          <Link
+            to="/"
+            className="mt-3 w-full h-14 rounded-xl bg-surface-1 border border-border text-foreground font-semibold text-base flex items-center justify-center hover:bg-surface-2 transition-all"
+          >
+            Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );
