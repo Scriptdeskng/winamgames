@@ -493,6 +493,7 @@ export type Database = {
           created_at: string | null
           difficulty: string
           display_text: string
+          explanation: string | null
           id: string
           options: Json
           original_proverb: string
@@ -504,6 +505,7 @@ export type Database = {
           created_at?: string | null
           difficulty: string
           display_text: string
+          explanation?: string | null
           id: string
           options: Json
           original_proverb: string
@@ -515,6 +517,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string
           display_text?: string
+          explanation?: string | null
           id?: string
           options?: Json
           original_proverb?: string
