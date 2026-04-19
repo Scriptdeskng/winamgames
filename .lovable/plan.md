@@ -1,38 +1,28 @@
 
 
-## Add thin separators between top 3 cash winners
+## Remove redundant bottom CTA on Winners page
 
-In `src/routes/_authed/winners.tsx`, the three cash winners (1st/2nd/3rd) currently render in a `space-y-1.5` stack with no visual division. Add a subtle divider between rows so each position reads as its own line.
+The Winners page already has a strong hero card at the top with an Award icon, headline, subhead, and "Play Now" CTA linking to `/`. The bottom card ("Keep playing, keep winning" → "Back to Games") repeats the same intent — push users back to games — at a point where they've just finished scrolling through draw history.
 
 ### Change
 
-In `DrawWeekCard`, the cash winners block (~lines 167–187) maps `draw.cashWinners` and renders each as a `<div>`. Add a bottom border to all but the last row:
+In `src/routes/_authed/winners.tsx`, delete the bottom CTA block (the final `<div className="rounded-2xl bg-surface-1 border border-border p-4 text-center space-y-2">...</div>` containing "Keep playing, keep winning" and the "Back to Games" link).
 
-```tsx
-{draw.cashWinners.map((w, j) => (
-  <div
-    key={j}
-    className={`flex items-center justify-between py-2 ${
-      j < draw.cashWinners.length - 1 ? "border-b border-border/40" : ""
-    }`}
-  >
-    {/* unchanged inner content */}
-  </div>
-))}
-```
+The page now ends on the last `DrawWeekCard`, which feels natural — the user has reached the end of the winners list and the persistent app navigation (TopBar back button, bottom nav) handles their next move.
 
-- `border-border/40` — thin, muted (40% of token border color) so it whispers rather than competes with the card border.
-- Bumped `py-1` → `py-2` for a touch more breathing room around the divider (still compact).
-- Last row gets no border so it doesn't double up with the "+ N airtime & data winners" line below.
-- Outer `space-y-1.5` on the parent stays — the eyebrow label still gets its gap from the rows.
+### Why not keep it
+
+- Duplicates the hero CTA's "go play" message with weaker copy.
+- Adds vertical scroll for no new info.
+- The TopBar back arrow + global nav already provide an exit path.
 
 ### Out of scope
 
-- Airtime tier rendering (currently summarized as a single line).
-- Card borders, hero CTA, or other sections.
-- Other pages.
+- Hero card at the top (stays as-is).
+- Draw week cards.
+- Any other page.
 
 ### File touched
 
-- `src/routes/_authed/winners.tsx` (one block inside `DrawWeekCard`)
+- `src/routes/_authed/winners.tsx` — remove the trailing CTA block (~last 12 lines of the JSX return).
 
