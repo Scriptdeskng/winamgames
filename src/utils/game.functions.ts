@@ -326,7 +326,7 @@ export const submitMove = createServerFn({ method: "POST" })
     } else {
       const { data: puzzle } = await supabaseAdmin
         .from("winam_wisdom_puzzles")
-        .select("options, correct_index, blank, original_proverb, region")
+        .select("options, correct_index, blank, original_proverb, region, explanation")
         .eq("id", data.puzzleId)
         .maybeSingle();
       if (puzzle) {
@@ -338,6 +338,7 @@ export const submitMove = createServerFn({ method: "POST" })
           blank: puzzle.blank,
           originalProverb: puzzle.original_proverb,
           region: puzzle.region,
+          explanation: puzzle.explanation ?? null,
         };
       }
     }
