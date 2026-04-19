@@ -49,10 +49,10 @@ function ResultsPage() {
 
   // Streak pill copy
   let streakPill: string | null = null;
-  if (streak >= 14) streakPill = `Day ${streak} — earning +3 bonus entries per session`;
-  else if (streak >= 7) streakPill = `Day ${streak} — earning +2 bonus entries per session`;
-  else if (streak >= 3) streakPill = `Day ${streak} — earning +1 bonus entry per session`;
-  else if (streak >= 1) streakPill = `Day ${streak} — reach day 3 for bonus entries`;
+  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus tickets per session`;
+  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus tickets per session`;
+  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus ticket per session`;
+  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus ticket per session`;
 
   const rankedUp = rankTier !== previousRank;
 
