@@ -232,6 +232,11 @@ function WisdomDropPage() {
                         <p className="text-xs text-muted-foreground/80">
                           — {session.lastReveal.region}
                         </p>
+                        {session.lastReveal.explanation && (
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 pt-1">
+                            {session.lastReveal.explanation}
+                          </p>
+                        )}
                       </>
                     )}
                   </div>

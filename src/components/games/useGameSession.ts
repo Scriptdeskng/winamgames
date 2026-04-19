@@ -7,6 +7,7 @@ interface RevealData {
   blank: string;
   originalProverb: string;
   region: string;
+  explanation: string | null;
 }
 
 interface PendingAdvance {
