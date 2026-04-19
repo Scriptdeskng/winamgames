@@ -181,7 +181,7 @@ function ProfilePage() {
             </AccordionTrigger>
             <AccordionContent className="pb-5 pt-1">
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Tickets are your entries</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; once the draw runs, your ticket count resets and a new week begins.
+                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Tickets are your shot at the draw</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; once the draw runs, your ticket count resets and a new week begins.
               </p>
               <ol className="space-y-3.5">
                 {[
@@ -461,7 +461,7 @@ function StreakTile({ streak }: { streak: number }) {
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
-            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus weekly draw entry per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
+            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus ticket per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
           </PopoverContent>
         </Popover>
       </div>
