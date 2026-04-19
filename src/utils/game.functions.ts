@@ -564,6 +564,18 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.playerId);
 
+    // ── Record served puzzles in history (wisdomdrop only) ──
+    // TODO: switch to batch insert for puzzle history on session close
+    if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+      for (const puzzleId of data.servedPuzzleIds) {
+        await supabaseAdmin.from("winam_puzzle_history").insert({
+          player_id: data.playerId,
+          puzzle_id: puzzleId,
+          seen_at: new Date().toISOString(),
+        });
+      }
+    }
+
     // ── Evaluate missions (writes its own ledger rows for entry rewards) ──
     const { evaluatePendingMissions } = await import("@/utils/mission.server");
     const completedMissions = await evaluatePendingMissions(
