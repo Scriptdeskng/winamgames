@@ -126,7 +126,7 @@ function ResultsPage() {
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
                 {breakdownParts.length > 0 && (
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-1.5 text-xs text-muted-foreground/70">
                     {breakdownParts.join("  ·  ")}
                   </p>
                 )}
