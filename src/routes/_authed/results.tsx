@@ -158,7 +158,7 @@ function ResultsPage() {
         <div className="mt-6">
           <div className="flex items-baseline justify-between mb-2.5">
             <span className="text-xs uppercase tracking-wider text-muted-foreground">
-              This week's draw
+              Tickets earned this week
             </span>
             <span className="text-sm font-semibold tabular-nums">
               {weekTotal} <span className="text-muted-foreground font-normal">of {weekCap}</span>
