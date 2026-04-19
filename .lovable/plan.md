@@ -1,35 +1,62 @@
 
 
-## Replace remaining "entries" copy with "tickets"
+## Add explanation to WisdomDrop reveal panel
 
-The user-facing word is "tickets" everywhere. A few stragglers still say "entries". Path/URL `/entries` stays (changing routes breaks links/history); only visible copy changes.
+Surface the puzzle's `explanation` text inside the inline reveal that appears after a player answers, so players learn the wisdom behind the proverb (not just the missing word).
 
-### Changes (visible UI strings only)
+### Changes
 
-| File | Line | Current | New |
-|---|---|---|---|
-| `src/routes/_authed/wisdomdrop.tsx` | 90 | `5 entries` per round | `5 tickets` per round |
-| `src/routes/_authed/wisdomdrop.tsx` | 18 | meta description: `…earn draw entries.` | `…earn draw tickets.` |
-| `src/routes/_authed/checkmate.tsx` | 107 | `5 entries` per round | `5 tickets` per round |
-| `src/routes/_authed/checkmate.tsx` | 18 | meta description: `…earn draw entries.` | `…earn draw tickets.` |
-| `src/routes/renew.tsx` | 69 | `Keep playing & earning entries` | `Keep playing & earning tickets` |
-| `src/routes/renew.tsx` | 101 | feature chip `Entries` | `Tickets` |
-| `src/routes/_authed/profile.tsx` | 184 | `Tickets are your entries` | `Tickets are your draw entries` → simplify to remove the "entries" word entirely: rewrite as `Tickets are your shot at the draw` |
-| `src/routes/_authed/profile.tsx` | 464 | `+1 bonus weekly draw entry per session` | `+1 bonus ticket per session` (and `+2`, `+3` follow same pattern in same sentence) |
-| `src/routes/__root.tsx` | 33, 36, 41 | meta `…earn draw entries…` (×3: description, og:description, twitter:description) | `…earn draw tickets…` |
+**1. `src/utils/game.functions.ts` — `submitMove` handler**
 
-### Not changed (intentional)
+In the wisdomdrop branch, extend the puzzle select and the returned `revealData`:
 
-- **Route path `/entries`** and `Link to="/entries"` references — internal URL, no user copy impact, changing breaks deep links / browser history.
-- **Database column names** (`entries_awarded`, `entries_delta`, `total_entries`, enum `entry_source_type`, `reward_type: "entries"`) — schema-level, not user-facing.
-- **Mock data field names** (`entries`, `entryId` in leaderboard/winners mock) — internal property names, not rendered as the word "entries" in UI.
-- **Component/function names** (`WeeklyEntriesCard`, `EntriesPage`) — internal identifiers.
+```ts
+.select("options, correct_index, blank, original_proverb, region, explanation")
+```
+
+```ts
+revealData: {
+  correctAnswer: options[correct_index],
+  blank,
+  originalProverb: original_proverb,
+  region,
+  explanation,
+}
+```
+
+The `explanation` column already exists on the puzzles table — no schema change.
+
+**2. `src/components/games/useGameSession.ts` — `RevealData` type**
+
+Add `explanation: string | null` to the local `RevealData` interface so the new field flows through `state.lastReveal`. The existing setState calls already spread `result.revealData` wholesale, so no setter logic changes are needed beyond the type.
+
+**3. `src/routes/_authed/wisdomdrop.tsx` — reveal panel**
+
+Inside the existing `<AnimatePresence>` reveal block (under the proverb + region line), conditionally render the explanation as a third element:
+
+```tsx
+{session.lastReveal.explanation && (
+  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 pt-1">
+    {session.lastReveal.explanation}
+  </p>
+)}
+```
+
+- Muted, smaller than the proverb so it reads as secondary context.
+- `line-clamp-3` caps height to keep the panel compact.
+- `pt-1` separates it from the region attribution above.
+
+Only added to wisdomdrop — checkmate has no `explanation` field and is unaffected.
+
+### Out of scope
+
+- DB schema, migrations, or new columns.
+- Checkmate reveal panel.
+- Animations beyond the existing AnimatePresence open/close.
 
 ### Files touched
 
+- `src/utils/game.functions.ts`
+- `src/components/games/useGameSession.ts`
 - `src/routes/_authed/wisdomdrop.tsx`
-- `src/routes/_authed/checkmate.tsx`
-- `src/routes/renew.tsx`
-- `src/routes/_authed/profile.tsx`
-- `src/routes/__root.tsx`
 
