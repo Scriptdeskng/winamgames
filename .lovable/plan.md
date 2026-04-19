@@ -1,59 +1,50 @@
 
 
-## Add a sort/filter dropdown to ticket lists
+## Swap hero card visual treatments between Home and Winners
 
-The current `TicketGroupedList` always groups tickets by source (Puzzle → Mission → Streak). For a player with 30+ tickets, that ordering is fixed and there's no way to scan by recency or isolate one source. A small dropdown control on each card would let users re-cut the same data.
+The Winners hero uses a warm marketing treatment (primary gradient wash, primary-tinted border, centered icon). The Home `DrawHeroCard` uses a flatter dashboard treatment (plain `surface-1` + `border`, thin top gradient strip). Swap the **container treatments** while keeping each card's content intact.
 
-### Interpretation
+### Changes
 
-"Dropdown" here = a compact `Select` control on each card (current week + each expanded past week) that switches how tickets are displayed. Not a navigation dropdown — the past weeks already use `Collapsible` for expand/collapse, which stays.
+**`src/routes/_authed/index.tsx` → `DrawHeroCard`**
 
-### Change
-
-In `src/routes/_authed/entries.tsx`:
-
-1. **Add a view-mode state to `TicketGroupedList`** with three modes:
-   - `by-source` (default — current behavior: grouped Puzzle/Mission/Streak)
-   - `recent` (flat list, newest first)
-   - `oldest` (flat list, oldest first)
-
-2. **Render a `Select` trigger** in the top-right of the list area. Use the existing `@/components/ui/select` primitives (already in the project). Trigger styled small and muted to fit the card density:
-   ```
-   [Sort: By source ▾]
-   ```
-   - `h-7`, `text-[11px]`, `border-border/60`, `bg-surface-2/60`, no shadow.
-
-3. **When mode = `recent` or `oldest`**, skip the source-grouped rendering and show a single flat list using the same row markup (Hash icon + ticket ID + date), sorted by `earnedAt`. Keep the source icon inline at the start of each row so the source signal isn't lost in flat view.
-
-4. **Wire it into both call sites** — `CurrentWeekTickets` and `PastWeekCard` — by passing the dropdown through `TicketGroupedList` itself (component owns its own state, so no prop wiring needed at the call sites).
-
-5. **Hide the dropdown when `tickets.length <= 3`** — not worth the chrome for tiny lists.
-
-### Layout
-
-```text
-┌─ This Week ──────────────────── Apr 14 – 20, 2026 ─┐
-│ 12 / 50 tickets                                     │
-│ [████████░░░░░░░░░░░░░░░░░░░░░░░░]                  │
-│                                                     │
-│ Tickets                          [Sort: By source ▾]│
-│ ─────────────────────────────────────────────────── │
-│ ⚔ PUZZLE · 8                                        │
-│   # WG-A1B2C3-01                          Apr 18    │
-│   ...                                               │
-│ 📖 MISSION · 4                                      │
-│   ...                                               │
-└─────────────────────────────────────────────────────┘
+Swap the outer wrapper from:
 ```
+rounded-2xl bg-surface-1 border border-border p-5 shadow-card
++ inner top gradient strip (from-primary/10)
+```
+to the Winners-style treatment:
+```
+rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent
+border border-primary/20 p-5 shadow-card
+```
+- Remove the inner `absolute ... bg-gradient-to-b` overlay strip — the full-card gradient replaces it.
+- Keep all content as-is: eyebrow "Weekly Draw", countdown, ticket progress bar, footer link. Layout stays left-aligned (it's a dashboard card, not a poster), only the surface treatment changes.
+- Progress bar track changes from `bg-surface-2` to `bg-background/40` so it reads against the lighter gradient.
+
+**`src/routes/_authed/winners.tsx` → Hero card**
+
+Swap the outer wrapper from:
+```
+rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent
+border border-primary/20 p-5 text-center space-y-2
+```
+to the Home-style treatment:
+```
+relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-2
++ inner top gradient strip: absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent
+```
+- Keep Award icon, headline, subhead, and "Play Now" pill CTA centered.
+- Wrap text content with `relative` so it sits above the gradient strip.
 
 ### Out of scope
 
-- Filtering by source (e.g. "show only Puzzle"). Sort/group is enough for now; can add chips later if needed.
-- Persisting the choice across sessions.
-- Changing the past-week `Collapsible` mechanism.
-- Server-side changes — `getPlayerEntries` already returns everything needed.
+- Content / copy changes.
+- Other cards (mission rows, banner stack, draw week cards, streak strip).
+- Spacing, typography, icon choices.
 
-### File touched
+### Files touched
 
-- `src/routes/_authed/entries.tsx` — add state + `Select` to `TicketGroupedList`, add a flat-list branch alongside the existing grouped branch.
+- `src/routes/_authed/index.tsx` — `DrawHeroCard` wrapper only.
+- `src/routes/_authed/winners.tsx` — hero card wrapper only.
 
