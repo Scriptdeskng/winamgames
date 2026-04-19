@@ -200,14 +200,13 @@ export const useHint = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       playerId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(20),
+      puzzleId: z.string().min(1).max(30),
       tier: z.number().min(1).max(3),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     const costs = { 1: 25, 2: 75, 3: 150 } as const;
     const cost = costs[data.tier as 1 | 2 | 3];
@@ -241,12 +240,17 @@ export const useHint = createServerFn({ method: "POST" })
         if (data.tier >= 3) hintData.move = puzzle.solutionMove;
       }
     } else {
-      const puzzle = WISDOMDROP_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_wisdom_puzzles")
+        .select("options, correct_index")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
-        const correctAnswer = puzzle.options[puzzle.correctIndex];
+        const opts = (puzzle.options as string[]) ?? [];
+        const correctAnswer = opts[puzzle.correct_index];
         if (data.tier >= 1) {
           // Remove 2 wrong options
-          const wrong = puzzle.options.filter((_, i) => i !== puzzle.correctIndex);
+          const wrong = opts.filter((_, i) => i !== puzzle.correct_index);
           hintData.eliminate = wrong.slice(0, 2).join(",");
         }
         if (data.tier >= 2) hintData.startsWidth = correctAnswer[0];
