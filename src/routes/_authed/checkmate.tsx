@@ -7,7 +7,7 @@ import { HintButton } from "@/components/games/HintButton";
 import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { Swords, Check, X, ArrowLeft } from "lucide-react";
+import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins } from "lucide-react";
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
