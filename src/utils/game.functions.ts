@@ -438,6 +438,7 @@ export const closeSession = createServerFn({ method: "POST" })
       puzzlesSolved: z.number().min(0).max(100),
       hintsUsed: z.number().min(0).max(100),
       durationSeconds: z.number().min(0).max(7200),
+      servedPuzzleIds: z.array(z.string().min(1).max(30)).max(20).optional(),
     })
   )
   .handler(async ({ data }) => {
