@@ -1,62 +1,43 @@
 
 
-## Add explanation to WisdomDrop reveal panel
+## Region as a colored pill at the top
 
-Surface the puzzle's `explanation` text inside the inline reveal that appears after a player answers, so players learn the wisdom behind the proverb (not just the missing word).
+Currently the region (e.g. "Hausa") sits as plain muted text above the proverb, and is repeated below as "— Hausa" attribution under the original proverb in the reveal panel.
 
-### Changes
+### Change
 
-**1. `src/utils/game.functions.ts` — `submitMove` handler**
+In `src/routes/_authed/wisdomdrop.tsx`, replace the plain region label at the top of the puzzle card with an emerald-tinted pill, matching the app's existing chip style (see the landing screen's stat chips and the hint chip for visual precedent).
 
-In the wisdomdrop branch, extend the puzzle select and the returned `revealData`:
-
-```ts
-.select("options, correct_index, blank, original_proverb, region, explanation")
-```
-
-```ts
-revealData: {
-  correctAnswer: options[correct_index],
-  blank,
-  originalProverb: original_proverb,
-  region,
-  explanation,
-}
-```
-
-The `explanation` column already exists on the puzzles table — no schema change.
-
-**2. `src/components/games/useGameSession.ts` — `RevealData` type**
-
-Add `explanation: string | null` to the local `RevealData` interface so the new field flows through `state.lastReveal`. The existing setState calls already spread `result.revealData` wholesale, so no setter logic changes are needed beyond the type.
-
-**3. `src/routes/_authed/wisdomdrop.tsx` — reveal panel**
-
-Inside the existing `<AnimatePresence>` reveal block (under the proverb + region line), conditionally render the explanation as a third element:
-
+**Before** (line ~149):
 ```tsx
-{session.lastReveal.explanation && (
-  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 pt-1">
-    {session.lastReveal.explanation}
-  </p>
-)}
+<p className="text-xs text-muted-foreground mb-3">{puzzle.region}</p>
 ```
 
-- Muted, smaller than the proverb so it reads as secondary context.
-- `line-clamp-3` caps height to keep the panel compact.
-- `pt-1` separates it from the region attribution above.
+**After**:
+```tsx
+<div className="mb-4">
+  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald">
+    <Globe className="h-3 w-3" />
+    {puzzle.region}
+  </span>
+</div>
+```
 
-Only added to wisdomdrop — checkmate has no `explanation` field and is unaffected.
+- Reuses the `Globe` icon already imported from lucide for region context (consistent with the landing screen's "9 regions" chip).
+- Uses the emerald token (`bg-emerald/10`, `border-emerald/20`, `text-emerald`) — the WisdomDrop signature color, distinct from the coin/amber hint chip below it.
+- Uppercase tracking gives it an eyebrow/tag feel so it reads as metadata rather than competing with the proverb.
+
+### Reveal panel (no change)
+
+The "— Hausa" attribution under the original proverb in the reveal stays — it's contextual ("this is the original Hausa version of what you just answered") and reads naturally there.
 
 ### Out of scope
 
-- DB schema, migrations, or new columns.
-- Checkmate reveal panel.
-- Animations beyond the existing AnimatePresence open/close.
+- Region color mapping per region (all regions use emerald for now — can be added later if useful).
+- Checkmate or any other screen.
+- Landing screen chips.
 
-### Files touched
+### File touched
 
-- `src/utils/game.functions.ts`
-- `src/components/games/useGameSession.ts`
-- `src/routes/_authed/wisdomdrop.tsx`
+- `src/routes/_authed/wisdomdrop.tsx` (one block, ~lines 147–151)
 
