@@ -181,7 +181,7 @@ function ProfilePage() {
             </AccordionTrigger>
             <AccordionContent className="pb-5 pt-1">
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Tickets are your entries</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; they reset every Monday.
+                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Tickets are your entries</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; once the draw runs, your ticket count resets and a new week begins.
               </p>
               <ol className="space-y-3.5">
                 {[
