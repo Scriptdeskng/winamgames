@@ -124,6 +124,7 @@ function ResultsPage() {
                 <p className="text-4xl font-bold tabular-nums text-primary">
                   +{entries} {entries === 1 ? "ticket" : "tickets"}
                 </p>
+                <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
                 {breakdownParts.length > 0 && (
                   <p className="mt-2 text-sm text-muted-foreground">
                     {breakdownParts.join("  ·  ")}
@@ -132,9 +133,9 @@ function ResultsPage() {
               </>
             ) : (
               <>
-                <p className="text-xl font-semibold">No tickets this session</p>
+                <p className="text-xl font-semibold">No tickets earned this session</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Solve 5 puzzles in a session to earn your first ticket
+                  Every 5 puzzles solved earns 1 ticket toward the weekly draw
                 </p>
               </>
             )}
@@ -146,9 +147,9 @@ function ResultsPage() {
           {/* Weekly progress */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Tickets this week</span>
+              <span className="text-sm text-muted-foreground">Tickets toward this week's draw</span>
               <span className="text-sm font-semibold tabular-nums">
-                {weekTotal} / {weekCap}
+                {weekTotal} of {weekCap}
               </span>
             </div>
             <Progress value={weekPct} />
