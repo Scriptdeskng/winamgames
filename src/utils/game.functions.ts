@@ -12,7 +12,6 @@ export const startSession = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
-    const { WISDOMDROP_PUZZLES } = await import("@/data/wisdomdrop-puzzles");
 
     // Get current open draw week
     const { data: drawWeek, error: dwErr } = await supabaseAdmin
