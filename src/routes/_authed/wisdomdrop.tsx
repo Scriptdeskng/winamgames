@@ -61,7 +61,7 @@ function WisdomDropPage() {
             WisdomDrop
           </h1>
           <p className="mt-3 text-sm italic text-muted-foreground text-center max-w-[280px] leading-relaxed">
-            Where ancient wisdom meets modern play.
+            Finish the proverb. Inherit the wisdom.
           </p>
 
           {/* Stat chips */}
