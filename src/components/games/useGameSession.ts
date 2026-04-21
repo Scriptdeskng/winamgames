@@ -38,6 +38,7 @@ interface GameSessionState {
   gameOver: boolean;
   lastReveal: RevealData | null;
   awaitingAdvance: boolean;
+  selectedAnswer: string | null;
 }
 
 const INITIAL_STATE: GameSessionState = {
