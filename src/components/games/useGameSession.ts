@@ -61,6 +61,7 @@ const INITIAL_STATE: GameSessionState = {
   gameOver: false,
   lastReveal: null,
   awaitingAdvance: false,
+  selectedAnswer: null,
 };
 
 // Auto-advance windows tuned per game type.
@@ -188,6 +189,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       feedback: null,
       lastReveal: null,
       awaitingAdvance: false,
+      selectedAnswer: null,
       currentPuzzleIndex: pending.nextIdx,
       currentPuzzle: pending.nextPuzzle ?? s.currentPuzzle,
       currentHintTier: 0,
@@ -204,7 +206,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
     const nextIdx = state.currentPuzzleIndex + 1;
     const nextPuzzleId = nextIdx < state.puzzleIds.length ? state.puzzleIds[nextIdx] : undefined;
 
-    setState((s) => ({ ...s, loading: true, feedback: null, lastReveal: null }));
+    setState((s) => ({ ...s, loading: true, feedback: null, lastReveal: null, selectedAnswer: answer }));
 
     try {
       const result = await submitMove({
@@ -217,6 +219,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
         },
       }) as {
         correct: boolean;
+        submittedAnswer?: string;
         nextPuzzle: Record<string, string | string[]> | null;
         revealData: RevealData | null;
       };
@@ -247,6 +250,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
         running: !isGameOver,
         lastReveal: result.revealData,
         awaitingAdvance: true,
+        selectedAnswer: result.submittedAnswer ?? answer,
       }));
 
       // Only correct answers auto-advance. Wrong answers wait for player tap
