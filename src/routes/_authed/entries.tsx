@@ -1,20 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { ChevronDown, Ticket, Swords, BookOpen, Flame, Hash } from "lucide-react";
+import { ChevronDown, Ticket, Swords, BookOpen, Flame } from "lucide-react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getSession } from "@/lib/session";
 import { getPlayerEntries, type PlayerEntryWeek, type TicketSource } from "@/utils/entries.functions";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import React from "react";
-
-type SortMode = "by-source" | "recent" | "oldest";
 
 export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
@@ -27,7 +18,6 @@ export const Route = createFileRoute("/_authed/entries")({
 });
 
 function formatWeekRange(startWat: string, endWat: string): string {
-  // Inputs are YYYY-MM-DD WAT dates
   const start = new Date(`${startWat}T00:00:00`);
   const end = new Date(`${endWat}T00:00:00`);
   const fmt = (d: Date) =>
@@ -96,7 +86,10 @@ function EntriesPage() {
 }
 
 function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap: number }) {
+  const [open, setOpen] = React.useState(false);
   const pct = Math.min(100, (week.totalTickets / weekCap) * 100);
+  const hasTickets = week.tickets.length > 0;
+
   return (
     <div className="rounded-2xl bg-surface-1 border border-border p-4 space-y-4 shadow-card">
       <div className="flex items-baseline justify-between">
@@ -116,15 +109,29 @@ function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap:
         </div>
       </div>
 
-      {week.tickets.length === 0 ? (
+      {hasTickets ? (
+        <Collapsible open={open} onOpenChange={setOpen}>
+          <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg bg-surface-2/60 px-3 py-2 hover:bg-surface-2 transition-colors">
+            <span className="text-xs font-medium text-foreground">
+              View tickets <span className="text-muted-foreground tabular-nums">· {week.totalTickets}</span>
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-3">
+              <FlatTicketList tickets={week.tickets} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : (
         <div className="rounded-xl border border-dashed border-border/60 px-3 py-4 text-center">
           <Ticket className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
           <p className="text-xs text-muted-foreground">
             No tickets yet — play a game to earn your first one.
           </p>
         </div>
-      ) : (
-        <TicketGroupedList tickets={week.tickets} />
       )}
     </div>
   );
@@ -164,7 +171,7 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
             {week.tickets.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">No tickets earned this week.</p>
             ) : (
-              <TicketGroupedList tickets={week.tickets} />
+              <FlatTicketList tickets={week.tickets} />
             )}
           </div>
         </CollapsibleContent>
@@ -173,119 +180,37 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
   );
 }
 
-function TicketGroupedList({ tickets }: { tickets: { ticketId: string; source: TicketSource; earnedAt: string }[] }) {
-  const [sort, setSort] = React.useState<SortMode>("by-source");
-  const showSort = tickets.length > 3;
-
-  const sortedFlat = React.useMemo(() => {
-    const arr = [...tickets];
-    arr.sort((a, b) => {
-      const cmp = new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime();
-      return sort === "oldest" ? -cmp : cmp;
-    });
-    return arr;
-  }, [tickets, sort]);
-
-  // Group by source so the list reads as: Puzzle (n) > id, id, id; Mission (n) > ...
-  const groups = new Map<TicketSource, typeof tickets>();
-  for (const t of tickets) {
-    const arr = groups.get(t.source) ?? [];
-    arr.push(t);
-    groups.set(t.source, arr);
-  }
-  const order: TicketSource[] = ["game_session", "mission", "streak_bonus"];
-
+function FlatTicketList({ tickets }: { tickets: { ticketId: string; source: TicketSource; earnedAt: string }[] }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-          Tickets
-        </p>
-        {showSort && (
-          <Select value={sort} onValueChange={(v) => setSort(v as SortMode)}>
-            <SelectTrigger className="h-7 w-auto gap-1.5 border-border/60 bg-surface-2/60 px-2 text-[11px] shadow-none">
-              <span className="text-muted-foreground">Sort:</span>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="end" className="text-[11px]">
-              <SelectItem value="by-source" className="text-[11px]">By source</SelectItem>
-              <SelectItem value="recent" className="text-[11px]">Newest first</SelectItem>
-              <SelectItem value="oldest" className="text-[11px]">Oldest first</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {sort === "by-source" ? (
-        order
-          .filter((s) => groups.has(s))
-          .map((source) => {
-            const items = groups.get(source)!;
-            const meta = SOURCE_META[source];
-            const Icon = meta.Icon;
-            return (
-              <div key={source} className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Icon className={`h-3 w-3 ${meta.color}`} />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-                    {meta.label}
-                  </p>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">
-                    · {items.length}
-                  </span>
-                </div>
-                <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
-                  {items.map((t) => (
-                    <div
-                      key={t.ticketId}
-                      className="flex items-center justify-between px-3 py-2"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <Hash className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs font-mono tabular-nums text-foreground">
-                          {t.ticketId}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground tabular-nums">
-                        {new Date(t.earnedAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })
-      ) : (
-        <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
-          {sortedFlat.map((t) => {
-            const meta = SOURCE_META[t.source];
-            const Icon = meta.Icon;
-            return (
-              <div
-                key={t.ticketId}
-                className="flex items-center justify-between px-3 py-2"
+    <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
+      {tickets.map((t) => {
+        const meta = SOURCE_META[t.source];
+        const Icon = meta.Icon;
+        return (
+          <div
+            key={t.ticketId}
+            className="flex items-center justify-between px-3 py-2 gap-2"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.color}`} />
+              <span className="text-xs font-mono tabular-nums text-foreground truncate">
+                {t.ticketId}
+              </span>
+              <span
+                className={`shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium ${meta.color}`}
               >
-                <div className="flex items-center gap-1.5">
-                  <Icon className={`h-3 w-3 ${meta.color}`} />
-                  <Hash className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs font-mono tabular-nums text-foreground">
-                    {t.ticketId}
-                  </span>
-                </div>
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {new Date(t.earnedAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                {meta.label}
+              </span>
+            </div>
+            <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
+              {new Date(t.earnedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
