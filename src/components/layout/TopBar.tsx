@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { MenuSheet } from "./MenuSheet";
 import { getSession } from "@/lib/session";
+import logo from "@/assets/winam-logo.png";
 
 interface TopBarProps {
   backTo?: string;
@@ -33,9 +34,13 @@ export function TopBar({ backTo, title }: TopBarProps) {
         </Link>
       )}
 
-      <span className="text-base font-bold text-foreground truncate max-w-[200px]">
-        {isSubPage ? (title ?? "") : "WinamGames"}
-      </span>
+      {isSubPage ? (
+        <span className="text-base font-bold text-foreground truncate max-w-[200px]">
+          {title ?? ""}
+        </span>
+      ) : (
+        <img src={logo} alt="WinAm" className="h-7 w-auto" />
+      )}
 
       {isSubPage ? <div className="h-10 w-10" aria-hidden /> : <MenuSheet />}
     </div>

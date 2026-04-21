@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { setNickname } from "@/utils/auth.functions";
 import { getSession, updateSessionNickname } from "@/lib/session";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import logo from "@/assets/winam-logo.png";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -56,8 +57,8 @@ function OnboardingPage() {
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
-        <Link to="/" className="text-lg font-bold text-gradient-emerald">
-          WinamGames
+        <Link to="/" aria-label="WinAm home">
+          <img src={logo} alt="WinAm" className="h-8 w-auto" />
         </Link>
       </div>
 

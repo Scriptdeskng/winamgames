@@ -5,6 +5,7 @@ import { sendOtp, verifyOtp } from "@/utils/auth.functions";
 import { setSession } from "@/lib/session";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import logo from "@/assets/winam-logo.png";
 
 export const Route = createFileRoute("/verify")({
   component: VerifyPage,
@@ -78,8 +79,8 @@ function VerifyPage() {
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
-        <Link to="/" className="text-lg font-bold text-gradient-emerald">
-          WinamGames
+        <Link to="/" aria-label="WinAm home">
+          <img src={logo} alt="WinAm" className="h-8 w-auto" />
         </Link>
       </div>
 
