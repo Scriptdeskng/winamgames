@@ -129,6 +129,8 @@ function WisdomDropPage() {
 
   const isCorrect = session.feedback === "correct";
   const correctAnswer = session.lastReveal?.blank;
+  const selectedAnswer = session.selectedAnswer;
+  const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
@@ -171,9 +173,12 @@ function WisdomDropPage() {
             <div className="px-4 pb-4 grid grid-cols-1 gap-3">
               {puzzle.options.map((option, i) => {
                 const isEliminated = eliminatedOptions.includes(option);
-                const isCorrectChoice = session.feedback && option === correctAnswer;
-                const isWrongChoice = session.feedback === "incorrect" && option !== correctAnswer;
+                const isThisCorrect = !!correctAnswer && normalize(option) === normalize(correctAnswer);
+                const isThisSelected = !!selectedAnswer && normalize(option) === normalize(selectedAnswer);
                 const showState = !!session.feedback;
+                const isChecking = session.loading && isThisSelected && !showState;
+                const isWrongSelected = showState && isThisSelected && !isThisCorrect;
+                const isOtherWrong = showState && !isThisSelected && !isThisCorrect;
 
                 return (
                   <button
@@ -181,13 +186,17 @@ function WisdomDropPage() {
                     onClick={() => session.submit(option)}
                     disabled={session.loading || session.gameOver || isEliminated || showState}
                     className={cn(
-                      "h-14 rounded-xl text-sm font-semibold transition-all border min-h-[44px]",
-                      showState && isCorrectChoice && "bg-success/15 border-success/40 text-success",
-                      showState && isWrongChoice && "bg-surface-1/40 border-border/40 text-muted-foreground/50",
-                      !showState && isEliminated && "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed",
-                      !showState && !isEliminated && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
+                      "h-14 rounded-xl text-sm font-semibold transition-all border min-h-[44px] inline-flex items-center justify-center gap-2",
+                      showState && isThisCorrect && "bg-success/15 border-success/40 text-success",
+                      isWrongSelected && "bg-live/15 border-live/40 text-live",
+                      isOtherWrong && "bg-surface-1/40 border-border/40 text-muted-foreground/50",
+                      isChecking && "bg-surface-1 border-primary/60 text-foreground shadow-glow",
+                      !showState && !isChecking && isEliminated && "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed",
+                      !showState && !isChecking && !isEliminated && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
                     )}
                   >
+                    {showState && isThisCorrect && <Check className="h-4 w-4" />}
+                    {isWrongSelected && <X className="h-4 w-4" />}
                     {option}
                   </button>
                 );
@@ -224,7 +233,15 @@ function WisdomDropPage() {
                       )}
                       {!isCorrect && session.lastReveal && (
                         <span className="ml-1 text-muted-foreground font-normal">
-                          — answer: <span className="text-foreground font-semibold">{session.lastReveal.blank}</span>
+                          {selectedAnswer && (
+                            <>
+                              — you chose:{" "}
+                              <span className="text-foreground font-semibold">{selectedAnswer}</span>
+                              {" · "}
+                            </>
+                          )}
+                          {!selectedAnswer && "— "}
+                          answer: <span className="text-foreground font-semibold">{session.lastReveal.blank}</span>
                         </span>
                       )}
                     </div>
