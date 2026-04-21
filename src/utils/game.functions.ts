@@ -318,6 +318,10 @@ export const submitMove = createServerFn({ method: "POST" })
       explanation: string | null;
     } | null = null;
 
+    // Normalize for tolerant text comparison (WisdomDrop only — checkmate
+    // moves are exact algebraic notation and must stay strict).
+    const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+
     if (isCheckmate) {
       const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
       if (puzzle) {
@@ -332,7 +336,7 @@ export const submitMove = createServerFn({ method: "POST" })
       if (puzzle) {
         const opts = (puzzle.options as string[]) ?? [];
         const correctAnswer = opts[puzzle.correct_index];
-        isCorrect = data.answer === correctAnswer;
+        isCorrect = normalize(data.answer) === normalize(correctAnswer ?? "");
         revealData = {
           correctAnswer,
           blank: puzzle.blank,
@@ -387,6 +391,7 @@ export const submitMove = createServerFn({ method: "POST" })
 
     return {
       correct: isCorrect,
+      submittedAnswer: data.answer,
       nextPuzzle,
       revealData,
     };
