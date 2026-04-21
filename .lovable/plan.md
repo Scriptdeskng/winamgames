@@ -1,38 +1,63 @@
 
 
-## Replace text wordmark with WinAm logo
+## Simplify ticket lists: collapsible per week, source-labeled lines
 
-The brand currently appears as a text wordmark ("WinamGames" with `text-gradient-emerald`) in 5 spots. Swap those for the uploaded WinAm logo so the brand is consistent and on-brand.
+Make every week — current and past — render as a collapsible card. Drop the sort selector. Each ticket line gets a small source pill (Puzzle / Mission / Streak) so you can read what earned it without grouping.
 
-### Asset
+### Changes (single file: `src/routes/_authed/entries.tsx`)
 
-Add the uploaded image to the project as a bundled asset:
-- `src/assets/winam-logo.png` — imported via ES module so Vite can hash and optimize it.
-- Also copy to `public/winam-logo.png` for use in `og:image` / social previews and as the favicon source.
+**1. Current week card → collapsible**
+- Keep the "This Week" header, week range, big ticket count, and progress bar visible at all times (this is the at-a-glance summary).
+- Add a collapsible section *below* the progress bar with a trigger like `View tickets · {n}` and a chevron that rotates on open. Default state: closed.
+- When opened, render the same flat ticket list described below. Empty state ("No tickets yet — play a game to earn your first one.") stays visible without a dropdown when `tickets.length === 0`.
 
-### Component changes
+**2. Past week cards**
+- No structural change — they're already collapsible. Just render the new flat ticket list inside.
 
-**1. `src/components/layout/TopBar.tsx` — home header**
-- Replace the centered text `"WinamGames"` with `<img src={logo} alt="WinAm" className="h-7 w-auto" />`.
-- Sub-page state still shows the page `title` text (unchanged).
+**3. Flat ticket list (replaces `TicketGroupedList`)**
+- Remove `SortMode`, the `Select` import, the `useMemo` sort, and the by-source grouping branch.
+- Render tickets in chronological order (most recent first — the order `getPlayerEntries` already returns).
+- Each row shows:
+  ```
+  [SourceIcon] WG-XXXXXX-01   [Puzzle pill]              Apr 18
+  ```
+  - Source icon + ticket ID on the left (mono, tabular).
+  - A small source pill next to it: rounded full, `bg-surface-2`, `text-[10px]`, label from `SOURCE_META` ("Puzzle" / "Mission" / "Streak"), icon-tinted text color.
+  - Earned-date on the right.
 
-**2. `src/routes/login.tsx`, `src/routes/verify.tsx`, `src/routes/onboarding.tsx`, `src/routes/renew.tsx` — top-left brand link**
-- Replace the `<Link>` containing `"WinamGames"` text with the same `<img>` wordmark, sized `h-8 w-auto`. Keep it inside the link (so tapping returns to `/`).
+**4. Cleanup**
+- Drop unused imports (`Select*`, `useMemo` if any).
+- `SOURCE_META` stays — used for icon + label + color on each row.
 
-**3. Favicon / social image**
-- Update `src/routes/__root.tsx`:
-  - Add `{ rel: "icon", href: "/winam-logo.png" }` to a `links: []` head entry (TanStack Start supports `head: () => ({ meta, links })`).
-  - Replace the current `og:image` and `twitter:image` URLs (currently a Lovable preview screenshot) with `https://winamgames.lovable.app/winam-logo.png` so social cards show the logo.
-  - Bump `twitter:card` from `summary` to `summary_large_image` so the logo gets a bigger preview tile.
+### Visual sketch
+
+```text
+┌────────────────────────────────────────┐
+│ THIS WEEK            Apr 14 – Apr 20   │
+│                                        │
+│ 7 / 50 tickets                         │
+│ ████████░░░░░░░░░░░░░░░░░░             │
+│                                        │
+│ ▸ View tickets · 7                     │  ← new collapsible trigger
+└────────────────────────────────────────┘
+
+(opened)
+┌────────────────────────────────────────┐
+│ ⚔ WG-A1B2C3-01  [Puzzle]      Apr 18  │
+│ 📖 WG-D4E5F6-01 [Mission]     Apr 17  │
+│ 🔥 WG-G7H8I9-01 [Streak]      Apr 16  │
+│ …                                      │
+└────────────────────────────────────────┘
+```
 
 ### Out of scope
 
-- Resizing/reworking the logo art itself (it's already a transparent PNG — fine on the dark background).
-- Replacing decorative `text-gradient-emerald` headings inside game pages (e.g. WisdomDrop's "WisdomDrop" h1, the 404 hero) — those are page titles, not the brand wordmark.
-- New splash/loading screens.
+- Server-side changes — `getPlayerEntries` already returns everything needed.
+- Filtering by source.
+- Persisting open/closed state across navigations.
+- Auto-opening the current week on first load (kept closed for consistency with past weeks).
 
-### Files touched
+### File touched
 
-- New: `src/assets/winam-logo.png`, `public/winam-logo.png` (copied from upload)
-- Edited: `src/components/layout/TopBar.tsx`, `src/routes/login.tsx`, `src/routes/verify.tsx`, `src/routes/onboarding.tsx`, `src/routes/renew.tsx`, `src/routes/__root.tsx`
+- `src/routes/_authed/entries.tsx`
 
