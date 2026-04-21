@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getSession } from "@/lib/session";
 import { renewSubscription } from "@/utils/auth.functions";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import logo from "@/assets/winam-logo.png";
 
 export const Route = createFileRoute("/renew")({
   component: RenewPage,
@@ -49,8 +50,8 @@ function RenewPage() {
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
       <div className="px-5 pt-5">
-        <Link to="/" className="text-lg font-bold text-gradient-emerald">
-          WinamGames
+        <Link to="/" aria-label="WinAm home">
+          <img src={logo} alt="WinAm" className="h-8 w-auto" />
         </Link>
       </div>
 
