@@ -1,93 +1,87 @@
 
 
-## Gate streak, missions, and ledger writes behind real performance
+## Leaderboard — audit + redesign
 
-Fix `closeSession` in `src/utils/game.functions.ts` so a player who solves fewer than 5 puzzles cannot earn streak bonuses, advance their daily streak, complete missions, or receive any entries.
+### Audit of current page
 
-### The change
+**Keep:**
+- Top bar with back button — consistent with other sub-pages.
+- Tab-style filter (Today / All Time) — concept is good but visuals need a refresh.
+- Per-row "rank, avatar, name, entries" structure — correct information density for mobile (390px).
 
-In `closeSession`, immediately after `baseEntries = Math.floor(puzzles_solved / 5)` is computed, branch on whether `baseEntries === 0`.
+**Drop / fix:**
+1. **Mock data** — the page uses a hardcoded `mockLeaderboard` array. The real `getLeaderboard` server function already exists in `src/utils/mission.functions.ts` and returns `{ id, name, entries, rankTier }` for the open draw week. Wire it up.
+2. **"Today" / "All Time" tabs** — neither is actually backed by data. The backend only exposes the current open draw week. Replace with a single, honest header: **"This Week"** + the WAT date range (matches `entries.tsx` and `winners.tsx` conventions).
+3. **`TrendIcon` (up/down/same)** — purely fictional, no data source. Drop.
+4. **`Trophy` import** — imported but unused. Drop.
+5. **Avatar showing only the first letter on a flat circle** — flavorless. Replace with the player's `RankBadge` icon (Sprout/Swords/Trophy/Crown by tier) using the existing `RANK_CONFIG` colors. Reuses the design system already shipped on `/profile`.
+6. **All ranks rendered identically** — top 3 deserve elevation. Add a podium treatment (gold/silver/bronze) for ranks 1–3.
+7. **No "you" indicator** — players can't find themselves. Highlight the current player's row and pin it to the bottom if they're outside the top 10.
+8. **No loading or empty state** — fetch fails silently today. Add a spinner during fetch and a friendly empty state ("Be the first to earn a ticket this week").
+9. **Entries shown without context** — number floats with no unit. Suffix with a small "tickets" label, and add a top "prize pool" hero strip pointing to `/winners` for context (consistent with the `/winners` "Real people. Real wins." card pattern).
 
-**Zero-performance branch (`baseEntries === 0`)**
-
-1. Compute `wisdomAccuracy` from `winam_puzzle_attempts` (audit signal).
-2. UPDATE `winam_game_sessions` with `entries_awarded: 0`, `coins_awarded: 0`, plus the submitted `puzzles_solved`, `hints_used`, `duration_seconds`, and `wisdom_accuracy`.
-3. INSERT `winam_puzzle_history` rows for wisdomdrop (so served puzzles aren't re-served — anti-fraud, not a reward).
-4. Do NOT write to `winam_entry_ledger`.
-5. Do NOT update `winam_players` at all — no XP, no coins, no streak, no `last_session_date`, no rank tier.
-6. Do NOT call `evaluatePendingMissions`.
-7. Return early with the same response shape as the success path, all reward fields zeroed and identity fields preserved from the existing player row:
-
-   ```
-   {
-     success: true,
-     entries: 0, sessionEntries: 0, baseEntries: 0,
-     streakBonus: 0, missionEntries: 0,
-     coins: 0, xp: 0,
-     streak: player.current_streak,
-     weekTotal: weekSoFar, weekCap,
-     overflow: 0,
-     rankTier: player.rank_tier,
-     previousRank: player.rank_tier,
-     completedMissions: [],
-   }
-   ```
-
-   `weekSoFar` is read from the ledger before the gate (existing query stays where it is — it's cheap and used by both branches).
-
-**Performance branch (`baseEntries >= 1`) — unchanged**
-
-Streak bonus, ledger insert, player update (XP/coins/streak/last_session_date/rank), and `evaluatePendingMissions` all run exactly as today. No threshold changes (3/7/14 → +1/+2/+3). No formula changes.
-
-### Handler ordering
+### New page structure (top to bottom)
 
 ```text
-1. Load player + session
-2. Compute baseEntries
-3. Read weekSoFar from ledger (both branches)
-4. Compute wisdomAccuracy (both branches)
-5. if baseEntries === 0:
-     UPDATE winam_game_sessions with zeros
-     INSERT winam_puzzle_history (wisdomdrop only)
-     return zeroed result
-6. else:
-     streakBonus, rawEntries, entriesToAdd, overflow
-     XP, coins
-     UPDATE winam_game_sessions
-     INSERT winam_entry_ledger (if entriesToAdd > 0)
-     UPDATE winam_players (streak, last_session_date, XP, coins, rank)
-     INSERT winam_puzzle_history (wisdomdrop only)
-     evaluatePendingMissions
-     return full result
+TopBar — back to /app, title "Leaderboard"
+
+Hero strip (compact)
+  ┌───────────────────────────────────────────┐
+  │ 🏆  This Week                             │
+  │     Apr 13 – 19 · ends Sun 8pm WAT        │
+  │     Top players competing for cash prizes │
+  └───────────────────────────────────────────┘
+
+Podium (top 3, when ≥3 players exist)
+  ┌─────────┬─────────┬─────────┐
+  │   2nd   │   1st   │   3rd   │
+  │ silver  │  gold   │ bronze  │   raised middle, larger 1st avatar
+  │ avatar  │ avatar  │ avatar  │
+  │ name    │ name    │ name    │
+  │ 42 🎟   │ 48 🎟   │ 38 🎟   │
+  └─────────┴─────────┴─────────┘
+
+Ranks 4–10
+  rounded list — rank · rank-tier icon · name · entries
+  current player row highlighted with primary border + subtle glow
+
+Your row (sticky, only if player not in visible list)
+  ┌───────────────────────────────────────────┐
+  │ #23  [tier]  You · CaptArice          5  │
+  └───────────────────────────────────────────┘
+
+Footer link → "How tickets work" → /entries
 ```
 
-### Why this shape
+### Visual design (matches Refined Arena tokens)
 
-- Single early return keeps the success path readable.
-- Same response shape on both branches → `useGameSession.endSession` and `/results` need zero changes (results page already tolerates zero values).
-- Session row + puzzle history still written on zero → audit trail intact, exploit closed.
-- Skipping the entire `winam_players` update is the cleanest guarantee that streak / XP / coins / rank don't move.
+- **Cards**: `rounded-2xl bg-surface-1 border border-border shadow-card` (matches `entries.tsx`/`winners.tsx`).
+- **Podium 1st**: `bg-coin/10` with `ring-1 ring-coin/30` and `shadow-glow`-equivalent gold tint; crown icon overlay.
+- **Podium 2nd**: neutral silver tint `oklch(0.75 0.01 250)/15`.
+- **Podium 3rd**: bronze `oklch(0.55 0.05 55)/15` — same palette already used in `winners.tsx` `POSITION_STYLES`.
+- **Rank tier icon** per row: pull `RANK_CONFIG[rankTier].icon` + `color` + `bgColor` from `src/components/profile/RankBadge.tsx` so a Champion's row visibly differs from a Starter's.
+- **Current player row**: `border-primary/40 bg-primary/5` plus a tiny "YOU" pill on the right.
+- **Numbers**: `tabular-nums` with a small `Ticket` icon next to the count.
+- **Animations**: `RevealOnScroll` is overkill here; use a simple fade-in on the list (existing `tw-animate-css` `animate-in fade-in-0`).
+
+### Data wiring
+
+- Call `getLeaderboard({ data: { limit: 10 } })` on mount (same pattern as `entries.tsx` — `useEffect` + `useState`, no TanStack Query — staying consistent with neighbouring routes).
+- Pull current player's `playerId` and `nickname` from `getSession()` to highlight the "you" row.
+- If the current player is not in the returned top 10, fire a second small query — extend `getLeaderboard` to optionally return the requesting player's rank/entries when `playerId` is supplied (computed server-side from `winam_entry_ledger` for the open week). This keeps the "your position" feature accurate without overfetching.
+- Pass the open `winam_draw_weeks.week_start_wat` / `week_end_wat` back from `getLeaderboard` so the hero strip can show the correct range. (Currently the function only returns `{ players: [] }`.)
+- Empty state: when `players.length === 0`, render the empty card with a "Play now" CTA linking to `/app`.
+- Loading state: same spinner pattern as `entries.tsx` (centered emerald ring).
 
 ### Files touched
 
-- `src/utils/game.functions.ts` — `closeSession` only.
+- `src/routes/_authed/leaderboard.tsx` — rewrite using real data, podium, rank-tier icons, current-player highlight, loading/empty states.
+- `src/utils/mission.functions.ts` — extend `getLeaderboard` to (a) accept optional `playerId`, (b) return `weekStartWat` / `weekEndWat`, (c) return `currentPlayer: { rank, entries } | null` when `playerId` is provided and they're outside the top N.
 
 ### Out of scope
 
-- No DB schema or migration changes.
-- No changes to `evaluatePendingMissions` (`src/utils/mission.server.ts`).
-- No UI changes (`results.tsx`, `useGameSession.ts` untouched).
-- Streak thresholds unchanged.
-- `startSession`, `submitMove`, `useHint` untouched.
-
-### Verification (after implementation, before closing)
-
-Manually walk all four scenarios and report results in the follow-up message:
-
-1. Start session → immediately exit. Confirm: no `winam_entry_ledger` row, `winam_players.current_streak` and `last_session_date` unchanged, no `winam_player_missions` progress change, `winam_game_sessions` row exists with `entries_awarded=0`, `coins_awarded=0`.
-2. Solve 4 puzzles → exit. Same expectations as #1 (4 < 5 → baseEntries still 0).
-3. Solve 5 puzzles → exit. baseEntries=1, streak bonus + mission eval run, ledger row written, `current_streak` incremented (or held if same WAT day).
-4. Solve 10 puzzles → exit. baseEntries=2, full reward path, entry count matches `2 + streakBonus + missionEntries` capped at 50/week.
-
-Task is not marked complete until all four are confirmed.
+- No DB schema changes.
+- No changes to `/winners`, `/entries`, `/profile`, or any game route.
+- No new `Today / All Time` filter — backend has no historical leaderboard data to support it; revisit when past-weeks aggregation is added.
+- No realtime subscription — leaderboard updates on page load only (matches the rest of the app).
 
