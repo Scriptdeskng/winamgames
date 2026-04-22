@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { getLeaderboard, getDailyLeaderboard } from "@/utils/mission.functions";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getNextEntriesLockWAT } from "@/lib/draw-state";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/leaderboard")({
