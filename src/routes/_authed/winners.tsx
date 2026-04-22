@@ -8,6 +8,12 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import { getNextEntriesLockWAT } from "@/lib/draw-state";
+
+// No real draws have executed yet — render the empty state until the first
+// draw lands in winam_draw_weeks (status = 'drawn' | 'settled'). Mock
+// DRAW_WEEKS data below stays in place for future wiring.
+const HAS_DRAWS = false;
 
 export const Route = createFileRoute("/_authed/winners")({
   component: WinnersPage,
@@ -209,6 +215,48 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
 
 function WinnersPage() {
   useAllowScroll();
+
+  if (!HAS_DRAWS) {
+    const nextLock = getNextEntriesLockWAT();
+    // Add 1 hour to the lock time → draw executes at 20:00 WAT
+    const drawDate = new Date(nextLock.getTime() + 60 * 60 * 1000);
+    const formatted = drawDate.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+    });
+
+    return (
+      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
+        <TopBar backTo="/app" title="Winners" />
+        <div className="px-6 pt-12 pb-10 flex flex-col items-center text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" aria-hidden />
+            <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-b from-primary/25 to-primary/10 border border-primary/30 shadow-glow flex items-center justify-center">
+              <Trophy className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+
+          <h1 className="text-2xl font-bold text-foreground">No draws yet</h1>
+          <p className="mt-3 text-sm text-muted-foreground max-w-[300px] leading-relaxed">
+            The first draw happens this Sunday at 20:00 WAT. Play now to earn your entries.
+          </p>
+
+          <p className="mt-5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70 tabular-nums">
+            Next draw · Sunday {formatted} at 20:00 WAT
+          </p>
+
+          <Link
+            to="/app"
+            className="mt-8 inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-glow"
+          >
+            <Gamepad2 className="h-4 w-4" />
+            Start playing
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/app" title="Winners" />

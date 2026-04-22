@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authed/checkmate")({
   head: () => ({
     meta: [
       { title: "CheckMate — WinamGames" },
-      { name: "description", content: "Solve chess puzzles and earn draw tickets." },
+      { name: "description", content: "Solve chess puzzles and earn draw entries." },
     ],
   }),
 });
@@ -105,7 +105,7 @@ function CheckMatePage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  Earn up to <span className="text-coin tabular-nums">5 tickets</span> per round
+                  Earn up to <span className="text-coin tabular-nums">5 entries</span> per round
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Plus XP, streak bonuses & weekly draws
