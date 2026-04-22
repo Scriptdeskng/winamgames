@@ -1,115 +1,56 @@
 
 
-## Public landing page at `/`, app moves to `/app`
+## Landing page copy + Recent Wins polish
 
-Build a standalone marketing landing page that lives at `/`, while the authenticated app entry point moves to `/app`. The page is mobile-first, leans on the existing Refined Arena tokens (emerald, surface-1/2/3, glass, shadow-glow, tabular-nums, Inter), and reads as a marketing page rather than the app shell.
+Targeted edits to `src/routes/index.tsx` only.
 
-### 1. Routing changes
+### 1. Hero — remove the games subline
 
-The current home (authenticated dashboard) lives at `src/routes/_authed/index.tsx` and resolves to `/`. Move it so the public landing can take `/`:
+Delete the paragraph: *"CheckMate sharpens your strategy. WisdomDrop tests the proverbs your elders raised you on."* (lines 140–145). The hero keeps the eyebrow, headline, prize pill, and CTAs — tightens the section without losing intent.
 
-- **Rename** `src/routes/_authed/index.tsx` → `src/routes/_authed/app.tsx` (resolves to `/app`, still inside the `_authed` layout — same auth + subscription guard).
-- **Create** `src/routes/index.tsx` — the new public landing page (no auth gate, no `_authed` parent).
-- **Update all `to: "/"` references** that were pointing at the authed dashboard to `to: "/app"`:
-  - `src/routes/login.tsx` (post-login redirect + session-exists redirect)
-  - `src/routes/onboarding.tsx` (post-onboarding redirect)
-  - `src/routes/renew.tsx` (post-renew redirect + logo home link → keep on `/` for landing)
-  - `src/routes/verify.tsx` (logo home link → keep on `/`)
-  - `src/components/games/useGameSession.ts` (game close fallback → `/app`)
-  - `src/routes/_authed/profile.tsx`, `results.tsx`, `winners.tsx`, `entries.tsx`, `leaderboard.tsx`, `checkmate.tsx`, `wisdomdrop.tsx` (`backTo="/"` and "Play Now" links → `/app`)
-  - `src/components/layout/TopBar.tsx` (logo/profile link semantics — keep app-internal links pointing to `/app`)
-- **`__root.tsx`** 404 "Go home" stays pointing at `/` (the landing) — that's correct.
-- The `_authed` guard already redirects unauthenticated visitors to `/login`, so it doesn't fight the public `/` route.
+### 2. Copy: stop hard-coding "78 winners"
 
-### 2. Landing page structure (`src/routes/index.tsx`)
+Replace anywhere that says "78 winners every Sunday" or "Cash and airtime drop into 78 winners every week" with the softer "50+ winners every week" framing the user already approved for the Winners section.
 
-Single file, all sections inline. Sets its own `head()` with marketing-focused title, description, og:title/description, og:image (= `/winam-logo.png`).
+- **How it works → step 3 body** (line 447): change to *"Cash and airtime drop to 50+ winners every Sunday. More tickets = better odds."*
+- **Social proof strip** (line 579): change pill from `"78 winners every Sunday"` to `"50+ winners every Sunday"`.
+- **Winners footer line** (line 565): the current `"+ 75 airtime & data winners"` is also a hard number that contradicts the "50+" framing. Change to `"+ airtime &amp; data winners every week"` (keeps the visual proof of additional tiers without locking in a count).
+- **Final CTA subhead** (line 622): keep "Join thousands of players competing every week" — no number change needed.
+- **og:description** (line 28): replace "Two games. Endless wisdom." with "Endless wisdom. Sharper play." to drop the games-count phrasing from share previews too.
 
-**Sticky nav** — translucent `bg-background/70 backdrop-blur` with `border-b border-border` once scrolled (toggle via `useEffect` scroll listener). WinAm logo left, single "Play now" button right (links to `/subscribe`, see below).
+### 3. Recent Wins — make it feel alive, not static
 
-**Section 1 — Hero** (`min-h-[100dvh]` on mobile, `min-h-[80vh]` on desktop):
-- Headline leads with the *experience*: e.g. "Africa's smartest puzzle arena." (sub-line: "Two games. Endless wisdom. Every Sunday someone wins.")
-- One-line subheadline naming both games and their cultural identity: "CheckMate sharpens your strategy. WisdomDrop tests the proverbs your elders raised you on."
-- Hero visual built purely from CSS + SVG: a side-by-side composition (stacked on mobile, overlapping cards on desktop) showing
-  - a 4×4 chess board fragment with Unicode pieces mid-puzzle (white queen threatening mate), styled with the same emerald/surface palette as `ChessBoard.tsx`
-  - a proverb card with `"A patient ___ eats ripe fruit."` and four answer chips, one highlighted in emerald
-  - subtle motion via `@keyframes` (gentle float / pulse on the highlighted square + chip), no JS libraries
-- Prize callout as a small pill *below* the headline, not above: "₦50,000 in prizes drawn every Sunday."
-- Primary CTA: full-width on mobile "Start playing" → `/subscribe`. Secondary text-only "See past winners" scrolls to Section 4.
+Keep the same data and overall layout, but add motion + signal so it reads as a live feed:
 
-**Section 2 — Games showcase** (two cards, stacked on mobile, side-by-side on desktop):
-- **CheckMate card**: 6×6 simplified board with real Unicode pieces in a tactical position, "CheckMate" name, copy: "One move. One mate. Train your tactical eye with bite-sized puzzles." Position badge: "1-move mates · daily puzzles".
-- **WisdomDrop card**: a proverb sentence with a blank and four real-looking option buttons (one styled as the correct answer with a check), "WisdomDrop" name, copy: "Fill the blank in proverbs from across Africa. Every right answer earns you a draw ticket." Origin badge: "Yoruba · Hausa · Igbo · Akan + more".
-- Both cards use `bg-surface-1`, `border-border`, `shadow-card`, with a hover lift on desktop (`hover:-translate-y-1 transition-transform`).
+- **Live indicator in the section header**: add a small pulsing emerald dot + label `"Updated weekly"` next to the "Recent draw" eyebrow. Pure CSS pulse using the existing `animate-landing-pulse-ring` / Tailwind `animate-pulse`.
+- **Card chrome**:
+  - Add a subtle ambient emerald glow behind the card (same blur technique as Hero/Final CTA).
+  - Replace the static `Calendar` header strip with: `Calendar` icon + week label on the left, and a right-aligned animated `LIVE` chip (pulsing dot + uppercase label) so the card visibly "breathes."
+- **Row entrance stagger**: wrap each of the 3 winner rows in `RevealOnScroll` with `delayMs={i * 120}` so they cascade in as the section scrolls into view (uses the existing component, no new deps).
+- **Per-row micro-motion**:
+  - Soft shimmer once on the prize amount (CSS keyframe gradient sweep) when the row reveals — draws the eye to the amount.
+  - Trophy/sparkle accent next to the 1st-place row's prize (`Sparkles` icon, already imported) to add hierarchy.
+- **Footer line**: replace the static `"+ 75 airtime & data winners"` with the live-feed-style line above (`"+ airtime & data winners every week"`) and add an arrow link styled as muted text *"See full winners list →"* that scrolls/links to `/subscribe` (the in-app winners page is auth-only, so the public CTA stays subscribe — keeps it actionable rather than dead-end).
+- **Optional polish**: cycle a barely-visible "ticker" hint above the card — `"Last drawn: Sunday, Apr 13"` in muted micro text — reinforcing recency without adding a JS clock.
 
-**Section 3 — How it works** (3 numbered steps in a horizontal flow on desktop, vertical on mobile):
-1. **Subscribe via MTN** — "Join with your MTN number in seconds. No app store. No password."
-2. **Play daily** — "Solve puzzles to earn draw tickets. The more you play, the more chances you stack."
-3. **Win every Sunday** — "Cash and airtime drop into 78 winners every week. More tickets = better odds."
-Each step has a numbered emerald ring, lucide icon (`Smartphone`, `Gamepad2`, `Trophy`), and short copy. **No prices anywhere.**
+All animations: pure CSS + the existing `RevealOnScroll`. No new keyframes required beyond a one-off `@keyframes landing-shimmer` added to `src/styles.css` under `@layer utilities` for the prize sweep.
 
-**Section 4 — Winners** ("Real people. Real wins."):
-- Reuses the exact visual language of `_authed/winners.tsx` cash-winner rows for credibility:
-  - Three rows with `POSITION_STYLES` 1st/2nd/3rd badges (gold / silver / bronze)
-  - `080*****31` masked phone, `#3F8A2C1D` entry hash with `Hash` icon, `₦35,000 / ₦10,000 / ₦5,000` prize on the right
-  - Below: static line "+ 75 airtime & data winners" (muted, non-tappable)
-  - Header: "Week of Apr 7 – 13, 2025" with `Calendar` icon
-- Wrapped in the same `rounded-2xl bg-surface-1 border border-border` container as the in-app winners card so it reads as authentic data.
+### 4. Games section — drop the "Two games" framing and the inline previews
 
-**Section 5 — Social proof strip** (horizontal scroll on mobile, centered row on desktop):
-- 4 fact pills (`rounded-full bg-surface-2 border border-border px-4 py-2 text-sm`) with lucide icons:
-  - "500+ players this week" (`Users`)
-  - "78 winners every Sunday" (`Trophy`)
-  - "₦50,000 in weekly prizes" (`Coins`)
-  - "2 games. Infinite challenge." (`Sparkles`)
-- On mobile: `overflow-x-auto snap-x` so they scroll horizontally; on desktop: centered flex wrap.
-
-**Section 6 — Final CTA**:
-- Centered. Headline "Ready to play?", subheadline "Join thousands of players competing every week."
-- Same "Start playing" CTA → `/subscribe`.
-- Fine-print muted line: "Available on MTN Nigeria. Standard data rates apply."
-- Tiny footer below: WinAm logo + © year.
-
-### 3. `/subscribe` alias
-
-The hero CTA spec says it links to "the subscribe flow." Today the subscribe entry point is `/login` (which leads to OTP → onboarding → app). To match the requested URL:
-
-- Add `src/routes/subscribe.tsx` as a **redirect shim**: a route whose `beforeLoad` calls `throw redirect({ to: "/login" })`. This keeps `/subscribe` as the canonical marketing destination without forking the auth flow.
-
-### 4. Animation strategy (no JS libraries)
-
-- A small reusable `RevealOnScroll` wrapper component using `IntersectionObserver` (vanilla browser API, no external deps) that toggles a `data-visible` attribute. Tailwind handles the rest via `data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0 opacity-0 translate-y-4 transition-all duration-500`.
-- Hero piece float / chip pulse: pure CSS `@keyframes` added in `src/styles.css` under `@layer utilities`.
-- Sticky nav background fade: single `useState` + `scroll` listener, no library.
-
-### 5. Performance & compatibility
-
-- Zero external image assets in landing. Only the existing `winam-logo.png` (already in `public/`).
-- Inter font is already preloaded in `__root.tsx`.
-- All visuals are CSS / Unicode chess glyphs / inline SVG.
-- No new dependencies.
-- Uses TanStack Start SSR — landing renders server-side for crawlers. Since the landing route is **outside** `_authed`, it has no client-only auth check blocking SSR.
-
-### 6. SEO
-
-`/` route's `head()`:
-- title: "WinAm Games — Africa's smartest puzzle arena"
-- description: "Play CheckMate and WisdomDrop. Sharpen your mind on chess tactics and African proverbs. Win cash every Sunday. Available on MTN Nigeria."
-- og:title / og:description mirrored
-- og:image: `https://winamgames.lovable.app/winam-logo.png`
-- twitter:card: `summary_large_image`
+- **Eyebrow** (line 299): change `"Two games"` → `"The games"` (or remove the eyebrow entirely if cleaner — going with `"The games"` to keep the header structure consistent with other sections).
+- **Headline + subhead** (lines 302–307): keep as-is — both are about how the games feel, not how many exist.
+- **Remove the chess board UI** inside `CheckMatePreviewCard` (lines 346–372).
+- **Remove the proverb card UI** inside `WisdomDropPreviewCard` (lines 391–422).
+- Each card keeps: name header + badge (top), description paragraph (bottom). Tighten the card's vertical padding now that the visual is gone so cards don't feel half-empty. No layout change to the two-column grid — the side-by-side cards still work, just text-forward.
 
 ### Files touched
 
-- **New**: `src/routes/index.tsx` (public landing), `src/routes/subscribe.tsx` (redirect shim), `src/components/landing/RevealOnScroll.tsx` (reveal-on-scroll wrapper)
-- **Renamed**: `src/routes/_authed/index.tsx` → `src/routes/_authed/app.tsx`
-- **Edited (link/redirect updates `/` → `/app`)**: `login.tsx`, `onboarding.tsx`, `renew.tsx`, `useGameSession.ts`, and the seven `_authed/*` pages plus `TopBar.tsx`
-- **Edited**: `src/styles.css` (add a couple of `@keyframes` for hero motion)
+- `src/routes/index.tsx` — all copy + structural changes above.
+- `src/styles.css` — add `@keyframes landing-shimmer` (and matching `.animate-landing-shimmer` utility) for the prize-amount sweep on Recent Wins rows.
 
 ### Out of scope
 
-- Any pricing copy or subscription tier display on the landing.
-- Animation libraries (Framer Motion is already used elsewhere; landing intentionally stays CSS-only per spec).
-- Changing the auth/OTP flow itself — `/subscribe` just redirects to the existing `/login`.
-- New brand artwork — uses the existing logo + on-brand CSS/SVG compositions.
+- Wiring Recent Wins to real DB data (still mock — same numbers as before, just presented with motion).
+- Changing the in-app `/_authed/winners.tsx` page.
+- Touching `/subscribe` flow or auth.
 
