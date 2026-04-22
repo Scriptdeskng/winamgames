@@ -504,6 +504,9 @@ export const closeSession = createServerFn({ method: "POST" })
       return { success: false as const, error: "Session not found" };
     }
 
+    // TODO: enforce entry lock window server-side before production
+    // Sessions completed between Sunday 19:00–20:00 WAT should award coins only
+    // Currently enforced UI-only via DrawLockBanner — server check needed for production
     // ── Entry calculation ──
     // Hints cost coins only — they do NOT reduce puzzle count for entry math.
     const baseN = 5; // default divisor

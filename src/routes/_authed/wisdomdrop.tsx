@@ -5,6 +5,7 @@ import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
+import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins } from "lucide-react";
@@ -145,6 +146,8 @@ function WisdomDropPage() {
       />
 
       <div className="px-4 pt-6 pb-8 space-y-4">
+        <DrawLockBanner />
+
         {puzzle && (
           <div className="rounded-2xl bg-surface-1 border border-border shadow-card overflow-hidden">
             {/* Proverb prompt */}

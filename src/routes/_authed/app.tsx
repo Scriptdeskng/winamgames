@@ -10,28 +10,12 @@ import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import { getDrawState, getNextEntriesLockWAT, type DrawState } from "@/lib/draw-state";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/app")({
   component: HomePage,
 });
-
-
-// Compute next Sunday 20:00 WAT (UTC+1) → 19:00 UTC
-function getNextSundayWAT(): Date {
-  const now = new Date();
-  const target = new Date(now);
-  const dayUTC = now.getUTCDay();
-  // Days until next Sunday (0). If today is Sunday and before 19:00 UTC, target today.
-  let daysUntil = (7 - dayUTC) % 7;
-  target.setUTCHours(19, 0, 0, 0);
-  if (daysUntil === 0 && now.getTime() >= target.getTime()) {
-    daysUntil = 7;
-  }
-  target.setUTCDate(now.getUTCDate() + daysUntil);
-  target.setUTCHours(19, 0, 0, 0);
-  return target;
-}
 
 function getCountdownParts(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -159,14 +143,28 @@ function DrawHeroCard({
   weekTotal: number;
   weekCap: number;
 }) {
+  // 60s boundary check — recomputes draw state, triggers re-render across phase changes.
+  const [drawState, setDrawState] = React.useState<DrawState>(() => getDrawState(new Date()));
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setDrawState(getDrawState(new Date()));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Countdown target = next Sunday 19:00 WAT (entries lock).
+  // Recomputed whenever drawState transitions (e.g. new_week → open).
   const targetDate = React.useMemo(() => {
     if (drawExecutesAt) {
       const d = new Date(drawExecutesAt);
-      if (d.getTime() > Date.now()) return d;
+      // drawExecutesAt is the 20:00 WAT execution time; lock is 1h earlier.
+      const lock = new Date(d.getTime() - 60 * 60 * 1000);
+      if (lock.getTime() > Date.now()) return lock;
     }
-    return getNextSundayWAT();
-  }, [drawExecutesAt]);
+    return getNextEntriesLockWAT();
+  }, [drawExecutesAt, drawState]);
 
+  // 1s ticker for countdown digits.
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -177,8 +175,67 @@ function DrawHeroCard({
   const { days, hours, minutes, seconds } = getCountdownParts(remaining);
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
+  const cardChrome =
+    "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card";
+
+  // ─── State: drawn ── winners selected, awaiting new week
+  if (drawState === "drawn") {
+    return (
+      <div className={cardChrome}>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Weekly Draw
+        </p>
+        <h3 className="text-2xl font-bold text-foreground">Draw complete</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          This week's winners have been selected
+        </p>
+        <Link
+          to="/winners"
+          className="mt-4 inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-glow"
+        >
+          See winners
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+        <p className="text-[11px] text-muted-foreground/80 mt-3">
+          New draw week opens in a moment
+        </p>
+      </div>
+    );
+  }
+
+  // ─── State: locked ── entries frozen, draw imminent
+  if (drawState === "locked") {
+    return (
+      <div className={cardChrome}>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Weekly Draw
+        </p>
+        <h3 className="text-2xl font-bold text-foreground">Draw closing soon</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Entries locked — draw executes at 20:00 WAT
+        </p>
+        <p className="text-sm text-muted-foreground mt-4 tabular-nums">
+          <span className="font-bold">{weekTotal}</span>
+          <span> / {weekCap} tickets this week</span>
+        </p>
+        <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-muted-foreground/40 transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-3 flex items-center justify-end">
+          <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
+            View my tickets <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── State: open / new_week ── default countdown UI
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card">
+    <div className={cardChrome}>
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
