@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Two games. Endless wisdom. Every Sunday someone wins. Join the daily puzzle arena built for Nigeria.",
+          "Endless wisdom. Sharper play. Every Sunday someone wins. Join the daily puzzle arena built for Nigeria.",
       },
       {
         property: "og:image",
@@ -135,13 +135,6 @@ function HeroSection({ onSeeWinners }: { onSeeWinners: () => void }) {
             <h1 className="mt-4 text-[2.25rem] sm:text-5xl md:text-[3.5rem] font-bold leading-[1.05] tracking-tight">
               Africa's smartest <span className="text-gradient-emerald">puzzle arena.</span>
             </h1>
-          </RevealOnScroll>
-
-          <RevealOnScroll delayMs={160}>
-            <p className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-[36ch] mx-auto md:mx-0">
-              <span className="text-foreground font-semibold">CheckMate</span> sharpens your strategy.{" "}
-              <span className="text-foreground font-semibold">WisdomDrop</span> tests the proverbs your elders raised you on.
-            </p>
           </RevealOnScroll>
 
           <RevealOnScroll delayMs={220}>
@@ -297,7 +290,7 @@ function GamesShowcase() {
         <RevealOnScroll>
           <div className="text-center mb-10 sm:mb-14">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald mb-3">
-              Two games
+              The games
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
               Built for the way you think.
@@ -322,55 +315,14 @@ function GamesShowcase() {
 }
 
 function CheckMatePreviewCard() {
-  // 6×6 simplified board with a real-looking tactical position
-  // Row indexing: row 0 = top of the rendered grid
-  const layout: (string | null)[][] = [
-    [null, null, "♚", null, null, null],
-    [null, null, null, null, null, null],
-    [null, null, null, "♕", null, null],
-    [null, null, null, null, null, null],
-    [null, "♙", null, null, "♙", null],
-    [null, null, "♔", null, null, null],
-  ];
-  const queenAt = { row: 2, col: 3 };
-
   return (
-    <div className="group h-full rounded-2xl bg-surface-1 border border-border shadow-card p-5 sm:p-6 transition-all md:hover:-translate-y-1 md:hover:shadow-glow">
+    <div className="group h-full rounded-2xl bg-surface-1 border border-border shadow-card p-6 sm:p-7 transition-all md:hover:-translate-y-1 md:hover:shadow-glow flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold">CheckMate</h3>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald bg-emerald/10 border border-emerald/20 rounded-full px-2.5 py-1">
           1-move mates · daily
         </span>
       </div>
-
-      <div className="rounded-xl border border-border overflow-hidden mb-5">
-        <div className="grid grid-cols-6">
-          {layout.flatMap((row, ri) =>
-            row.map((piece, ci) => {
-              const light = (ri + ci) % 2 === 0;
-              const isQueen = ri === queenAt.row && ci === queenAt.col;
-              return (
-                <div
-                  key={`${ri}-${ci}`}
-                  className={`relative aspect-square flex items-center justify-center text-xl sm:text-2xl select-none ${
-                    light ? "bg-surface-3" : "bg-surface-2"
-                  } ${isQueen ? "ring-2 ring-emerald ring-inset" : ""}`}
-                >
-                  {piece && (
-                    <span
-                      className={`relative text-foreground ${isQueen ? "animate-landing-piece-glow" : "text-foreground/85"}`}
-                      style={{ textShadow: "0 1px 1px rgba(0,0,0,0.5)" }}
-                    >
-                      {piece}
-                    </span>
-                  )}
-                </div>
-              );
-            }),
-          )}
-        </div>
-      </div>
-
       <p className="text-sm text-muted-foreground leading-relaxed">
         One move. One mate. Train your tactical eye with bite-sized puzzles you can finish on the way to work.
       </p>
@@ -380,47 +332,13 @@ function CheckMatePreviewCard() {
 
 function WisdomDropPreviewCard() {
   return (
-    <div className="group h-full rounded-2xl bg-surface-1 border border-border shadow-card p-5 sm:p-6 transition-all md:hover:-translate-y-1 md:hover:shadow-glow">
+    <div className="group h-full rounded-2xl bg-surface-1 border border-border shadow-card p-6 sm:p-7 transition-all md:hover:-translate-y-1 md:hover:shadow-glow flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold">WisdomDrop</h3>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-xp bg-xp/10 border border-xp/20 rounded-full px-2.5 py-1">
           Yoruba · Hausa · Igbo · Akan +
         </span>
       </div>
-
-      <div className="rounded-xl bg-surface-2 border border-border p-4 sm:p-5 mb-5">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald mb-3">
-          Igbo
-        </span>
-        <p className="text-base sm:text-lg font-medium leading-relaxed mb-4">
-          "When the{" "}
-          <span className="inline-block min-w-[60px] text-center px-2 py-0.5 rounded-md border border-dashed border-emerald/50 text-emerald text-xs font-semibold tracking-wider align-middle">
-            ___
-          </span>{" "}
-          falls, the goat eats the leaves."
-        </p>
-        <div className="grid grid-cols-2 gap-2.5">
-          {[
-            { label: "tree", correct: true },
-            { label: "rain", correct: false },
-            { label: "wall", correct: false },
-            { label: "sun", correct: false },
-          ].map((opt) => (
-            <div
-              key={opt.label}
-              className={`h-10 rounded-lg border text-sm font-semibold inline-flex items-center justify-center gap-1.5 ${
-                opt.correct
-                  ? "bg-emerald/15 border-emerald/40 text-emerald"
-                  : "bg-surface-1 border-border text-foreground/85"
-              }`}
-            >
-              {opt.correct && <Check className="h-3.5 w-3.5" />}
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      </div>
-
       <p className="text-sm text-muted-foreground leading-relaxed">
         Fill the blank in proverbs from across Africa. Every right answer earns you a draw ticket.
       </p>
@@ -444,7 +362,7 @@ function HowItWorks() {
     {
       icon: Trophy,
       title: "Win every Sunday",
-      body: "Cash and airtime drop into 78 winners every week. More tickets = better odds.",
+      body: "Cash and airtime drop to 50+ winners every Sunday. More tickets = better odds.",
     },
   ];
 
@@ -503,28 +421,54 @@ function WinnersSection() {
   ];
 
   return (
-    <section id="winners" className="relative py-16 sm:py-24 scroll-mt-16">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+    <section id="winners" className="relative py-16 sm:py-24 scroll-mt-16 overflow-hidden">
+      {/* Ambient glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-[120px]"
+      />
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
         <RevealOnScroll>
           <div className="text-center mb-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald mb-3">
-              Recent draw
-            </p>
+            <div className="inline-flex items-center gap-2 mb-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald">
+                Recent draw
+              </p>
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald" />
+                </span>
+                Updated weekly
+              </span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
               Real people. Real wins.
             </h2>
             <p className="mt-3 text-sm sm:text-base text-muted-foreground">
               50+ winners every week — cash and airtime
             </p>
+            <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground/70 tabular-nums">
+              Last drawn · Sunday, Apr 13
+            </p>
           </div>
         </RevealOnScroll>
 
         <RevealOnScroll delayMs={120}>
-          <div className="rounded-2xl bg-surface-1 border border-border overflow-hidden shadow-card">
-            <div className="px-4 sm:px-5 py-3 flex items-center gap-2 border-b border-border bg-surface-1/60">
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground tabular-nums">
-                Week of Apr 7 – 13, 2025
+          <div className="relative rounded-2xl bg-surface-1 border border-border overflow-hidden shadow-card">
+            <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-2 border-b border-border bg-surface-1/60">
+              <div className="inline-flex items-center gap-2 min-w-0">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground tabular-nums truncate">
+                  Week of Apr 7 – 13, 2025
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald" />
+                </span>
+                Live
               </span>
             </div>
 
@@ -532,38 +476,48 @@ function WinnersSection() {
               {cashWinners.map((w, i) => {
                 const pos = POSITION_STYLES[i];
                 return (
-                  <div
-                    key={w.entryId}
-                    className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4"
-                  >
-                    <div
-                      className={`shrink-0 h-9 w-9 rounded-full ${pos.bg} ${pos.text} flex items-center justify-center text-xs font-bold tabular-nums`}
-                    >
-                      {pos.label}
+                  <RevealOnScroll key={w.entryId} delayMs={i * 120}>
+                    <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 transition-colors hover:bg-surface-2/40">
+                      <div
+                        className={`shrink-0 h-9 w-9 rounded-full ${pos.bg} ${pos.text} flex items-center justify-center text-xs font-bold tabular-nums`}
+                      >
+                        {pos.label}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold tabular-nums text-foreground">
+                          {w.phone}
+                        </p>
+                        <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground tabular-nums">
+                          <Hash className="h-3 w-3" />
+                          {w.entryId.replace(/^#/, "")}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right inline-flex items-center gap-1.5">
+                        {i === 0 && <Sparkles className="h-3.5 w-3.5 text-coin" />}
+                        <p
+                          className="text-base sm:text-lg font-bold tabular-nums text-coin animate-landing-shimmer"
+                          style={{ animationDelay: `${0.4 + i * 0.15}s` }}
+                        >
+                          {w.prize}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold tabular-nums text-foreground">
-                        {w.phone}
-                      </p>
-                      <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground tabular-nums">
-                        <Hash className="h-3 w-3" />
-                        {w.entryId.replace(/^#/, "")}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-base sm:text-lg font-bold tabular-nums text-coin">
-                        {w.prize}
-                      </p>
-                    </div>
-                  </div>
+                  </RevealOnScroll>
                 );
               })}
             </div>
 
-            <div className="px-4 sm:px-5 py-3 border-t border-border bg-surface-1/60 text-center">
-              <span className="text-xs text-muted-foreground tabular-nums">
-                + 75 airtime &amp; data winners
+            <div className="px-4 sm:px-5 py-3 border-t border-border bg-surface-1/60 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-center sm:text-left">
+              <span className="text-xs text-muted-foreground">
+                + airtime &amp; data winners every week
               </span>
+              <Link
+                to="/subscribe"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-emerald transition-colors"
+              >
+                See full winners list
+                <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
           </div>
         </RevealOnScroll>
@@ -576,9 +530,9 @@ function WinnersSection() {
 function SocialProofStrip() {
   const facts = [
     { icon: Users, label: "500+ players this week" },
-    { icon: Trophy, label: "78 winners every Sunday" },
+    { icon: Trophy, label: "50+ winners every Sunday" },
     { icon: Coins, label: "₦50,000 in weekly prizes" },
-    { icon: Sparkles, label: "2 games. Infinite challenge." },
+    { icon: Sparkles, label: "Infinite challenge" },
   ];
 
   return (
