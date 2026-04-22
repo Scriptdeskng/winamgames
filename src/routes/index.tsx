@@ -8,6 +8,7 @@ import {
 import logo from "@/assets/winam-logo.png";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
+import { HeroChessFragment, HeroProverbCard } from "@/components/landing/HeroGameGraphics";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
