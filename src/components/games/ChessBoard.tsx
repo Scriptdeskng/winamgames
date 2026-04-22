@@ -26,10 +26,12 @@ interface ChessBoardProps {
   selectedSquare: string | null;
   onSquareClick: (square: string) => void;
   lastMove?: { from: string; to: string } | null;
+  hintFrom?: string | null;
+  hintTo?: string | null;
   disabled?: boolean;
 }
 
-export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, disabled }: ChessBoardProps) {
+export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintFrom, hintTo, disabled }: ChessBoardProps) {
   const board = parseFen(fen);
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -42,6 +44,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, disab
             const isLight = (ri + ci) % 2 === 0;
             const isSelected = selectedSquare === square;
             const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
+            const isHint = square === hintFrom || square === hintTo;
 
             return (
               <button
@@ -54,7 +57,8 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, disab
                     ? "bg-emerald-dim/30"
                     : "bg-surface-2",
                   isSelected && "ring-2 ring-primary ring-inset bg-primary/25",
-                  isLastMove && !isSelected && "bg-primary/10",
+                  isHint && !isSelected && "ring-2 ring-coin/70 ring-inset bg-coin/15",
+                  isLastMove && !isSelected && !isHint && "bg-primary/10",
                   disabled && "cursor-default"
                 )}
                 style={{ fontSize: "clamp(1.5rem, 4.5vw, 2.25rem)" }}
