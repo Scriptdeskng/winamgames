@@ -59,9 +59,9 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
             if (isSelected) bg = "rgba(255, 255, 0, 0.7)";
             else if (isHint) bg = "rgba(255, 255, 0, 0.5)";
             else if (isLastMove) bg = isLight ? "rgba(155, 199, 100, 0.6)" : "rgba(110, 160, 80, 0.6)";
-            else bg = isLight ? "#B8D4A8" : "#4A7C59";
+            else bg = isLight ? "#F0D9B5" : "#B58863";
 
-            const labelColor = isLight ? "#4A7C59" : "#B8D4A8";
+            const labelColor = isLight ? "#B58863" : "#F0D9B5";
 
             return (
               <button
