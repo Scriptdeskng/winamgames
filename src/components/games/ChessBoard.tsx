@@ -1,9 +1,18 @@
-import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
-const PIECE_MAP: Record<string, string> = {
-  K: "♔", Q: "♕", R: "♖", B: "♗", N: "♘", P: "♙",
-  k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟",
+const PIECE_URL: Record<string, string> = {
+  K: "https://lichess1.org/assets/piece/cburnett/wK.svg",
+  Q: "https://lichess1.org/assets/piece/cburnett/wQ.svg",
+  R: "https://lichess1.org/assets/piece/cburnett/wR.svg",
+  B: "https://lichess1.org/assets/piece/cburnett/wB.svg",
+  N: "https://lichess1.org/assets/piece/cburnett/wN.svg",
+  P: "https://lichess1.org/assets/piece/cburnett/wP.svg",
+  k: "https://lichess1.org/assets/piece/cburnett/bK.svg",
+  q: "https://lichess1.org/assets/piece/cburnett/bQ.svg",
+  r: "https://lichess1.org/assets/piece/cburnett/bR.svg",
+  b: "https://lichess1.org/assets/piece/cburnett/bB.svg",
+  n: "https://lichess1.org/assets/piece/cburnett/bN.svg",
+  p: "https://lichess1.org/assets/piece/cburnett/bP.svg",
 };
 
 function parseFen(fen: string): (string | null)[][] {
@@ -45,7 +54,14 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
             const isSelected = selectedSquare === square;
             const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
             const isHint = square === hintFrom || square === hintTo;
-            const isWhitePiece = piece && piece === piece.toUpperCase();
+
+            let bg: string;
+            if (isSelected) bg = "rgba(255, 255, 0, 0.7)";
+            else if (isHint) bg = "rgba(255, 255, 0, 0.5)";
+            else if (isLastMove) bg = isLight ? "rgba(155, 199, 100, 0.6)" : "rgba(110, 160, 80, 0.6)";
+            else bg = isLight ? "#B8D4A8" : "#4A7C59";
+
+            const labelColor = isLight ? "#4A7C59" : "#B8D4A8";
 
             return (
               <button
@@ -53,24 +69,35 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                 disabled={disabled}
                 onClick={() => onSquareClick(square)}
                 className={cn(
-                  "aspect-square flex items-center justify-center text-3xl sm:text-4xl leading-none transition-all min-h-[44px]",
-                  isWhitePiece ? "text-white drop-shadow-sm" : "text-gray-900",
-                  isSelected && "ring-2 ring-primary ring-inset bg-primary/25",
-                  isHint && !isSelected && "ring-2 ring-coin/70 ring-inset",
-                  isLastMove && !isSelected && !isHint && "bg-primary/10",
+                  "relative aspect-square flex items-center justify-center transition-all min-h-[44px]",
                   disabled && "cursor-default"
                 )}
-                style={{
-                  backgroundColor: isSelected
-                    ? undefined
-                    : isHint
-                      ? undefined
-                      : isLight
-                        ? "#B8D4A8"
-                        : "#4A7C59",
-                }}
+                style={{ backgroundColor: bg }}
               >
-                {piece ? PIECE_MAP[piece] || "" : ""}
+                {piece && (
+                  <img
+                    src={PIECE_URL[piece]}
+                    alt={piece}
+                    draggable={false}
+                    className="w-[80%] h-[80%] pointer-events-none select-none"
+                  />
+                )}
+                {ci === 0 && (
+                  <span
+                    className="absolute top-0.5 left-0.5 text-[9px] font-semibold leading-none pointer-events-none"
+                    style={{ color: labelColor }}
+                  >
+                    {8 - ri}
+                  </span>
+                )}
+                {ri === 7 && (
+                  <span
+                    className="absolute bottom-0.5 right-0.5 text-[9px] font-semibold leading-none pointer-events-none"
+                    style={{ color: labelColor }}
+                  >
+                    {files[ci]}
+                  </span>
+                )}
               </button>
             );
           })
