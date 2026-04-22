@@ -136,7 +136,6 @@ function LeaderboardPage() {
 
           <TabsContent value="week" className="space-y-5 mt-4">
             <DrawCountdownCard
-              drawExecutesAt={weekly.drawExecutesAt}
               weekStartWat={weekly.weekStartWat}
               weekEndWat={weekly.weekEndWat}
               totalPlayers={weekly.totalPlayers}
