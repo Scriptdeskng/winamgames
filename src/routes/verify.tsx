@@ -54,7 +54,7 @@ function VerifyPage() {
         nickname: null,
       });
 
-      navigate({ to: result.needsOnboarding ? "/onboarding" : "/" });
+      navigate({ to: result.needsOnboarding ? "/onboarding" : "/app" });
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

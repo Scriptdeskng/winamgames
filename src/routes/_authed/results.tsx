@@ -93,7 +93,7 @@ function ResultsPage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex flex-col">
-      <TopBar backTo="/" title="Results" />
+      <TopBar backTo="/app" title="Results" />
       <div className="flex-1 flex flex-col px-6 pb-8 pt-8">
         {/* Rank up notification — discrete event, kept as bordered chip above hero */}
         {rankedUp && (
@@ -184,7 +184,7 @@ function ResultsPage() {
             Play again
           </button>
           <Link
-            to="/"
+            to="/app"
             className="mt-3 w-full h-14 rounded-xl bg-surface-1 border border-border text-foreground font-semibold text-base flex items-center justify-center hover:bg-surface-2 transition-all"
           >
             Back to Home

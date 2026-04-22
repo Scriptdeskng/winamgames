@@ -36,7 +36,7 @@ function LeaderboardPage() {
   useAllowScroll();
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="Leaderboard" />
+      <TopBar backTo="/app" title="Leaderboard" />
       <div className="px-4 pb-6 space-y-5">
         <div className="flex gap-2">
           <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Today</button>

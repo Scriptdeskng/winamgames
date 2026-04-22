@@ -37,7 +37,7 @@ function RenewPage() {
         setError(result.error || "Something went wrong");
         return;
       }
-      navigate({ to: "/" });
+      navigate({ to: "/app" });
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Try again.");
     } finally {

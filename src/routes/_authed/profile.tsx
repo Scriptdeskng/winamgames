@@ -80,7 +80,7 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="Profile" />
+      <TopBar backTo="/app" title="Profile" />
       <div className="px-4 pb-8 space-y-5">
 
         {/* ── Identity + Rank hero ───────────────────────────── */}

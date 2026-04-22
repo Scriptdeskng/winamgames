@@ -60,7 +60,7 @@ function EntriesPage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="My Tickets" />
+      <TopBar backTo="/app" title="My Tickets" />
       <div className="px-4 pb-6 space-y-5">
         {currentWeek ? (
           <CurrentWeekTickets week={currentWeek} weekCap={data.weekCap} />
