@@ -219,17 +219,15 @@ function BoardBody({
 
 // ── Live draw countdown card (weekly tab) ─────────────────────────────
 function DrawCountdownCard({
-  drawExecutesAt,
   weekStartWat,
   weekEndWat,
   totalPlayers,
 }: {
-  drawExecutesAt: string | null;
   weekStartWat: string | null;
   weekEndWat: string | null;
   totalPlayers: number;
 }) {
-  const target = drawExecutesAt ? new Date(drawExecutesAt).getTime() : null;
+  const target = React.useMemo(() => getNextEntriesLockWAT().getTime(), []);
   const [now, setNow] = React.useState(() => Date.now());
 
   React.useEffect(() => {
@@ -237,7 +235,7 @@ function DrawCountdownCard({
     return () => clearInterval(id);
   }, []);
 
-  const remaining = target ? Math.max(0, target - now) : 0;
+  const remaining = Math.max(0, target - now);
   const { days, hours, minutes } = getCountdownParts(remaining);
 
   let pct = 0;
@@ -268,7 +266,7 @@ function DrawCountdownCard({
           <CountdownBlock value={minutes} label="min" />
         </div>
         <div className="text-right text-[11px] text-muted-foreground leading-tight">
-          <p>ends Sun 8pm</p>
+          <p>locks Sun 7pm WAT</p>
           <p className="tabular-nums">{formatWeekRange(weekStartWat, weekEndWat)}</p>
         </div>
       </div>
