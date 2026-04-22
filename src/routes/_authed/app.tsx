@@ -10,28 +10,12 @@ import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import { getDrawState, getNextEntriesLockWAT, type DrawState } from "@/lib/draw-state";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/app")({
   component: HomePage,
 });
-
-
-// Compute next Sunday 20:00 WAT (UTC+1) → 19:00 UTC
-function getNextSundayWAT(): Date {
-  const now = new Date();
-  const target = new Date(now);
-  const dayUTC = now.getUTCDay();
-  // Days until next Sunday (0). If today is Sunday and before 19:00 UTC, target today.
-  let daysUntil = (7 - dayUTC) % 7;
-  target.setUTCHours(19, 0, 0, 0);
-  if (daysUntil === 0 && now.getTime() >= target.getTime()) {
-    daysUntil = 7;
-  }
-  target.setUTCDate(now.getUTCDate() + daysUntil);
-  target.setUTCHours(19, 0, 0, 0);
-  return target;
-}
 
 function getCountdownParts(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
