@@ -80,7 +80,7 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="Profile" />
+      <TopBar backTo="/app" title="Profile" />
       <div className="px-4 pb-8 space-y-5">
 
         {/* ── Identity + Rank hero ───────────────────────────── */}
@@ -432,7 +432,7 @@ function WeeklyEntriesCard({
       </div>
 
       <Link
-        to="/"
+        to="/app"
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
       >
         Play to earn more

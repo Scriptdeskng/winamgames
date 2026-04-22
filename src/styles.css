@@ -207,4 +207,40 @@
   .font-display {
     font-family: var(--font-family-display);
   }
+
+  /* Landing page motion — subtle, GPU-friendly */
+  @keyframes landing-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @keyframes landing-pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.696 0.17 162.48 / 0.45); }
+    50% { box-shadow: 0 0 0 6px oklch(0.696 0.17 162.48 / 0); }
+  }
+
+  @keyframes landing-piece-glow {
+    0%, 100% { filter: drop-shadow(0 0 6px oklch(0.696 0.17 162.48 / 0.4)); }
+    50% { filter: drop-shadow(0 0 14px oklch(0.696 0.17 162.48 / 0.85)); }
+  }
+
+  .animate-landing-float {
+    animation: landing-float 3.6s ease-in-out infinite;
+  }
+
+  .animate-landing-pulse-ring {
+    animation: landing-pulse-ring 2.4s ease-out infinite;
+  }
+
+  .animate-landing-piece-glow {
+    animation: landing-piece-glow 2.8s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-landing-float,
+    .animate-landing-pulse-ring,
+    .animate-landing-piece-glow {
+      animation: none;
+    }
+  }
 }

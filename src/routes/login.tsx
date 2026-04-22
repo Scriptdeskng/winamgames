@@ -25,7 +25,7 @@ function LoginPage() {
 
   useEffect(() => {
     const session = getSession();
-    if (session) navigate({ to: "/" });
+    if (session) navigate({ to: "/app" });
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {

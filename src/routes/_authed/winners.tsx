@@ -211,7 +211,7 @@ function WinnersPage() {
   useAllowScroll();
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/" title="Winners" />
+      <TopBar backTo="/app" title="Winners" />
       <div className="px-4 pb-6 space-y-4">
         {/* Hero / Ad Card */}
         <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-2">
@@ -222,7 +222,7 @@ function WinnersPage() {
             50+ winners every week — cash, airtime & data
           </p>
           <Link
-            to="/"
+            to="/app"
             className="relative inline-flex items-center gap-2 mt-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Gamepad2 className="h-4 w-4" />

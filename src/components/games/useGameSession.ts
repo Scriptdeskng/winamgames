@@ -159,7 +159,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       }
     } catch (err) {
       console.error("Close session failed:", err);
-      navigate({ to: "/" });
+      navigate({ to: "/app" });
     }
   }, [state.sessionId, state.startTime, state.puzzlesSolved, state.hintsUsed, state.puzzleIds, playerId, navigate, gameType]);
 
@@ -301,7 +301,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
     if (state.sessionId && state.running) {
       endSession();
     } else {
-      navigate({ to: "/" });
+      navigate({ to: "/app" });
     }
   }, [state.sessionId, state.running, endSession, navigate]);
 

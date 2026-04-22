@@ -44,7 +44,7 @@ function OnboardingPage() {
         return;
       }
       updateSessionNickname(trimmed);
-      navigate({ to: "/" });
+      navigate({ to: "/app" });
     } catch {
       setError("Something went wrong. Try again.");
     } finally {

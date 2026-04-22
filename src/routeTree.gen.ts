@@ -10,11 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as RenewRouteImport } from './routes/renew'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
-import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiForthsoftWebhookRouteImport } from './routes/api/forthsoft-webhook'
 import { Route as AuthedWisdomdropRouteImport } from './routes/_authed/wisdomdrop'
 import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
@@ -23,10 +24,16 @@ import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedLeaderboardRouteImport } from './routes/_authed/leaderboard'
 import { Route as AuthedEntriesRouteImport } from './routes/_authed/entries'
 import { Route as AuthedCheckmateRouteImport } from './routes/_authed/checkmate'
+import { Route as AuthedAppRouteImport } from './routes/_authed/app'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscribeRoute = SubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RenewRoute = RenewRouteImport.update({
@@ -48,10 +55,10 @@ const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedIndexRoute = AuthedIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiForthsoftWebhookRoute = ApiForthsoftWebhookRouteImport.update({
   id: '/api/forthsoft-webhook',
@@ -93,13 +100,20 @@ const AuthedCheckmateRoute = AuthedCheckmateRouteImport.update({
   path: '/checkmate',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAppRoute = AuthedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthedIndexRoute
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
+  '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
   '/entries': typeof AuthedEntriesRoute
   '/leaderboard': typeof AuthedLeaderboardRoute
@@ -110,10 +124,13 @@ export interface FileRoutesByFullPath {
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
+  '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
   '/entries': typeof AuthedEntriesRoute
   '/leaderboard': typeof AuthedLeaderboardRoute
@@ -122,15 +139,17 @@ export interface FileRoutesByTo {
   '/winners': typeof AuthedWinnersRoute
   '/wisdomdrop': typeof AuthedWisdomdropRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
-  '/': typeof AuthedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
+  '/_authed/app': typeof AuthedAppRoute
   '/_authed/checkmate': typeof AuthedCheckmateRoute
   '/_authed/entries': typeof AuthedEntriesRoute
   '/_authed/leaderboard': typeof AuthedLeaderboardRoute
@@ -139,7 +158,6 @@ export interface FileRoutesById {
   '/_authed/winners': typeof AuthedWinnersRoute
   '/_authed/wisdomdrop': typeof AuthedWisdomdropRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
-  '/_authed/': typeof AuthedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,7 +166,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
+    | '/app'
     | '/checkmate'
     | '/entries'
     | '/leaderboard'
@@ -159,10 +179,13 @@ export interface FileRouteTypes {
     | '/api/forthsoft-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
+    | '/app'
     | '/checkmate'
     | '/entries'
     | '/leaderboard'
@@ -171,14 +194,16 @@ export interface FileRouteTypes {
     | '/winners'
     | '/wisdomdrop'
     | '/api/forthsoft-webhook'
-    | '/'
   id:
     | '__root__'
+    | '/'
     | '/_authed'
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
+    | '/_authed/app'
     | '/_authed/checkmate'
     | '/_authed/entries'
     | '/_authed/leaderboard'
@@ -187,14 +212,15 @@ export interface FileRouteTypes {
     | '/_authed/winners'
     | '/_authed/wisdomdrop'
     | '/api/forthsoft-webhook'
-    | '/_authed/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RenewRoute: typeof RenewRoute
+  SubscribeRoute: typeof SubscribeRoute
   VerifyRoute: typeof VerifyRoute
   ApiForthsoftWebhookRoute: typeof ApiForthsoftWebhookRoute
 }
@@ -206,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscribe': {
+      id: '/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof SubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/renew': {
@@ -236,12 +269,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/': {
-      id: '/_authed/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthedIndexRouteImport
-      parentRoute: typeof AuthedRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/forthsoft-webhook': {
       id: '/api/forthsoft-webhook'
@@ -299,10 +332,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCheckmateRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/app': {
+      id: '/_authed/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthedAppRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAppRoute: typeof AuthedAppRoute
   AuthedCheckmateRoute: typeof AuthedCheckmateRoute
   AuthedEntriesRoute: typeof AuthedEntriesRoute
   AuthedLeaderboardRoute: typeof AuthedLeaderboardRoute
@@ -310,10 +351,10 @@ interface AuthedRouteChildren {
   AuthedResultsRoute: typeof AuthedResultsRoute
   AuthedWinnersRoute: typeof AuthedWinnersRoute
   AuthedWisdomdropRoute: typeof AuthedWisdomdropRoute
-  AuthedIndexRoute: typeof AuthedIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAppRoute: AuthedAppRoute,
   AuthedCheckmateRoute: AuthedCheckmateRoute,
   AuthedEntriesRoute: AuthedEntriesRoute,
   AuthedLeaderboardRoute: AuthedLeaderboardRoute,
@@ -321,17 +362,18 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedResultsRoute: AuthedResultsRoute,
   AuthedWinnersRoute: AuthedWinnersRoute,
   AuthedWisdomdropRoute: AuthedWisdomdropRoute,
-  AuthedIndexRoute: AuthedIndexRoute,
 }
 
 const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RenewRoute: RenewRoute,
+  SubscribeRoute: SubscribeRoute,
   VerifyRoute: VerifyRoute,
   ApiForthsoftWebhookRoute: ApiForthsoftWebhookRoute,
 }

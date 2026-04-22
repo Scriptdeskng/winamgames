@@ -12,7 +12,7 @@ import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import React from "react";
 
-export const Route = createFileRoute("/_authed/")({
+export const Route = createFileRoute("/_authed/app")({
   component: HomePage,
 });
 
