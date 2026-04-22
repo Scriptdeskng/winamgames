@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+
 import {
   Trophy, Coins, Users, Sparkles, Smartphone, Gamepad2,
   ArrowRight, Hash, Calendar, Check, ChevronDown,
