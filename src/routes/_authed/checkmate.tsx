@@ -219,9 +219,19 @@ function CheckMatePage() {
         )}
 
         {puzzle && (
-          <p className="text-center text-xs text-muted-foreground">
-            {puzzle.fen.split(" ")[1] === "w" ? "White" : "Black"} to move — find the best move
-          </p>
+          <div className="rounded-xl bg-surface-1 border border-border px-4 py-3 flex gap-3 items-start">
+            <div className="text-2xl leading-none shrink-0">
+              {puzzle.fen.split(" ")[1] === "w" ? "♙" : "♟"}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground">
+                {puzzle.fen.split(" ")[1] === "w" ? "White" : "Black"} to move
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {GOAL_BY_THEME[(puzzle as any).theme] ?? "Find the best move."}
+              </p>
+            </div>
+          </div>
         )}
 
         {puzzle && (
