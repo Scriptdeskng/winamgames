@@ -1,6 +1,59 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+// ── ensureCurrentDrawWeek ─────────────────────────────────────────────
+// Returns the id of the current open draw week, creating one if missing.
+// Triggers lazily on the first session of a new week — no cron required.
+async function ensureCurrentDrawWeek(): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+  const todayWAT = nowWAT.toISOString().split("T")[0];
+
+  // TODO (schema): add unique index on winam_draw_weeks(week_start_wat)
+  // to harden rollover against concurrent insert races — Phase 1 CTO task
+  const { data: existing } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .select("id")
+    .eq("status", "open")
+    .gte("week_end_wat", todayWAT)
+    .order("week_start_wat", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) return existing.id;
+
+  // Compute current WAT week (Mon–Sun)
+  const day = nowWAT.getUTCDay(); // 0 = Sunday
+  const daysToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(nowWAT);
+  monday.setUTCDate(nowWAT.getUTCDate() + daysToMonday);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+
+  const weekStart = monday.toISOString().split("T")[0];
+  const weekEnd = sunday.toISOString().split("T")[0];
+
+  const { data: newWeek, error } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .insert({
+      week_start_wat: weekStart,
+      week_end_wat: weekEnd,
+      entry_lock_at: `${weekEnd}T18:00:00+00:00`, // 19:00 WAT
+      draw_executes_at: `${weekEnd}T19:00:00+00:00`, // 20:00 WAT
+      status: "open",
+      total_entries: 0,
+    })
+    .select("id")
+    .single();
+
+  if (error || !newWeek) {
+    console.error("ensureCurrentDrawWeek insert failed:", error);
+    return null;
+  }
+  return newWeek.id;
+}
+
 // ── startSession ──────────────────────────────────────────────────────
 export const startSession = createServerFn({ method: "POST" })
   .inputValidator(
@@ -13,15 +66,9 @@ export const startSession = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
-    // Get current open draw week
-    const { data: drawWeek, error: dwErr } = await supabaseAdmin
-      .from("winam_draw_weeks")
-      .select("id")
-      .eq("status", "open")
-      .limit(1)
-      .maybeSingle();
-
-    if (dwErr || !drawWeek) {
+    // Ensure current draw week exists (auto-rollover)
+    const drawWeekId = await ensureCurrentDrawWeek();
+    if (!drawWeekId) {
       return { success: false as const, error: "No active draw week" };
     }
 
