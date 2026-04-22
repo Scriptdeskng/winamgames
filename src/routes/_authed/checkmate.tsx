@@ -1,15 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import React from "react";
 import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
-import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins, Lightbulb } from "lucide-react";
+
+const HINT_TIERS = [
+  { tier: 1 as const, label: "Piece", cost: 25 },
+  { tier: 2 as const, label: "Destination", cost: 75 },
+  { tier: 3 as const, label: "Full move", cost: 150 },
+];
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
@@ -34,6 +40,20 @@ function CheckMatePage() {
   const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
   const session = useGameSession("checkmate", playerId);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem("winam_checkmate_onboarded")) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const dismissOnboarding = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("winam_checkmate_onboarded", "1");
+    }
+    setShowOnboarding(false);
+  };
 
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
@@ -152,6 +172,21 @@ function CheckMatePage() {
       <div className="px-4 pt-4 pb-8 space-y-4">
         <DrawLockBanner />
 
+        {showOnboarding && (
+          <div className="rounded-xl bg-surface-1 border border-emerald/30 p-4 space-y-3">
+            <p className="text-sm text-foreground leading-relaxed">
+              Tap a piece to select it, then tap where you want it to move.
+              Find the winning move to earn your entry.
+            </p>
+            <button
+              onClick={dismissOnboarding}
+              className="w-full h-10 rounded-lg bg-emerald text-emerald-foreground text-sm font-semibold hover:bg-emerald/90 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        )}
+
         {session.feedback && (
           <div className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold ${
             session.feedback === "correct"
@@ -167,6 +202,12 @@ function CheckMatePage() {
         )}
 
         {puzzle && (
+          <p className="text-center text-xs text-muted-foreground">
+            {puzzle.fen.split(" ")[1] === "w" ? "White" : "Black"} to move — find the best move
+          </p>
+        )}
+
+        {puzzle && (
           <ChessBoard
             fen={puzzle.fen}
             selectedSquare={selectedSquare}
@@ -177,12 +218,16 @@ function CheckMatePage() {
           />
         )}
 
-        {session.hintData && !session.feedback && (
-          <div className="rounded-xl bg-coin/10 border border-coin/20 p-3">
-            <p className="text-xs font-medium text-coin">
-              {session.hintData.piece && `Piece: ${session.hintData.piece}`}
-              {session.hintData.destination && ` → ${session.hintData.destination}`}
-              {session.hintData.from && session.hintData.to && ` (${session.hintData.from} → ${session.hintData.to})`}
+        {session.currentHintTier > 0 && !session.feedback && session.hintData && (
+          <div className="rounded-xl bg-coin/10 border border-coin/20 p-3 text-center">
+            <p className="text-sm text-coin">
+              Move the <strong className="font-semibold">{session.hintData.piece}</strong>
+              {session.currentHintTier === 2 && session.hintData.destination && (
+                <> to <strong className="font-semibold">{session.hintData.destination}</strong></>
+              )}
+              {session.currentHintTier >= 3 && session.hintData.from && session.hintData.to && (
+                <> from <strong className="font-semibold">{session.hintData.from}</strong> to <strong className="font-semibold">{session.hintData.to}</strong></>
+              )}
             </p>
           </div>
         )}
@@ -196,12 +241,45 @@ function CheckMatePage() {
         />
 
         {!session.feedback && (
-          <HintButton
-            currentTier={session.currentHintTier}
-            coinBalance={session.coinBalance}
-            onUseHint={session.requestHint}
-            disabled={session.loading || session.gameOver}
-          />
+          <div className="grid grid-cols-3 gap-2">
+            {HINT_TIERS.map(({ tier, label, cost }) => {
+              const purchased = session.currentHintTier >= tier;
+              const locked = tier > session.currentHintTier + 1;
+              const canAfford = session.coinBalance >= cost;
+              const disabled =
+                purchased ||
+                locked ||
+                !canAfford ||
+                session.loading ||
+                session.gameOver;
+
+              return (
+                <button
+                  key={tier}
+                  disabled={disabled}
+                  onClick={() => session.requestHint(tier)}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all border min-h-[72px]",
+                    purchased
+                      ? "bg-success/10 border-success/30 text-success"
+                      : disabled
+                        ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
+                        : "bg-surface-1 border-border text-foreground hover:border-primary/30"
+                  )}
+                >
+                  {purchased ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Lightbulb className="h-4 w-4 text-coin" />
+                  )}
+                  <span className="leading-tight">{label}</span>
+                  <span className="tabular-nums text-[10px] text-coin">
+                    {purchased ? "Bought" : `${cost} coins`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
