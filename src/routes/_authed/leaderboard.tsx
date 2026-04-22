@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
-import { Crown, Ticket, Info, Play, Users, Trophy } from "lucide-react";
+import { Crown, Puzzle, Play, Users, Trophy, Sun } from "lucide-react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getSession } from "@/lib/session";
-import { getLeaderboard } from "@/utils/mission.functions";
+import { getLeaderboard, getDailyLeaderboard } from "@/utils/mission.functions";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import React from "react";
 
 export const Route = createFileRoute("/_authed/leaderboard")({
@@ -12,25 +13,32 @@ export const Route = createFileRoute("/_authed/leaderboard")({
   head: () => ({
     meta: [
       { title: "Leaderboard — WinamGames" },
-      { name: "description", content: "See the top players competing this week on WinamGames." },
+      { name: "description", content: "See the top puzzle solvers competing this week on WinamGames." },
     ],
   }),
 });
 
-interface LeaderboardPlayer {
+interface LeaderRow {
   id: string;
   name: string;
-  entries: number;
+  score: number;
   rankTier: string;
 }
 
-interface LeaderboardData {
-  players: LeaderboardPlayer[];
+interface WeeklyData {
+  players: LeaderRow[];
   totalPlayers: number;
   weekStartWat: string | null;
   weekEndWat: string | null;
   drawExecutesAt: string | null;
-  currentPlayer: (LeaderboardPlayer & { rank: number }) | null;
+  currentPlayer: (LeaderRow & { rank: number }) | null;
+}
+
+interface DailyData {
+  players: LeaderRow[];
+  totalPlayers: number;
+  todayWat: string | null;
+  currentPlayer: (LeaderRow & { rank: number }) | null;
 }
 
 function asTier(tier: string): RankTier {
@@ -57,36 +65,45 @@ function getCountdownParts(ms: number) {
 function LeaderboardPage() {
   useAllowScroll();
   const session = getSession();
-  const [data, setData] = React.useState<LeaderboardData | null>(null);
+  const [weekly, setWeekly] = React.useState<WeeklyData | null>(null);
+  const [daily, setDaily] = React.useState<DailyData | null>(null);
 
   React.useEffect(() => {
-    getLeaderboard({
-      data: { limit: 10, playerId: session?.playerId },
-    }).then((res) => {
-      if (res.success) {
-        setData({
-          players: res.players,
-          totalPlayers: res.totalPlayers,
-          weekStartWat: res.weekStartWat,
-          weekEndWat: res.weekEndWat,
-          drawExecutesAt: res.drawExecutesAt,
-          currentPlayer: res.currentPlayer,
+    Promise.all([
+      getLeaderboard({ data: { limit: 10, playerId: session?.playerId } }),
+      getDailyLeaderboard({ data: { limit: 50, playerId: session?.playerId } }),
+    ]).then(([w, d]) => {
+      if (w.success) {
+        setWeekly({
+          players: w.players.map((p) => ({ id: p.id, name: p.name, score: p.puzzles, rankTier: p.rankTier })),
+          totalPlayers: w.totalPlayers,
+          weekStartWat: w.weekStartWat,
+          weekEndWat: w.weekEndWat,
+          drawExecutesAt: w.drawExecutesAt,
+          currentPlayer: w.currentPlayer
+            ? { id: w.currentPlayer.id, name: w.currentPlayer.name, score: w.currentPlayer.puzzles, rankTier: w.currentPlayer.rankTier, rank: w.currentPlayer.rank }
+            : null,
         });
       } else {
-        setData({
-          players: [],
-          totalPlayers: 0,
-          weekStartWat: null,
-          weekEndWat: null,
-          drawExecutesAt: null,
-          currentPlayer: null,
+        setWeekly({ players: [], totalPlayers: 0, weekStartWat: null, weekEndWat: null, drawExecutesAt: null, currentPlayer: null });
+      }
+      if (d.success) {
+        setDaily({
+          players: d.players.map((p) => ({ id: p.id, name: p.name, score: p.puzzles, rankTier: p.rankTier })),
+          totalPlayers: d.totalPlayers,
+          todayWat: d.todayWat,
+          currentPlayer: d.currentPlayer
+            ? { id: d.currentPlayer.id, name: d.currentPlayer.name, score: d.currentPlayer.puzzles, rankTier: d.currentPlayer.rankTier, rank: d.currentPlayer.rank }
+            : null,
         });
+      } else {
+        setDaily({ players: [], totalPlayers: 0, todayWat: null, currentPlayer: null });
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!data) {
+  if (!weekly || !daily) {
     return (
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex items-center justify-center">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -95,15 +112,6 @@ function LeaderboardPage() {
   }
 
   const meId = session?.playerId;
-  const top3 = data.players.slice(0, 3);
-  const rest = data.players.slice(3);
-  const showPodium = top3.length === 3;
-
-  // Resolve current player standing: prefer server `currentPlayer`, else find in top list.
-  const meInTop = meId ? data.players.find((p) => p.id === meId) : undefined;
-  const myRank = data.currentPlayer?.rank
-    ?? (meInTop ? data.players.findIndex((p) => p.id === meId) + 1 : null);
-  const myEntries = data.currentPlayer?.entries ?? meInTop?.entries ?? null;
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
@@ -119,52 +127,97 @@ function LeaderboardPage() {
       `}</style>
       <TopBar backTo="/app" title="Leaderboard" />
       <div className="px-4 pb-8 space-y-5">
-        <DrawCountdownCard
-          drawExecutesAt={data.drawExecutesAt}
-          weekStartWat={data.weekStartWat}
-          weekEndWat={data.weekEndWat}
-          totalPlayers={data.totalPlayers}
-        />
+        <Tabs defaultValue="week" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-surface-1 border border-border h-10">
+            <TabsTrigger value="week" className="text-xs font-semibold">This week</TabsTrigger>
+            <TabsTrigger value="today" className="text-xs font-semibold">Today</TabsTrigger>
+          </TabsList>
 
-        {data.players.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <>
-            {showPodium && <Podium top3={top3} meId={meId} />}
+          <TabsContent value="week" className="space-y-5 mt-4">
+            <DrawCountdownCard
+              drawExecutesAt={weekly.drawExecutesAt}
+              weekStartWat={weekly.weekStartWat}
+              weekEndWat={weekly.weekEndWat}
+              totalPlayers={weekly.totalPlayers}
+            />
+            <BoardBody
+              data={weekly}
+              meId={meId}
+              scoreLabel="puzzles this week"
+            />
+          </TabsContent>
 
-            {(showPodium ? rest : data.players).length > 0 && (
-              <ChaseList
-                players={showPodium ? rest : data.players}
-                startRank={showPodium ? 4 : 1}
-                meId={meId}
-                top3Lowest={showPodium ? top3[2].entries : null}
-              />
-            )}
-
-            {myRank !== null && myEntries !== null && (
-              <YourStandingCard
-                rank={myRank}
-                entries={myEntries}
-                totalPlayers={data.totalPlayers}
-                players={data.players}
-              />
-            )}
-          </>
-        )}
-
-        <Link
-          to="/entries"
-          className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
-        >
-          <Info className="h-3 w-3" />
-          How tickets work
-        </Link>
+          <TabsContent value="today" className="space-y-5 mt-4">
+            <TodayHeaderCard
+              todayWat={daily.todayWat}
+              totalPlayers={daily.totalPlayers}
+            />
+            <BoardBody
+              data={daily}
+              meId={meId}
+              scoreLabel="puzzles today"
+              chaseScrollable
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 }
 
-// ── Live draw countdown card ──────────────────────────────────────────
+// ── Shared body for both tabs ─────────────────────────────────────────
+function BoardBody({
+  data,
+  meId,
+  scoreLabel,
+  chaseScrollable,
+}: {
+  data: { players: LeaderRow[]; totalPlayers: number; currentPlayer: (LeaderRow & { rank: number }) | null };
+  meId: string | undefined;
+  scoreLabel: string;
+  chaseScrollable?: boolean;
+}) {
+  if (data.players.length === 0) {
+    return <EmptyState />;
+  }
+
+  const top3 = data.players.slice(0, 3);
+  const rest = data.players.slice(3);
+  const showPodium = top3.length === 3;
+
+  const meInTop = meId ? data.players.find((p) => p.id === meId) : undefined;
+  const myRank = data.currentPlayer?.rank
+    ?? (meInTop ? data.players.findIndex((p) => p.id === meId) + 1 : null);
+  const myScore = data.currentPlayer?.score ?? meInTop?.score ?? null;
+
+  return (
+    <>
+      {showPodium && <Podium top3={top3} meId={meId} />}
+
+      {(showPodium ? rest : data.players).length > 0 && (
+        <ChaseList
+          players={showPodium ? rest : data.players}
+          startRank={showPodium ? 4 : 1}
+          meId={meId}
+          top3Lowest={showPodium ? top3[2].score : null}
+          scrollable={chaseScrollable}
+        />
+      )}
+
+      {myRank !== null && myScore !== null && (
+        <YourStandingCard
+          rank={myRank}
+          score={myScore}
+          totalPlayers={data.totalPlayers}
+          players={data.players}
+          scoreLabel={scoreLabel}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Live draw countdown card (weekly tab) ─────────────────────────────
 function DrawCountdownCard({
   drawExecutesAt,
   weekStartWat,
@@ -187,7 +240,6 @@ function DrawCountdownCard({
   const remaining = target ? Math.max(0, target - now) : 0;
   const { days, hours, minutes } = getCountdownParts(remaining);
 
-  // Week elapsed progress
   let pct = 0;
   if (weekStartWat && weekEndWat) {
     const start = new Date(`${weekStartWat}T00:00:00`).getTime();
@@ -203,7 +255,7 @@ function DrawCountdownCard({
         </p>
         <div className="inline-flex items-center gap-1 text-[11px] text-muted-foreground tabular-nums">
           <Users className="h-3 w-3" />
-          {totalPlayers} {totalPlayers === 1 ? "player" : "players"}
+          {totalPlayers} {totalPlayers === 1 ? "solver" : "solvers"}
         </div>
       </div>
 
@@ -248,6 +300,39 @@ function Sep() {
   return <span className="font-mono text-2xl font-bold leading-none text-muted-foreground/40 pb-[14px]">:</span>;
 }
 
+// ── Today header card ─────────────────────────────────────────────────
+function TodayHeaderCard({
+  todayWat,
+  totalPlayers,
+}: {
+  todayWat: string | null;
+  totalPlayers: number;
+}) {
+  const dateLabel = todayWat
+    ? new Date(`${todayWat}T00:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+    : "Today";
+
+  return (
+    <div className="rounded-2xl bg-surface-1 border border-border shadow-card p-4 flex items-center gap-3">
+      <div className="h-10 w-10 rounded-xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center shrink-0">
+        <Sun className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+          Today's Solvers
+        </p>
+        <p className="text-sm font-semibold text-foreground tabular-nums truncate">{dateLabel}</p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-base font-bold tabular-nums font-display text-foreground">{totalPlayers}</p>
+        <p className="text-[10px] text-muted-foreground leading-none">
+          {totalPlayers === 1 ? "solver" : "solvers"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Empty state ───────────────────────────────────────────────────────
 function EmptyState() {
   return (
@@ -261,7 +346,7 @@ function EmptyState() {
       <div>
         <p className="text-base font-bold text-foreground">Be first on the board</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Earn a ticket to claim rank #1 this week.
+          Solve puzzles to climb the ranks.
         </p>
       </div>
       <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
@@ -277,13 +362,12 @@ function Podium({
   top3,
   meId,
 }: {
-  top3: LeaderboardPlayer[];
+  top3: LeaderRow[];
   meId: string | undefined;
 }) {
   const [first, second, third] = top3;
   return (
     <div className="relative pt-6">
-      {/* Radial gold glow behind 1st */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-48 w-48 rounded-full blur-3xl opacity-50"
@@ -354,7 +438,7 @@ function PodiumPillar({
   place,
   meId,
 }: {
-  player: LeaderboardPlayer | undefined;
+  player: LeaderRow | undefined;
   place: 1 | 2 | 3;
   meId: string | undefined;
 }) {
@@ -376,7 +460,6 @@ function PodiumPillar({
         <Crown className="crown-float absolute -top-5 left-1/2 h-7 w-7 text-coin drop-shadow-[0_0_8px_oklch(0.82_0.17_85_/_0.6)]" />
       )}
 
-      {/* Tier-colored gradient orb avatar */}
       <div
         className={`${style.avatar} rounded-full flex items-center justify-center mb-2 shadow-lg`}
         style={{
@@ -397,8 +480,8 @@ function PodiumPillar({
       </p>
 
       <div className={`mt-1.5 inline-flex items-center gap-1 ${place === 1 ? "text-base" : "text-sm"} font-bold tabular-nums font-display ${style.label}`}>
-        <Ticket className={place === 1 ? "h-4 w-4" : "h-3 w-3"} />
-        {player.entries}
+        <Puzzle className={place === 1 ? "h-4 w-4" : "h-3 w-3"} />
+        {player.score}
       </div>
 
       <span className={`mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${style.medalBg} ${style.medalText}`}>
@@ -408,25 +491,31 @@ function PodiumPillar({
   );
 }
 
-// ── The Chase (ranks 4–10) ────────────────────────────────────────────
+// ── Chase list ────────────────────────────────────────────────────────
 function ChaseList({
   players,
   startRank,
   meId,
   top3Lowest,
+  scrollable,
 }: {
-  players: LeaderboardPlayer[];
+  players: LeaderRow[];
   startRank: number;
   meId: string | undefined;
   top3Lowest: number | null;
+  scrollable?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border overflow-hidden divide-y divide-border/40">
+    <div
+      className={`rounded-2xl bg-surface-1 border border-border overflow-hidden divide-y divide-border/40 ${
+        scrollable && players.length > 7 ? "max-h-[60vh] overflow-y-auto" : ""
+      }`}
+    >
       {players.map((p, i) => {
         const rank = startRank + i;
         const isMe = p.id === meId;
         const isFirstBelowPodium = startRank === 4 && i === 0;
-        const gapToPodium = top3Lowest !== null ? top3Lowest - p.entries + 1 : 0;
+        const gapToPodium = top3Lowest !== null ? top3Lowest - p.score + 1 : 0;
         const hint = isFirstBelowPodium && gapToPodium > 0
           ? `+${gapToPodium} to podium`
           : null;
@@ -435,7 +524,7 @@ function ChaseList({
           <div
             key={p.id}
             className={`animate-in fade-in-0 duration-300 ${isMe ? "border-l-2 border-l-primary bg-primary/[0.04]" : ""}`}
-            style={{ animationDelay: `${i * 30}ms` }}
+            style={{ animationDelay: `${Math.min(i * 30, 600)}ms` }}
           >
             <ChaseRow rank={rank} player={p} isMe={isMe} hint={hint} />
           </div>
@@ -452,7 +541,7 @@ function ChaseRow({
   hint,
 }: {
   rank: number;
-  player: LeaderboardPlayer;
+  player: LeaderRow;
   isMe: boolean;
   hint: string | null;
 }) {
@@ -490,8 +579,8 @@ function ChaseRow({
         )}
       </div>
       <div className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-foreground">
-        <Ticket className="h-3.5 w-3.5 text-muted-foreground" />
-        {player.entries}
+        <Puzzle className="h-3.5 w-3.5 text-muted-foreground" />
+        {player.score}
       </div>
     </div>
   );
@@ -500,29 +589,28 @@ function ChaseRow({
 // ── Your standing card ────────────────────────────────────────────────
 function YourStandingCard({
   rank,
-  entries,
+  score,
   totalPlayers,
   players,
+  scoreLabel,
 }: {
   rank: number;
-  entries: number;
+  score: number;
   totalPlayers: number;
-  players: LeaderboardPlayer[];
+  players: LeaderRow[];
+  scoreLabel: string;
 }) {
-  // Gap to next rank up (the player one position above me)
-  let gapUp: { entries: number; targetRank: number } | null = null;
+  let gapUp: { score: number; targetRank: number } | null = null;
   if (rank > 1) {
-    const above = players[rank - 2]; // 0-indexed: rank-1 is me, rank-2 is above
+    const above = players[rank - 2];
     if (above) {
-      gapUp = { entries: Math.max(0, above.entries - entries + 1), targetRank: rank - 1 };
+      gapUp = { score: Math.max(0, above.score - score + 1), targetRank: rank - 1 };
     } else if (players.length > 0) {
-      // I'm outside the top list — target the lowest visible rank
       const lowest = players[players.length - 1];
-      gapUp = { entries: Math.max(0, lowest.entries - entries + 1), targetRank: players.length };
+      gapUp = { score: Math.max(0, lowest.score - score + 1), targetRank: players.length };
     }
   }
 
-  // Top-10 safety
   const inTop10 = rank <= 10;
   let safetyMsg: { text: string; tone: "safe" | "push" } = inTop10
     ? { text: "Safe in top 10", tone: "safe" }
@@ -532,9 +620,8 @@ function YourStandingCard({
     safetyMsg = { text: "Hold rank 10 to lock top 10", tone: "push" };
   }
 
-  // Progress to next rank up — visualised as fraction of "above's entries"
-  const aboveEntries = rank > 1 && players[rank - 2] ? players[rank - 2].entries : entries;
-  const pct = aboveEntries > 0 ? Math.min(100, (entries / aboveEntries) * 100) : 100;
+  const aboveScore = rank > 1 && players[rank - 2] ? players[rank - 2].score : score;
+  const pct = aboveScore > 0 ? Math.min(100, (score / aboveScore) * 100) : 100;
 
   return (
     <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-surface-1 to-surface-1 border border-primary/30 shadow-glow p-4 space-y-3">
@@ -550,14 +637,14 @@ function YourStandingCard({
         </div>
         <div className="text-right">
           <div className="inline-flex items-center gap-1 text-lg font-bold tabular-nums font-display text-primary">
-            <Ticket className="h-4 w-4" />
-            {entries}
+            <Puzzle className="h-4 w-4" />
+            {score}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">tickets</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{scoreLabel}</p>
         </div>
       </div>
 
-      {gapUp && gapUp.entries > 0 && (
+      {gapUp && gapUp.score > 0 && (
         <>
           <div className="h-1.5 w-full rounded-full bg-border/60 overflow-hidden">
             <div
@@ -566,7 +653,7 @@ function YourStandingCard({
             />
           </div>
           <p className="text-[11px] text-muted-foreground tabular-nums">
-            <span className="text-foreground font-semibold">+{gapUp.entries}</span> to reach rank #{gapUp.targetRank}
+            <span className="text-foreground font-semibold">+{gapUp.score}</span> to reach rank #{gapUp.targetRank}
             {" · "}
             <span className={safetyMsg.tone === "safe" ? "text-primary" : "text-coin"}>
               {safetyMsg.text}
@@ -575,7 +662,7 @@ function YourStandingCard({
         </>
       )}
 
-      {(!gapUp || gapUp.entries === 0) && (
+      {(!gapUp || gapUp.score === 0) && (
         <p className="text-[11px] text-primary font-semibold">
           {rank === 1 ? "👑 You're #1 — defend the throne." : safetyMsg.text}
         </p>
