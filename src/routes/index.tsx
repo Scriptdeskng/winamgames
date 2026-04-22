@@ -141,7 +141,7 @@ function HeroSection({ onSeeWinners }: { onSeeWinners: () => void }) {
             <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-coin/10 border border-coin/25 px-3.5 py-1.5">
               <Trophy className="h-3.5 w-3.5 text-coin" />
               <span className="text-xs font-semibold text-coin tabular-nums">
-                ₦50,000 in prizes drawn every Sunday
+                Cash prizes drawn every Sunday
               </span>
             </div>
           </RevealOnScroll>
@@ -531,7 +531,7 @@ function SocialProofStrip() {
   const facts = [
     { icon: Users, label: "500+ players this week" },
     { icon: Trophy, label: "50+ winners every Sunday" },
-    { icon: Coins, label: "₦50,000 in weekly prizes" },
+    { icon: Coins, label: "Real cash, every week" },
     { icon: Sparkles, label: "Infinite challenge" },
   ];
 
