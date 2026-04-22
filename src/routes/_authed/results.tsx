@@ -49,10 +49,10 @@ function ResultsPage() {
 
   // Streak pill copy
   let streakPill: string | null = null;
-  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus tickets per session`;
-  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus tickets per session`;
-  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus ticket per session`;
-  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus ticket per session`;
+  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus entries per session`;
+  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus entries per session`;
+  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus entry per session`;
+  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus entry per session`;
 
   const rankedUp = rankTier !== previousRank;
 
@@ -77,12 +77,12 @@ function ResultsPage() {
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve 5 puzzles in a session to earn your first ticket";
+    nudge = "Solve 5 puzzles in a session to earn your first entry";
   } else if (remainder === 0) {
-    nudge = "Nice rhythm — every 5 puzzles earns 1 ticket";
+    nudge = "Nice rhythm — every 5 puzzles earns 1 entry";
   } else {
     const need = 5 - remainder;
-    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} for your next ticket`;
+    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} for your next entry`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
@@ -131,7 +131,7 @@ function ResultsPage() {
               >
                 +{entries}
                 <span className="ml-2 text-2xl font-semibold align-baseline">
-                  {entries === 1 ? "ticket" : "tickets"}
+                  {entries === 1 ? "entry" : "entries"}
                 </span>
               </p>
               <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
@@ -143,9 +143,9 @@ function ResultsPage() {
             </>
           ) : (
             <>
-              <p className="mt-3 text-3xl font-bold">No tickets this time</p>
+              <p className="mt-3 text-3xl font-bold">No entries this time</p>
               <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
-                Every 5 puzzles solved earns 1 ticket toward the weekly draw
+                Every 5 puzzles solved earns 1 entry toward the weekly draw
               </p>
             </>
           )}
@@ -158,7 +158,7 @@ function ResultsPage() {
         <div className="mt-6">
           <div className="flex items-baseline justify-between mb-2.5">
             <span className="text-xs uppercase tracking-wider text-muted-foreground">
-              Tickets earned this week
+              Entries earned this week
             </span>
             <span className="text-sm font-semibold tabular-nums">
               {weekTotal} <span className="text-muted-foreground font-normal">of {weekCap}</span>
