@@ -1,18 +1,18 @@
 import { cn } from "@/lib/utils";
 
 const PIECE_URL: Record<string, string> = {
-  K: "https://lichess1.org/assets/piece/cburnett/wK.svg",
-  Q: "https://lichess1.org/assets/piece/cburnett/wQ.svg",
-  R: "https://lichess1.org/assets/piece/cburnett/wR.svg",
-  B: "https://lichess1.org/assets/piece/cburnett/wB.svg",
-  N: "https://lichess1.org/assets/piece/cburnett/wN.svg",
-  P: "https://lichess1.org/assets/piece/cburnett/wP.svg",
-  k: "https://lichess1.org/assets/piece/cburnett/bK.svg",
-  q: "https://lichess1.org/assets/piece/cburnett/bQ.svg",
-  r: "https://lichess1.org/assets/piece/cburnett/bR.svg",
-  b: "https://lichess1.org/assets/piece/cburnett/bB.svg",
-  n: "https://lichess1.org/assets/piece/cburnett/bN.svg",
-  p: "https://lichess1.org/assets/piece/cburnett/bP.svg",
+  K: "https://lichess1.org/assets/piece/staunty/wK.svg",
+  Q: "https://lichess1.org/assets/piece/staunty/wQ.svg",
+  R: "https://lichess1.org/assets/piece/staunty/wR.svg",
+  B: "https://lichess1.org/assets/piece/staunty/wB.svg",
+  N: "https://lichess1.org/assets/piece/staunty/wN.svg",
+  P: "https://lichess1.org/assets/piece/staunty/wP.svg",
+  k: "https://lichess1.org/assets/piece/staunty/bK.svg",
+  q: "https://lichess1.org/assets/piece/staunty/bQ.svg",
+  r: "https://lichess1.org/assets/piece/staunty/bR.svg",
+  b: "https://lichess1.org/assets/piece/staunty/bB.svg",
+  n: "https://lichess1.org/assets/piece/staunty/bN.svg",
+  p: "https://lichess1.org/assets/piece/staunty/bP.svg",
 };
 
 function parseFen(fen: string): (string | null)[][] {
