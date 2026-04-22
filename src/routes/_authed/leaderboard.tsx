@@ -169,12 +169,10 @@ function BoardBody({
   data,
   meId,
   scoreLabel,
-  chaseScrollable,
 }: {
   data: { players: LeaderRow[]; totalPlayers: number; currentPlayer: (LeaderRow & { rank: number }) | null };
   meId: string | undefined;
   scoreLabel: string;
-  chaseScrollable?: boolean;
 }) {
   if (data.players.length === 0) {
     return <EmptyState />;
@@ -199,7 +197,6 @@ function BoardBody({
           startRank={showPodium ? 4 : 1}
           meId={meId}
           top3Lowest={showPodium ? top3[2].score : null}
-          scrollable={chaseScrollable}
         />
       )}
 
@@ -498,13 +495,11 @@ function ChaseList({
   startRank,
   meId,
   top3Lowest,
-  scrollable,
 }: {
   players: LeaderRow[];
   startRank: number;
   meId: string | undefined;
   top3Lowest: number | null;
-  scrollable?: boolean;
 }) {
   return (
     <div
