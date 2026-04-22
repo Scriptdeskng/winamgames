@@ -40,6 +40,20 @@ function CheckMatePage() {
   const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
   const session = useGameSession("checkmate", playerId);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem("winam_checkmate_onboarded")) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const dismissOnboarding = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("winam_checkmate_onboarded", "1");
+    }
+    setShowOnboarding(false);
+  };
 
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
