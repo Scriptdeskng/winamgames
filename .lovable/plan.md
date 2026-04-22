@@ -1,110 +1,104 @@
 
 
-## Seed current draw week + auto-rollover (with addenda)
+## Fix CheckMate submission format bug
 
-### 1. Database operations (via insert tool)
+### Pre-flight checks
+- **chess.js**: not installed (grep on `package.json` + `package-lock.json` returned no results). Need to add it.
+- **cm-003 / cm-008 share `c1g5`**: verified against both FENs — the dark-squared bishop is on c1 in both positions and the c1→g5 diagonal is clear in both. The mappings are **correct**; the duplicate is a content-design issue (two near-identical positions in the pool), not a translation error. Flagged below, not changed.
 
-Two statements run together:
+### 1. Add dependency
+Add `chess.js` (`^1.0.0-beta.8` or latest stable) to `package.json`.
 
-```sql
--- Close out stale row
-UPDATE winam_draw_weeks
-SET status = 'settled'
-WHERE week_end_wat = '2026-04-19';
+### 2. `src/data/checkmate-puzzles.ts` — convert all 20 `solutionMove` to UCI
 
--- Seed current week with correct spec times (19:00 WAT lock, 20:00 WAT draw)
-INSERT INTO winam_draw_weeks (
-  week_start_wat, week_end_wat,
-  entry_lock_at, draw_executes_at,
-  status, total_entries
-) VALUES (
-  '2026-04-20', '2026-04-26',
-  '2026-04-26 18:00:00+00',
-  '2026-04-26 19:00:00+00',
-  'open', 0
-);
-```
+| ID | Old | New |   | ID | Old | New |
+|----|-----|-----|---|----|-----|-----|
+| cm-001 | Qxf7 | h5f7 | | cm-011 | e5 | e4e5 |
+| cm-002 | Qh4 | d8h4 | | cm-012 | e3 | e2e3 |
+| cm-003 | Bg5 | c1g5 | | cm-013 | O-O | e1g1 |
+| cm-004 | Bxf7 | c4f7 | | cm-014 | Be3 | c1e3 |
+| cm-005 | Ng5 | f3g5 | | cm-015 | cxd5 | c4d5 |
+| cm-006 | Nxf7 | e5f7 | | cm-016 | Be3 | c1e3 |
+| cm-007 | Be2 | f1e2 | | cm-017 | e3 | e2e3 |
+| cm-008 | Bg5 | c1g5 | | cm-018 | Nf3 | g1f3 |
+| cm-009 | O-O | e1g1 | | cm-019 | Bd3 | f1d3 |
+| cm-010 | d4 | d2d4 | | cm-020 | e3 | e2e3 |
 
-### 2. Add `ensureCurrentDrawWeek` helper in `src/utils/game.functions.ts`
+Add comment: `// solutionMove uses UCI format: <from-square><to-square>, e.g. "h5f7"`.
 
-Insert near top of file (above `startSession`). Lazy-imports `supabaseAdmin` to match existing server-fn pattern.
+### 3. `src/utils/game.functions.ts` — `submitMove` (lines 372–376)
+Add `import { Chess } from "chess.js";` at top. Replace the equality check:
 
 ```ts
-async function ensureCurrentDrawWeek(): Promise<string | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-  const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
-  const todayWAT = nowWAT.toISOString().split("T")[0];
-
-  // TODO (schema): add unique index on winam_draw_weeks(week_start_wat)
-  // to harden rollover against concurrent insert races — Phase 1 CTO task
-  const { data: existing } = await supabaseAdmin
-    .from("winam_draw_weeks")
-    .select("id")
-    .eq("status", "open")
-    .gte("week_end_wat", todayWAT)
-    .order("week_start_wat", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (existing) return existing.id;
-
-  // Compute current WAT week (Mon–Sun)
-  const day = nowWAT.getUTCDay();           // 0 = Sunday
-  const daysToMonday = day === 0 ? -6 : 1 - day;
-  const monday = new Date(nowWAT);
-  monday.setUTCDate(nowWAT.getUTCDate() + daysToMonday);
-  const sunday = new Date(monday);
-  sunday.setUTCDate(monday.getUTCDate() + 6);
-
-  const weekStart = monday.toISOString().split("T")[0];
-  const weekEnd   = sunday.toISOString().split("T")[0];
-
-  const { data: newWeek, error } = await supabaseAdmin
-    .from("winam_draw_weeks")
-    .insert({
-      week_start_wat: weekStart,
-      week_end_wat:   weekEnd,
-      entry_lock_at:    `${weekEnd}T18:00:00+00:00`, // 19:00 WAT
-      draw_executes_at: `${weekEnd}T19:00:00+00:00`, // 20:00 WAT
-      status: "open",
-      total_entries: 0,
-    })
-    .select("id")
-    .single();
-
-  if (error || !newWeek) {
-    console.error("ensureCurrentDrawWeek insert failed:", error);
-    return null;
+if (isCheckmate) {
+  const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
+  if (puzzle) {
+    try {
+      const { from, to } = JSON.parse(data.answer) as { from: string; to: string };
+      const chess = new Chess(puzzle.fen);
+      const move = chess.move({ from, to, promotion: "q" });
+      isCorrect = move !== null && `${from}${to}` === puzzle.solutionMove;
+    } catch {
+      isCorrect = false;
+    }
   }
-  return newWeek.id;
 }
 ```
 
-### 3. Wire into `startSession` (lines 16–26)
-
-Replace the current `winam_draw_weeks` lookup block:
-
+### 4. `src/utils/game.functions.ts` — `useHint` tier 3 (line 489)
 ```ts
-const drawWeekId = await ensureCurrentDrawWeek();
-if (!drawWeekId) {
-  return { success: false as const, error: "No active draw week" };
+if (data.tier >= 3) {
+  hintData.from = puzzle.solutionMove.slice(0, 2);
+  hintData.to   = puzzle.solutionMove.slice(2, 4);
 }
 ```
+Tiers 1 (`piece`) and 2 (`destination`) unchanged.
 
-Update the session insert (line 40) `draw_week_id: drawWeek.id` → `draw_week_id: drawWeekId`. Remove the now-unused `drawWeek`/`dwErr` variables.
+### 5. `src/routes/_authed/checkmate.tsx` — `handleSquareClick`
+```tsx
+if (selectedSquare) {
+  session.submit(JSON.stringify({ from: selectedSquare, to: square }));
+  setSelectedSquare(null);
+} else {
+  setSelectedSquare(square);
+}
+```
+Update hint display to render `from → to` for tier 3, and pass hint coords to the board:
+```tsx
+<ChessBoard
+  fen={puzzle.fen}
+  selectedSquare={selectedSquare}
+  onSquareClick={handleSquareClick}
+  hintFrom={session.hintData?.from}
+  hintTo={session.hintData?.to ?? session.hintData?.destination}
+  disabled={session.loading || session.gameOver || !!session.feedback}
+/>
+```
+Fallback to `destination` so tier-2 hints also light up the target square.
+
+### 6. `src/components/games/ChessBoard.tsx` — hint highlighting
+Add optional props `hintFrom?: string | null` and `hintTo?: string | null`. In the square render:
+```tsx
+const isHint = square === hintFrom || square === hintTo;
+// ...
+isHint && !isSelected && "ring-2 ring-coin/70 ring-inset bg-coin/15",
+```
 
 ### Why this is safe
+- chess.js rejects illegal `{from,to}` pairs before equality check — random clicks can't accidentally match.
+- Castling works: `{from:"e1",to:"g1"}` → chess.js accepts as castling → UCI matches `e1g1`.
+- UCI is unambiguous (no SAN disambiguation edge cases).
+- No schema or DB changes.
 
-- `closeSession` reads `draw_week_id` straight off the session row — no change needed.
-- Leaderboard / Entries pages query `winam_draw_weeks` directly; once the new row exists they pick up correct `week_start_wat`/`week_end_wat` for date labels.
-- Rollover triggers lazily on the first session of a new week — no cron required.
-- SELECT uses `order by week_start_wat desc limit 1` so subsequent calls converge on one row even if a brief race produces duplicates.
+### Out of scope (flagged)
+- **cm-003 / cm-008 share `c1g5` solution** — both FENs are legitimately solved by the same bishop move; the positions are near-duplicates (cm-008 has both sides castled + Black rook on e8). Content-design issue worth reviewing in a future puzzle-curation pass; not a translation bug.
+- **Promotion** hardcoded to queen (`promotion:"q"`) — none of the 20 puzzles need underpromotion.
+- **Client-side legality preview** (greying illegal moves) — server stays the authority; UI polish for later.
 
 ### Files touched
-
-- `src/utils/game.functions.ts` — add `ensureCurrentDrawWeek` (with TODO comment), replace draw-week lookup in `startSession`
-- Two SQL statements via the insert tool: UPDATE stale row to `settled` + INSERT current week
-
-No schema changes. No new dependencies.
+- `package.json` — add `chess.js`
+- `src/data/checkmate-puzzles.ts` — 20 UCI conversions + format comment
+- `src/utils/game.functions.ts` — chess.js validation in `submitMove`; tier-3 hint shape in `useHint`
+- `src/routes/_authed/checkmate.tsx` — submit `{from,to}` JSON; render new hint shape; pass hint props to board
+- `src/components/games/ChessBoard.tsx` — `hintFrom`/`hintTo` props with coin-tinted ring
 
