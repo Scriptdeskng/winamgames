@@ -126,7 +126,7 @@ function LeaderboardPage() {
         }
       `}</style>
       <TopBar backTo="/app" title="Leaderboard" />
-      <div className="px-4 pb-8 space-y-5">
+      <div className="px-4 pb-32 space-y-5">
         <Tabs defaultValue="week" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-surface-1 border border-border h-10">
             <TabsTrigger value="week" className="text-xs font-semibold">This week</TabsTrigger>
@@ -156,7 +156,6 @@ function LeaderboardPage() {
               data={daily}
               meId={meId}
               scoreLabel="puzzles today"
-              chaseScrollable
             />
           </TabsContent>
         </Tabs>
@@ -205,13 +204,15 @@ function BoardBody({
       )}
 
       {myRank !== null && myScore !== null && (
-        <YourStandingCard
-          rank={myRank}
-          score={myScore}
-          totalPlayers={data.totalPlayers}
-          players={data.players}
-          scoreLabel={scoreLabel}
-        />
+        <div className="sticky bottom-3 z-30 -mx-1 pt-2">
+          <YourStandingCard
+            rank={myRank}
+            score={myScore}
+            totalPlayers={data.totalPlayers}
+            players={data.players}
+            scoreLabel={scoreLabel}
+          />
+        </div>
       )}
     </>
   );
@@ -507,9 +508,7 @@ function ChaseList({
 }) {
   return (
     <div
-      className={`rounded-2xl bg-surface-1 border border-border overflow-hidden divide-y divide-border/40 ${
-        scrollable && players.length > 7 ? "max-h-[60vh] overflow-y-auto" : ""
-      }`}
+      className="rounded-2xl bg-surface-1 border border-border overflow-hidden divide-y divide-border/40"
     >
       {players.map((p, i) => {
         const rank = startRank + i;
@@ -624,7 +623,7 @@ function YourStandingCard({
   const pct = aboveScore > 0 ? Math.min(100, (score / aboveScore) * 100) : 100;
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-surface-1 to-surface-1 border border-primary/30 shadow-glow p-4 space-y-3">
+    <div className="rounded-2xl bg-gradient-to-br from-primary/20 via-surface-1/95 to-surface-1/95 backdrop-blur-md border border-primary/40 shadow-glow p-4 space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-primary">Your standing</p>
