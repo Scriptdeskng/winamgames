@@ -294,6 +294,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       return {
         success: true as const,
         players: [],
+        totalPlayers: 0,
         ...weekMeta,
         currentPlayer: null,
       };
@@ -304,6 +305,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       const current = playerMap.get(e.player_id) ?? 0;
       if (e.week_total_after > current) playerMap.set(e.player_id, e.week_total_after);
     }
+    const totalPlayers = playerMap.size;
 
     // Full ranked list (used to look up requesting player's rank if outside top N).
     const fullRanked = [...playerMap.entries()]
@@ -360,6 +362,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
     return {
       success: true as const,
       players: sorted,
+      totalPlayers,
       ...weekMeta,
       currentPlayer,
     };
