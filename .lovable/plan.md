@@ -1,34 +1,42 @@
 
 
-## Fix CheckMate piece deselection
+## CheckMate board — Staunty pieces + Lichess classic palette
 
-### Change
+### Changes to `src/components/games/ChessBoard.tsx`
 
-In `src/routes/_authed/checkmate.tsx`, update `handleSquareClick` (lines 71–79) so tapping the already-selected square deselects it instead of submitting a no-op move that costs a life.
+**1. Piece set → Staunty, larger pieces**
 
+Replace every `/cburnett/` URL in `PIECE_URL` with `/staunty/`:
 ```ts
-const handleSquareClick = useCallback((square: string) => {
-  if (!session.currentPuzzle || session.loading || session.gameOver) return;
-
-  if (selectedSquare) {
-    if (square === selectedSquare) {
-      setSelectedSquare(null);
-      return;
-    }
-    session.submit(JSON.stringify({ from: selectedSquare, to: square }));
-    setSelectedSquare(null);
-  } else {
-    setSelectedSquare(square);
-  }
-}, [selectedSquare, session]);
+const PIECE_URL: Record<string, string> = {
+  K: "https://lichess1.org/assets/piece/staunty/wK.svg",
+  Q: "https://lichess1.org/assets/piece/staunty/wQ.svg",
+  R: "https://lichess1.org/assets/piece/staunty/wR.svg",
+  B: "https://lichess1.org/assets/piece/staunty/wB.svg",
+  N: "https://lichess1.org/assets/piece/staunty/wN.svg",
+  P: "https://lichess1.org/assets/piece/staunty/wP.svg",
+  k: "https://lichess1.org/assets/piece/staunty/bK.svg",
+  q: "https://lichess1.org/assets/piece/staunty/bQ.svg",
+  r: "https://lichess1.org/assets/piece/staunty/bR.svg",
+  b: "https://lichess1.org/assets/piece/staunty/bB.svg",
+  n: "https://lichess1.org/assets/piece/staunty/bN.svg",
+  p: "https://lichess1.org/assets/piece/staunty/bP.svg",
+};
 ```
 
-### Why
-- Current code always submits when a square is already selected, so re-tapping the same piece sends `{from: "e2", to: "e2"}` — chess.js rejects it, server marks it wrong, player loses a life.
-- Early-return on the same-square case restores the standard chess UX (tap to select, tap again to cancel).
+Bump `<img>` sizing from `w-[80%] h-[80%]` → `w-[90%] h-[90%]`.
+
+**2. Lichess classic warm palette**
+
+- Base square colours: light `#F0D9B5`, dark `#B58863` (replaces sage/forest greens).
+- Last-move tints stay green-toned — they read fine on the warm board and remain distinct from yellow hint/selection. No change.
+- Coordinate label colour inverts: `isLight ? "#B58863" : "#F0D9B5"`.
+- Board wrapper border: `border-emerald-900/50` → `border-amber-900/30`.
+
+Yellow hint/selection overlays unchanged (universal across both palettes).
 
 ### Files touched
-- `src/routes/_authed/checkmate.tsx` — `handleSquareClick` only
+- `src/components/games/ChessBoard.tsx`
 
 No DB, schema, or dependency changes.
 
