@@ -11,6 +11,8 @@ export interface ChessPuzzle {
   hintPiece: string;
   hintDestination: string;
   difficulty: 1 | 2 | 3;
+  /** Lichess-aligned tactical theme used to drive the goal text shown to the player */
+  theme: string;
 }
 
 export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
@@ -21,6 +23,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Queen",
     hintDestination: "f7",
     difficulty: 1,
+    theme: "Fork",
   },
   {
     id: "cm-002",
@@ -29,6 +32,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Queen",
     hintDestination: "h4",
     difficulty: 1,
+    theme: "Checkmate in 1",
   },
   {
     id: "cm-003",
@@ -37,6 +41,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "g5",
     difficulty: 2,
+    theme: "Pin",
   },
   {
     id: "cm-004",
@@ -45,6 +50,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "f7",
     difficulty: 2,
+    theme: "Attacking f2 or f7",
   },
   {
     id: "cm-005",
@@ -53,6 +59,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Knight",
     hintDestination: "g5",
     difficulty: 2,
+    theme: "Attacking f2 or f7",
   },
   {
     id: "cm-006",
@@ -61,6 +68,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Knight",
     hintDestination: "f7",
     difficulty: 2,
+    theme: "Fork",
   },
   {
     id: "cm-007",
@@ -69,6 +77,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "e2",
     difficulty: 1,
+    theme: "Clearance",
   },
   {
     id: "cm-008",
@@ -77,6 +86,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "g5",
     difficulty: 2,
+    theme: "Pin",
   },
   {
     id: "cm-009",
@@ -85,6 +95,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "King",
     hintDestination: "g1",
     difficulty: 1,
+    theme: "Exposed king",
   },
   {
     id: "cm-010",
@@ -93,6 +104,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "d4",
     difficulty: 1,
+    theme: "Advanced pawn",
   },
   {
     id: "cm-011",
@@ -101,6 +113,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "e5",
     difficulty: 2,
+    theme: "Hanging piece",
   },
   {
     id: "cm-012",
@@ -109,6 +122,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "e3",
     difficulty: 1,
+    theme: "Trapped piece",
   },
   {
     id: "cm-013",
@@ -117,6 +131,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "King",
     hintDestination: "g1",
     difficulty: 1,
+    theme: "Exposed king",
   },
   {
     id: "cm-014",
@@ -125,6 +140,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "e3",
     difficulty: 2,
+    theme: "Clearance",
   },
   {
     id: "cm-015",
@@ -133,6 +149,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "d5",
     difficulty: 2,
+    theme: "Capture the defender",
   },
   {
     id: "cm-016",
@@ -141,6 +158,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "e3",
     difficulty: 3,
+    theme: "Clearance",
   },
   {
     id: "cm-017",
@@ -149,6 +167,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "e3",
     difficulty: 2,
+    theme: "Pin",
   },
   {
     id: "cm-018",
@@ -157,6 +176,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Knight",
     hintDestination: "f3",
     difficulty: 1,
+    theme: "Hanging piece",
   },
   {
     id: "cm-019",
@@ -165,6 +185,7 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Bishop",
     hintDestination: "d3",
     difficulty: 2,
+    theme: "Clearance",
   },
   {
     id: "cm-020",
@@ -173,5 +194,6 @@ export const CHECKMATE_PUZZLES: ChessPuzzle[] = [
     hintPiece: "Pawn",
     hintDestination: "e3",
     difficulty: 3,
+    theme: "Discovered attack",
   },
 ];
