@@ -9,7 +9,6 @@ import { useGameSession } from "@/components/games/useGameSession";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins } from "lucide-react";
-import { HeroChessFragment } from "@/components/landing/HeroGameGraphics";
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
@@ -94,10 +93,8 @@ function CheckMatePage() {
             </span>
           </div>
 
-          {/* Graphic */}
-          <div className="flex-1 flex items-center justify-center w-full py-4">
-            <HeroChessFragment variant="intro" />
-          </div>
+          {/* Spacer */}
+          <div className="flex-1 min-h-6" />
 
           {/* Reward preview */}
           <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
