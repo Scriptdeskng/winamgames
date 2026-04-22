@@ -79,7 +79,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                     src={PIECE_URL[piece]}
                     alt={piece}
                     draggable={false}
-                    className="w-[80%] h-[80%] pointer-events-none select-none"
+                    className="w-[90%] h-[90%] pointer-events-none select-none"
                   />
                 )}
                 {ci === 0 && (
