@@ -252,6 +252,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       limit: z.number().min(1).max(50).default(10),
+      playerId: z.string().uuid().optional(),
     })
   )
   .handler(async ({ data }) => {
@@ -259,21 +260,44 @@ export const getLeaderboard = createServerFn({ method: "POST" })
 
     const { data: drawWeek } = await supabaseAdmin
       .from("winam_draw_weeks")
-      .select("id")
+      .select("id, week_start_wat, week_end_wat, draw_executes_at")
       .eq("status", "open")
       .limit(1)
       .maybeSingle();
 
-    if (!drawWeek) return { success: true as const, players: [] };
+    if (!drawWeek) {
+      return {
+        success: true as const,
+        players: [],
+        weekStartWat: null,
+        weekEndWat: null,
+        drawExecutesAt: null,
+        currentPlayer: null,
+      };
+    }
 
+    // Pull a wider slice so we can dedupe by player and still have enough for the top N.
     const { data: entries } = await supabaseAdmin
       .from("winam_entry_ledger")
       .select("player_id, week_total_after")
       .eq("draw_week_id", drawWeek.id)
       .order("week_total_after", { ascending: false })
-      .limit(data.limit);
+      .limit(500);
 
-    if (!entries || entries.length === 0) return { success: true as const, players: [] };
+    const weekMeta = {
+      weekStartWat: drawWeek.week_start_wat,
+      weekEndWat: drawWeek.week_end_wat,
+      drawExecutesAt: drawWeek.draw_executes_at,
+    };
+
+    if (!entries || entries.length === 0) {
+      return {
+        success: true as const,
+        players: [],
+        ...weekMeta,
+        currentPlayer: null,
+      };
+    }
 
     const playerMap = new Map<string, number>();
     for (const e of entries) {
@@ -281,24 +305,62 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       if (e.week_total_after > current) playerMap.set(e.player_id, e.week_total_after);
     }
 
-    const playerIds = [...playerMap.keys()];
+    // Full ranked list (used to look up requesting player's rank if outside top N).
+    const fullRanked = [...playerMap.entries()]
+      .map(([id, entries]) => ({ id, entries }))
+      .sort((a, b) => b.entries - a.entries);
+
+    const topIds = fullRanked.slice(0, data.limit).map((r) => r.id);
+
     const { data: players } = await supabaseAdmin
       .from("winam_players")
       .select("id, nickname, msisdn_last4, rank_tier")
-      .in("id", playerIds);
+      .in("id", topIds);
 
-    const sorted = playerIds
-      .map((pid) => {
-        const p = players?.find((x) => x.id === pid);
-        return {
-          id: pid,
-          name: p?.nickname ?? `****${p?.msisdn_last4 ?? "0000"}`,
-          entries: playerMap.get(pid) ?? 0,
-          rankTier: p?.rank_tier ?? "starter",
-        };
-      })
-      .sort((a, b) => b.entries - a.entries)
-      .slice(0, data.limit);
+    const sorted = fullRanked.slice(0, data.limit).map((r) => {
+      const p = players?.find((x) => x.id === r.id);
+      return {
+        id: r.id,
+        name: p?.nickname ?? `****${p?.msisdn_last4 ?? "0000"}`,
+        entries: r.entries,
+        rankTier: p?.rank_tier ?? "starter",
+      };
+    });
 
-    return { success: true as const, players: sorted };
+    // Compute requesting player's row if provided and not already in the top N.
+    let currentPlayer: {
+      id: string;
+      name: string;
+      entries: number;
+      rankTier: string;
+      rank: number;
+    } | null = null;
+
+    if (data.playerId) {
+      const inTop = topIds.includes(data.playerId);
+      if (!inTop) {
+        const idx = fullRanked.findIndex((r) => r.id === data.playerId);
+        if (idx >= 0) {
+          const { data: me } = await supabaseAdmin
+            .from("winam_players")
+            .select("id, nickname, msisdn_last4, rank_tier")
+            .eq("id", data.playerId)
+            .maybeSingle();
+          currentPlayer = {
+            id: data.playerId,
+            name: me?.nickname ?? `****${me?.msisdn_last4 ?? "0000"}`,
+            entries: fullRanked[idx].entries,
+            rankTier: me?.rank_tier ?? "starter",
+            rank: idx + 1,
+          };
+        }
+      }
+    }
+
+    return {
+      success: true as const,
+      players: sorted,
+      ...weekMeta,
+      currentPlayer,
+    };
   });
