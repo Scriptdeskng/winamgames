@@ -9,6 +9,7 @@ import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HeroProverbCard } from "@/components/landing/HeroGameGraphics";
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
   component: WisdomDropPage,
@@ -78,7 +79,9 @@ function WisdomDropPage() {
             </span>
           </div>
 
-          <div className="flex-1 min-h-6" />
+          <div className="flex-1 flex items-center justify-center w-full py-4">
+            <HeroProverbCard variant="intro" />
+          </div>
 
           <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
             <div className="flex items-center gap-3">
