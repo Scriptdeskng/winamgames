@@ -84,7 +84,7 @@ export const startSession = createServerFn({ method: "POST" })
       .insert({
         player_id: data.playerId,
         game_type: data.gameType,
-        draw_week_id: drawWeek.id,
+        draw_week_id: drawWeekId,
         session_date_wat: watDate,
       })
       .select("id")
@@ -327,7 +327,7 @@ export const startSession = createServerFn({ method: "POST" })
     return {
       success: true as const,
       sessionId: session.id,
-      drawWeekId: drawWeek.id,
+      drawWeekId: drawWeekId,
       puzzleIds: puzzleList.map((p) => p.id),
       firstPuzzle: {
         puzzleId: puzzleList[0].id,
