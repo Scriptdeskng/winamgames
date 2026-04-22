@@ -1,18 +1,18 @@
 import { cn } from "@/lib/utils";
 
 const PIECE_URL: Record<string, string> = {
-  K: "https://lichess1.org/assets/piece/cburnett/wK.svg",
-  Q: "https://lichess1.org/assets/piece/cburnett/wQ.svg",
-  R: "https://lichess1.org/assets/piece/cburnett/wR.svg",
-  B: "https://lichess1.org/assets/piece/cburnett/wB.svg",
-  N: "https://lichess1.org/assets/piece/cburnett/wN.svg",
-  P: "https://lichess1.org/assets/piece/cburnett/wP.svg",
-  k: "https://lichess1.org/assets/piece/cburnett/bK.svg",
-  q: "https://lichess1.org/assets/piece/cburnett/bQ.svg",
-  r: "https://lichess1.org/assets/piece/cburnett/bR.svg",
-  b: "https://lichess1.org/assets/piece/cburnett/bB.svg",
-  n: "https://lichess1.org/assets/piece/cburnett/bN.svg",
-  p: "https://lichess1.org/assets/piece/cburnett/bP.svg",
+  K: "https://lichess1.org/assets/piece/staunty/wK.svg",
+  Q: "https://lichess1.org/assets/piece/staunty/wQ.svg",
+  R: "https://lichess1.org/assets/piece/staunty/wR.svg",
+  B: "https://lichess1.org/assets/piece/staunty/wB.svg",
+  N: "https://lichess1.org/assets/piece/staunty/wN.svg",
+  P: "https://lichess1.org/assets/piece/staunty/wP.svg",
+  k: "https://lichess1.org/assets/piece/staunty/bK.svg",
+  q: "https://lichess1.org/assets/piece/staunty/bQ.svg",
+  r: "https://lichess1.org/assets/piece/staunty/bR.svg",
+  b: "https://lichess1.org/assets/piece/staunty/bB.svg",
+  n: "https://lichess1.org/assets/piece/staunty/bN.svg",
+  p: "https://lichess1.org/assets/piece/staunty/bP.svg",
 };
 
 function parseFen(fen: string): (string | null)[][] {
@@ -46,7 +46,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
 
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
-      <div className="grid grid-cols-8 border-2 border-emerald-900/50 rounded-lg overflow-hidden shadow-card">
+      <div className="grid grid-cols-8 border-2 border-amber-900/30 rounded-lg overflow-hidden shadow-card">
         {board.map((row, ri) =>
           row.map((piece, ci) => {
             const square = `${files[ci]}${8 - ri}`;
@@ -59,9 +59,9 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
             if (isSelected) bg = "rgba(255, 255, 0, 0.7)";
             else if (isHint) bg = "rgba(255, 255, 0, 0.5)";
             else if (isLastMove) bg = isLight ? "rgba(155, 199, 100, 0.6)" : "rgba(110, 160, 80, 0.6)";
-            else bg = isLight ? "#B8D4A8" : "#4A7C59";
+            else bg = isLight ? "#F0D9B5" : "#B58863";
 
-            const labelColor = isLight ? "#4A7C59" : "#B8D4A8";
+            const labelColor = isLight ? "#B58863" : "#F0D9B5";
 
             return (
               <button
@@ -79,7 +79,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                     src={PIECE_URL[piece]}
                     alt={piece}
                     draggable={false}
-                    className="w-[80%] h-[80%] pointer-events-none select-none"
+                    className="w-[90%] h-[90%] pointer-events-none select-none"
                   />
                 )}
                 {ci === 0 && (
