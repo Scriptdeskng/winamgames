@@ -201,14 +201,16 @@ function BoardBody({
       )}
 
       {myRank !== null && myScore !== null && (
-        <div className="sticky bottom-3 z-30 -mx-1 pt-2">
-          <YourStandingCard
-            rank={myRank}
-            score={myScore}
-            totalPlayers={data.totalPlayers}
-            players={data.players}
-            scoreLabel={scoreLabel}
-          />
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-30 w-full max-w-[430px] px-4 pointer-events-none">
+          <div className="pointer-events-auto">
+            <YourStandingCard
+              rank={myRank}
+              score={myScore}
+              totalPlayers={data.totalPlayers}
+              players={data.players}
+              scoreLabel={scoreLabel}
+            />
+          </div>
         </div>
       )}
     </>
