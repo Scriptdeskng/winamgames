@@ -1,54 +1,55 @@
 
 
-## Reframe rewards without naming a fixed amount
+## Fix `/profile` failing to load — stale route cache after `_authed/index.tsx` rename
 
-Two spots on the landing page hard-code "₦50,000". If the prize pool changes, the page lies. Replace both with framing that signals real cash + frequency + scale, without locking a number.
+### Root cause
 
-### Recommendation
+When `src/routes/_authed/index.tsx` was renamed to `src/routes/_authed/app.tsx`, the on-disk `src/routeTree.gen.ts` and all other files updated correctly. But the **Vite dev server's in-memory SSR module graph** still has a cached evaluation of `routeTree.gen.ts` that imports the deleted `_authed/index.tsx`. Every SSR render now throws:
 
-**Keep the per-winner amounts in the Winners section** (₦35,000 / ₦10,000 / ₦5,000) — that's *evidence*, not a promise. Real past payouts are the strongest proof we have, and removing them would weaken the section more than the flexibility is worth.
+```
+Failed to load url /src/routes/_authed/index.tsx … Does the file exist?
+status: 500
+```
 
-**Drop the total pool number** in the two marketing spots (hero pill + social proof pill). The total is the brittle one — it's what changes when you add tiers or scale up.
+That 500 cascades into the browser as `Failed to fetch dynamically imported module: …profile.tsx?tsr-split=component` — TanStack's code-splitter virtual module can't be served because SSR is broken upstream. `/profile` is just the route that hits it most visibly.
 
-### Edits to `src/routes/index.tsx`
+The earlier remediation attempt (touching files + deleting `.vite/`) didn't evict the live module graph because the dev process kept running. We need to force the TanStack Router Vite plugin to regenerate `routeTree.gen.ts` and have Vite actually re-evaluate it.
 
-**1. Social proof strip — line 534**
+### Fix
 
-Remove the `₦50,000 in weekly prizes` pill. Replace with a frequency/scale framing that stays true regardless of pool size:
+**Force regeneration of the route tree by deleting it and triggering a fresh write.**
 
-> `{ icon: Coins, label: "Real cash, every week" }`
+The TanStack Router Vite plugin watches `src/routes/` and writes `src/routeTree.gen.ts` whenever a route file changes. If the file is missing on startup (or on a watched event), it regenerates from scratch — which guarantees the import list reflects the actual files on disk.
 
-Alternatives if you'd rather lean different directions:
-- `"Cash + airtime, drawn weekly"` — broadens the reward type
-- `"Weekly cash payouts"` — shortest, most direct
-- `"New winners every Sunday"` — shifts focus from pot to people
+Steps:
 
-Going with **"Real cash, every week"** — keeps the `Coins` icon meaningful, signals it's not points/tokens, and reinforces the weekly cadence already on the neighbouring pill.
+1. **Delete `src/routeTree.gen.ts`.** The plugin will recreate it on the next route-file change or dev-server boot.
+2. **Touch every route file under `src/routes/`** so the plugin's file watcher fires regeneration events for the new tree (covers the case where the watcher is still attached but cache is stale).
+3. **Verify the regenerated `routeTree.gen.ts`** contains `import { Route as AuthedAppImport } from './routes/_authed/app'` and contains **no** reference to `_authed/index`.
+4. **Hit `/profile` in the preview** to confirm the dynamic import resolves and the page renders.
 
-**2. Hero prize pill — line 144**
+If after step 3 the file still references `_authed/index`, the plugin watcher itself is wedged — in that case do a one-shot dev-server restart by touching `vite.config.ts`, which forces Vite to reload its config and rebuild the module graph from zero.
 
-Currently: `"₦50,000 in prizes drawn every Sunday"`
+### Why not just edit `routeTree.gen.ts` by hand
 
-Replace with: `"Cash prizes drawn every Sunday"`
-
-Keeps the `Trophy` icon, the gold `text-coin` styling, and the Sunday cadence — just drops the fixed number. Reads as a confident promise without committing to a figure.
-
-### Why this works without an amount
-
-The page still has three layers of credibility that do the heavy lifting:
-
-1. **Winners section** shows actual ₦35K / ₦10K / ₦5K payouts with masked phones + entry hashes — concrete evidence beats an abstract pool number.
-2. **"50+ winners every Sunday"** pill stays — communicates scale.
-3. **"Real cash, every week"** + hero pill — communicates that prizes are cash, frequent, and reliable.
-
-Together these say *"many people win real money often"* without a single hard number that can age out of date.
+It's an auto-generated file. Hand-edits get stomped on the next route change, and on an SSR-first stack any drift between the generated tree and the on-disk routes resurrects this exact bug. Deleting it and letting the plugin regenerate is the only durable fix.
 
 ### Files touched
 
-- `src/routes/index.tsx` — two single-line copy changes (lines 144 and 534).
+- **Delete**: `src/routeTree.gen.ts` (will be auto-regenerated by the TanStack Router Vite plugin)
+- **Touch (no content changes)**: route files under `src/routes/` to trigger watcher regeneration
+- **Touch if plugin watcher is wedged**: `vite.config.ts` (whitespace-only, forces config reload)
+
+### Verification
+
+- `cat src/routeTree.gen.ts | grep _authed/index` returns nothing.
+- `cat src/routeTree.gen.ts | grep _authed/app` shows the expected import.
+- Loading `/profile` in the preview renders the profile page with no "Failed to fetch dynamically imported module" error in the console.
+- Loading `/app`, `/checkmate`, `/wisdomdrop`, `/winners`, `/entries`, `/leaderboard`, `/results` all still work (regression check on the `_authed` group).
 
 ### Out of scope
 
-- Winners section per-row prize amounts — kept as evidence.
-- Any backend / draw config changes.
+- No changes to `profile.tsx` itself — the file is fine.
+- No changes to auth, session, or any feature code.
+- No changes to the public landing page or `/subscribe`.
 
