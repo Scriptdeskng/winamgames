@@ -247,7 +247,90 @@ export const getActiveBanners = createServerFn({ method: "POST" }).handler(
   }
 );
 
-// ── getLeaderboard ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────
+function todayWatString(): string {
+  // WAT = UTC+1 (no DST). Shift "now" by +1h, then take the UTC date parts.
+  const shifted = new Date(Date.now() + 60 * 60 * 1000);
+  const y = shifted.getUTCFullYear();
+  const m = String(shifted.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(shifted.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+type RankedRow = { id: string; puzzles: number };
+
+async function buildLeaderboardRows(
+  rows: Array<{ player_id: string; puzzles_solved: number | null }>,
+  limit: number,
+  playerId: string | undefined
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const playerMap = new Map<string, number>();
+  for (const r of rows) {
+    const inc = r.puzzles_solved ?? 0;
+    if (inc <= 0) continue;
+    playerMap.set(r.player_id, (playerMap.get(r.player_id) ?? 0) + inc);
+  }
+  const totalPlayers = playerMap.size;
+
+  const fullRanked: RankedRow[] = [...playerMap.entries()]
+    .map(([id, puzzles]) => ({ id, puzzles }))
+    .sort((a, b) => b.puzzles - a.puzzles);
+
+  const topRanked = fullRanked.slice(0, limit);
+  const topIds = topRanked.map((r) => r.id);
+
+  const { data: players } = topIds.length
+    ? await supabaseAdmin
+        .from("winam_players")
+        .select("id, nickname, msisdn_last4, rank_tier")
+        .in("id", topIds)
+    : { data: [] as Array<{ id: string; nickname: string | null; msisdn_last4: string; rank_tier: string }> };
+
+  const sorted = topRanked.map((r) => {
+    const p = players?.find((x) => x.id === r.id);
+    return {
+      id: r.id,
+      name: p?.nickname ?? `****${p?.msisdn_last4 ?? "0000"}`,
+      puzzles: r.puzzles,
+      rankTier: p?.rank_tier ?? "starter",
+    };
+  });
+
+  let currentPlayer: {
+    id: string;
+    name: string;
+    puzzles: number;
+    rankTier: string;
+    rank: number;
+  } | null = null;
+
+  if (playerId) {
+    const inTop = topIds.includes(playerId);
+    if (!inTop) {
+      const idx = fullRanked.findIndex((r) => r.id === playerId);
+      if (idx >= 0) {
+        const { data: me } = await supabaseAdmin
+          .from("winam_players")
+          .select("id, nickname, msisdn_last4, rank_tier")
+          .eq("id", playerId)
+          .maybeSingle();
+        currentPlayer = {
+          id: playerId,
+          name: me?.nickname ?? `****${me?.msisdn_last4 ?? "0000"}`,
+          puzzles: fullRanked[idx].puzzles,
+          rankTier: me?.rank_tier ?? "starter",
+          rank: idx + 1,
+        };
+      }
+    }
+  }
+
+  return { players: sorted, totalPlayers, currentPlayer };
+}
+
+// ── getLeaderboard (weekly — puzzles solved this draw week) ───────────
 export const getLeaderboard = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
@@ -277,21 +360,20 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       };
     }
 
-    // Pull a wider slice so we can dedupe by player and still have enough for the top N.
-    const { data: entries } = await supabaseAdmin
-      .from("winam_entry_ledger")
-      .select("player_id, week_total_after")
-      .eq("draw_week_id", drawWeek.id)
-      .order("week_total_after", { ascending: false })
-      .limit(500);
-
     const weekMeta = {
       weekStartWat: drawWeek.week_start_wat,
       weekEndWat: drawWeek.week_end_wat,
       drawExecutesAt: drawWeek.draw_executes_at,
     };
 
-    if (!entries || entries.length === 0) {
+    const { data: sessions } = await supabaseAdmin
+      .from("winam_game_sessions")
+      .select("player_id, puzzles_solved")
+      .eq("draw_week_id", drawWeek.id)
+      .gt("puzzles_solved", 0)
+      .limit(2000);
+
+    if (!sessions || sessions.length === 0) {
       return {
         success: true as const,
         players: [],
@@ -301,70 +383,50 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       };
     }
 
-    const playerMap = new Map<string, number>();
-    for (const e of entries) {
-      const current = playerMap.get(e.player_id) ?? 0;
-      if (e.week_total_after > current) playerMap.set(e.player_id, e.week_total_after);
-    }
-    const totalPlayers = playerMap.size;
-
-    // Full ranked list (used to look up requesting player's rank if outside top N).
-    const fullRanked = [...playerMap.entries()]
-      .map(([id, entries]) => ({ id, entries }))
-      .sort((a, b) => b.entries - a.entries);
-
-    const topIds = fullRanked.slice(0, data.limit).map((r) => r.id);
-
-    const { data: players } = await supabaseAdmin
-      .from("winam_players")
-      .select("id, nickname, msisdn_last4, rank_tier")
-      .in("id", topIds);
-
-    const sorted = fullRanked.slice(0, data.limit).map((r) => {
-      const p = players?.find((x) => x.id === r.id);
-      return {
-        id: r.id,
-        name: p?.nickname ?? `****${p?.msisdn_last4 ?? "0000"}`,
-        entries: r.entries,
-        rankTier: p?.rank_tier ?? "starter",
-      };
-    });
-
-    // Compute requesting player's row if provided and not already in the top N.
-    let currentPlayer: {
-      id: string;
-      name: string;
-      entries: number;
-      rankTier: string;
-      rank: number;
-    } | null = null;
-
-    if (data.playerId) {
-      const inTop = topIds.includes(data.playerId);
-      if (!inTop) {
-        const idx = fullRanked.findIndex((r) => r.id === data.playerId);
-        if (idx >= 0) {
-          const { data: me } = await supabaseAdmin
-            .from("winam_players")
-            .select("id, nickname, msisdn_last4, rank_tier")
-            .eq("id", data.playerId)
-            .maybeSingle();
-          currentPlayer = {
-            id: data.playerId,
-            name: me?.nickname ?? `****${me?.msisdn_last4 ?? "0000"}`,
-            entries: fullRanked[idx].entries,
-            rankTier: me?.rank_tier ?? "starter",
-            rank: idx + 1,
-          };
-        }
-      }
-    }
+    const result = await buildLeaderboardRows(sessions, data.limit, data.playerId);
 
     return {
       success: true as const,
-      players: sorted,
-      totalPlayers,
+      ...result,
       ...weekMeta,
-      currentPlayer,
+    };
+  });
+
+// ── getDailyLeaderboard (today — puzzles solved today WAT) ────────────
+export const getDailyLeaderboard = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      limit: z.number().min(1).max(50).default(50),
+      playerId: z.string().uuid().optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const todayWat = todayWatString();
+
+    const { data: sessions } = await supabaseAdmin
+      .from("winam_game_sessions")
+      .select("player_id, puzzles_solved")
+      .eq("session_date_wat", todayWat)
+      .gt("puzzles_solved", 0)
+      .limit(2000);
+
+    if (!sessions || sessions.length === 0) {
+      return {
+        success: true as const,
+        players: [],
+        totalPlayers: 0,
+        todayWat,
+        currentPlayer: null,
+      };
+    }
+
+    const result = await buildLeaderboardRows(sessions, data.limit, data.playerId);
+
+    return {
+      success: true as const,
+      ...result,
+      todayWat,
     };
   });
