@@ -1,56 +1,54 @@
 
 
-## Landing page copy + Recent Wins polish
+## Reframe rewards without naming a fixed amount
 
-Targeted edits to `src/routes/index.tsx` only.
+Two spots on the landing page hard-code "₦50,000". If the prize pool changes, the page lies. Replace both with framing that signals real cash + frequency + scale, without locking a number.
 
-### 1. Hero — remove the games subline
+### Recommendation
 
-Delete the paragraph: *"CheckMate sharpens your strategy. WisdomDrop tests the proverbs your elders raised you on."* (lines 140–145). The hero keeps the eyebrow, headline, prize pill, and CTAs — tightens the section without losing intent.
+**Keep the per-winner amounts in the Winners section** (₦35,000 / ₦10,000 / ₦5,000) — that's *evidence*, not a promise. Real past payouts are the strongest proof we have, and removing them would weaken the section more than the flexibility is worth.
 
-### 2. Copy: stop hard-coding "78 winners"
+**Drop the total pool number** in the two marketing spots (hero pill + social proof pill). The total is the brittle one — it's what changes when you add tiers or scale up.
 
-Replace anywhere that says "78 winners every Sunday" or "Cash and airtime drop into 78 winners every week" with the softer "50+ winners every week" framing the user already approved for the Winners section.
+### Edits to `src/routes/index.tsx`
 
-- **How it works → step 3 body** (line 447): change to *"Cash and airtime drop to 50+ winners every Sunday. More tickets = better odds."*
-- **Social proof strip** (line 579): change pill from `"78 winners every Sunday"` to `"50+ winners every Sunday"`.
-- **Winners footer line** (line 565): the current `"+ 75 airtime & data winners"` is also a hard number that contradicts the "50+" framing. Change to `"+ airtime &amp; data winners every week"` (keeps the visual proof of additional tiers without locking in a count).
-- **Final CTA subhead** (line 622): keep "Join thousands of players competing every week" — no number change needed.
-- **og:description** (line 28): replace "Two games. Endless wisdom." with "Endless wisdom. Sharper play." to drop the games-count phrasing from share previews too.
+**1. Social proof strip — line 534**
 
-### 3. Recent Wins — make it feel alive, not static
+Remove the `₦50,000 in weekly prizes` pill. Replace with a frequency/scale framing that stays true regardless of pool size:
 
-Keep the same data and overall layout, but add motion + signal so it reads as a live feed:
+> `{ icon: Coins, label: "Real cash, every week" }`
 
-- **Live indicator in the section header**: add a small pulsing emerald dot + label `"Updated weekly"` next to the "Recent draw" eyebrow. Pure CSS pulse using the existing `animate-landing-pulse-ring` / Tailwind `animate-pulse`.
-- **Card chrome**:
-  - Add a subtle ambient emerald glow behind the card (same blur technique as Hero/Final CTA).
-  - Replace the static `Calendar` header strip with: `Calendar` icon + week label on the left, and a right-aligned animated `LIVE` chip (pulsing dot + uppercase label) so the card visibly "breathes."
-- **Row entrance stagger**: wrap each of the 3 winner rows in `RevealOnScroll` with `delayMs={i * 120}` so they cascade in as the section scrolls into view (uses the existing component, no new deps).
-- **Per-row micro-motion**:
-  - Soft shimmer once on the prize amount (CSS keyframe gradient sweep) when the row reveals — draws the eye to the amount.
-  - Trophy/sparkle accent next to the 1st-place row's prize (`Sparkles` icon, already imported) to add hierarchy.
-- **Footer line**: replace the static `"+ 75 airtime & data winners"` with the live-feed-style line above (`"+ airtime & data winners every week"`) and add an arrow link styled as muted text *"See full winners list →"* that scrolls/links to `/subscribe` (the in-app winners page is auth-only, so the public CTA stays subscribe — keeps it actionable rather than dead-end).
-- **Optional polish**: cycle a barely-visible "ticker" hint above the card — `"Last drawn: Sunday, Apr 13"` in muted micro text — reinforcing recency without adding a JS clock.
+Alternatives if you'd rather lean different directions:
+- `"Cash + airtime, drawn weekly"` — broadens the reward type
+- `"Weekly cash payouts"` — shortest, most direct
+- `"New winners every Sunday"` — shifts focus from pot to people
 
-All animations: pure CSS + the existing `RevealOnScroll`. No new keyframes required beyond a one-off `@keyframes landing-shimmer` added to `src/styles.css` under `@layer utilities` for the prize sweep.
+Going with **"Real cash, every week"** — keeps the `Coins` icon meaningful, signals it's not points/tokens, and reinforces the weekly cadence already on the neighbouring pill.
 
-### 4. Games section — drop the "Two games" framing and the inline previews
+**2. Hero prize pill — line 144**
 
-- **Eyebrow** (line 299): change `"Two games"` → `"The games"` (or remove the eyebrow entirely if cleaner — going with `"The games"` to keep the header structure consistent with other sections).
-- **Headline + subhead** (lines 302–307): keep as-is — both are about how the games feel, not how many exist.
-- **Remove the chess board UI** inside `CheckMatePreviewCard` (lines 346–372).
-- **Remove the proverb card UI** inside `WisdomDropPreviewCard` (lines 391–422).
-- Each card keeps: name header + badge (top), description paragraph (bottom). Tighten the card's vertical padding now that the visual is gone so cards don't feel half-empty. No layout change to the two-column grid — the side-by-side cards still work, just text-forward.
+Currently: `"₦50,000 in prizes drawn every Sunday"`
+
+Replace with: `"Cash prizes drawn every Sunday"`
+
+Keeps the `Trophy` icon, the gold `text-coin` styling, and the Sunday cadence — just drops the fixed number. Reads as a confident promise without committing to a figure.
+
+### Why this works without an amount
+
+The page still has three layers of credibility that do the heavy lifting:
+
+1. **Winners section** shows actual ₦35K / ₦10K / ₦5K payouts with masked phones + entry hashes — concrete evidence beats an abstract pool number.
+2. **"50+ winners every Sunday"** pill stays — communicates scale.
+3. **"Real cash, every week"** + hero pill — communicates that prizes are cash, frequent, and reliable.
+
+Together these say *"many people win real money often"* without a single hard number that can age out of date.
 
 ### Files touched
 
-- `src/routes/index.tsx` — all copy + structural changes above.
-- `src/styles.css` — add `@keyframes landing-shimmer` (and matching `.animate-landing-shimmer` utility) for the prize-amount sweep on Recent Wins rows.
+- `src/routes/index.tsx` — two single-line copy changes (lines 144 and 534).
 
 ### Out of scope
 
-- Wiring Recent Wins to real DB data (still mock — same numbers as before, just presented with motion).
-- Changing the in-app `/_authed/winners.tsx` page.
-- Touching `/subscribe` flow or auth.
+- Winners section per-row prize amounts — kept as evidence.
+- Any backend / draw config changes.
 
