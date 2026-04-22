@@ -18,20 +18,17 @@ const HINT_TIERS = [
 ];
 
 const GOAL_BY_THEME: Record<string, string> = {
-  "Scholar's mate": "You have a checkmating idea. Can you find it?",
-  "Fool's mate": "Black has a devastating queen move. Find it.",
-  "Pin the knight": "You can pin an important piece. How?",
-  "Fork the king": "You can attack two pieces at once. Find the fork.",
-  "Attack f7": "The f7 square is weak. How do you exploit it?",
-  "Knight fork": "Your knight can attack two pieces simultaneously. Find it.",
-  "Develop calmly": "Find the move that develops your piece most effectively.",
-  "Castle to safety": "Your king is exposed. How do you make it safe?",
-  "Claim the centre": "Control the centre. What's the best pawn move?",
-  "Pawn push, attack knight": "Push a pawn to gain space and attack. Which one?",
-  "Open the bishop": "Your bishop is blocked. Find the move that opens its diagonal.",
-  "Central exchange": "You can take a central pawn. Should you? Find the best way.",
-  "Develop the bishop": "Find the best square for your bishop.",
-  "Develop the knight": "Find the best square for your knight.",
+  "Fork": "Your piece can attack two opponent pieces at once. Find the fork.",
+  "Checkmate in 1": "You have an immediate checkmate. Can you find it?",
+  "Pin": "You can pin a piece against a more valuable one behind it. Find the pin.",
+  "Attacking f2 or f7": "The f7 square is weak and under-defended. How do you exploit it?",
+  "Clearance": "Find the move that develops your piece to its most active square.",
+  "Exposed king": "The king is exposed in the centre. Find the move that exploits it.",
+  "Advanced pawn": "A strong pawn push controls the centre and gains space. Find it.",
+  "Hanging piece": "An opponent piece is undefended or can be attacked with tempo. Find it.",
+  "Trapped piece": "An opponent piece has no safe escape. Find the move that proves it.",
+  "Capture the defender": "Capturing this piece removes a key defender. Find the winning exchange.",
+  "Discovered attack": "Moving one piece reveals a hidden attack from another. Find it.",
 };
 
 export const Route = createFileRoute("/_authed/checkmate")({
