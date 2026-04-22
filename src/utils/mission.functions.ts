@@ -269,6 +269,7 @@ export const getLeaderboard = createServerFn({ method: "POST" })
       return {
         success: true as const,
         players: [],
+        totalPlayers: 0,
         weekStartWat: null,
         weekEndWat: null,
         drawExecutesAt: null,
