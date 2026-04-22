@@ -38,7 +38,7 @@ function CheckMatePage() {
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
     if (selectedSquare) {
-      session.submit(square);
+      session.submit(JSON.stringify({ from: selectedSquare, to: square }));
       setSelectedSquare(null);
     } else {
       setSelectedSquare(square);
@@ -171,6 +171,8 @@ function CheckMatePage() {
             fen={puzzle.fen}
             selectedSquare={selectedSquare}
             onSquareClick={handleSquareClick}
+            hintFrom={session.hintData?.from}
+            hintTo={session.hintData?.to ?? session.hintData?.destination}
             disabled={session.loading || session.gameOver || !!session.feedback}
           />
         )}
@@ -180,7 +182,7 @@ function CheckMatePage() {
             <p className="text-xs font-medium text-coin">
               {session.hintData.piece && `Piece: ${session.hintData.piece}`}
               {session.hintData.destination && ` → ${session.hintData.destination}`}
-              {session.hintData.move && ` (${session.hintData.move})`}
+              {session.hintData.from && session.hintData.to && ` (${session.hintData.from} → ${session.hintData.to})`}
             </p>
           </div>
         )}

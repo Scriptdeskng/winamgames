@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { Chess } from "chess.js";
 
 // ── ensureCurrentDrawWeek ─────────────────────────────────────────────
 // Returns the id of the current open draw week, creating one if missing.
@@ -372,7 +373,14 @@ export const submitMove = createServerFn({ method: "POST" })
     if (isCheckmate) {
       const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
       if (puzzle) {
-        isCorrect = data.answer === puzzle.solutionMove;
+        try {
+          const { from, to } = JSON.parse(data.answer) as { from: string; to: string };
+          const chess = new Chess(puzzle.fen);
+          const move = chess.move({ from, to, promotion: "q" });
+          isCorrect = move !== null && `${from}${to}` === puzzle.solutionMove;
+        } catch {
+          isCorrect = false;
+        }
       }
     } else {
       const { data: puzzle } = await supabaseAdmin
@@ -486,7 +494,10 @@ export const useHint = createServerFn({ method: "POST" })
       if (puzzle) {
         if (data.tier >= 1) hintData.piece = puzzle.hintPiece;
         if (data.tier >= 2) hintData.destination = puzzle.hintDestination;
-        if (data.tier >= 3) hintData.move = puzzle.solutionMove;
+        if (data.tier >= 3) {
+          hintData.from = puzzle.solutionMove.slice(0, 2);
+          hintData.to = puzzle.solutionMove.slice(2, 4);
+        }
       }
     } else {
       const { data: puzzle } = await supabaseAdmin
