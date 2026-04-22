@@ -37,7 +37,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
 
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
-      <div className="grid grid-cols-8 rounded-xl overflow-hidden border border-border shadow-card">
+      <div className="grid grid-cols-8 border-2 border-emerald-900/50 rounded-lg overflow-hidden shadow-card">
         {board.map((row, ri) =>
           row.map((piece, ci) => {
             const square = `${files[ci]}${8 - ri}`;
@@ -45,6 +45,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
             const isSelected = selectedSquare === square;
             const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
             const isHint = square === hintFrom || square === hintTo;
+            const isWhitePiece = piece && piece === piece.toUpperCase();
 
             return (
               <button
@@ -52,16 +53,22 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                 disabled={disabled}
                 onClick={() => onSquareClick(square)}
                 className={cn(
-                  "aspect-square flex items-center justify-center text-2xl sm:text-3xl transition-all min-h-[44px]",
-                  isLight
-                    ? "bg-emerald-dim/30"
-                    : "bg-surface-2",
+                  "aspect-square flex items-center justify-center text-3xl sm:text-4xl leading-none transition-all min-h-[44px]",
+                  isWhitePiece ? "text-white drop-shadow-sm" : "text-gray-900",
                   isSelected && "ring-2 ring-primary ring-inset bg-primary/25",
-                  isHint && !isSelected && "ring-2 ring-coin/70 ring-inset bg-coin/15",
+                  isHint && !isSelected && "ring-2 ring-coin/70 ring-inset",
                   isLastMove && !isSelected && !isHint && "bg-primary/10",
                   disabled && "cursor-default"
                 )}
-                style={{ fontSize: "clamp(1.5rem, 4.5vw, 2.25rem)" }}
+                style={{
+                  backgroundColor: isSelected
+                    ? undefined
+                    : isHint
+                      ? undefined
+                      : isLight
+                        ? "#B8D4A8"
+                        : "#4A7C59",
+                }}
               >
                 {piece ? PIECE_MAP[piece] || "" : ""}
               </button>
