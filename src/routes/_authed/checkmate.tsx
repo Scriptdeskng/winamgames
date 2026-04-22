@@ -6,6 +6,7 @@ import { GameHeader } from "@/components/games/GameHeader";
 import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
+import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins } from "lucide-react";
@@ -149,6 +150,8 @@ function CheckMatePage() {
       />
 
       <div className="px-4 pt-4 pb-8 space-y-4">
+        <DrawLockBanner />
+
         {session.feedback && (
           <div className={`flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-semibold ${
             session.feedback === "correct"

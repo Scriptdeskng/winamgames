@@ -13,6 +13,9 @@ export const startSession = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
+    // TODO: enforce entry lock window server-side before production
+    // Sessions completed between Sunday 19:00–20:00 WAT should award coins only
+    // Currently enforced UI-only via DrawLockBanner — server check needed for production
     // Get current open draw week
     const { data: drawWeek, error: dwErr } = await supabaseAdmin
       .from("winam_draw_weeks")
