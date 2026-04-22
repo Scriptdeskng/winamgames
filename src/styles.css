@@ -236,10 +236,30 @@
     animation: landing-piece-glow 2.8s ease-in-out infinite;
   }
 
+  @keyframes landing-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-landing-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      oklch(0.82 0.17 85 / 0.35) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: landing-shimmer 2.4s ease-out 0.4s 1 both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-landing-float,
     .animate-landing-pulse-ring,
-    .animate-landing-piece-glow {
+    .animate-landing-piece-glow,
+    .animate-landing-shimmer {
       animation: none;
     }
   }
