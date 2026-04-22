@@ -74,7 +74,12 @@ function CheckMatePage() {
 
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
+
     if (selectedSquare) {
+      if (square === selectedSquare) {
+        setSelectedSquare(null);
+        return;
+      }
       session.submit(JSON.stringify({ from: selectedSquare, to: square }));
       setSelectedSquare(null);
     } else {
