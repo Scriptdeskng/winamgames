@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as RenewRouteImport } from './routes/renew'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -27,6 +28,11 @@ import { Route as AuthedAppRouteImport } from './routes/_authed/app'
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscribeRoute = SubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RenewRoute = RenewRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
   '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
   '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
+  '/subscribe': typeof SubscribeRoute
   '/verify': typeof VerifyRoute
   '/_authed/app': typeof AuthedAppRoute
   '/_authed/checkmate': typeof AuthedCheckmateRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
     | '/app'
     | '/checkmate'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
     | '/app'
     | '/checkmate'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/renew'
+    | '/subscribe'
     | '/verify'
     | '/_authed/app'
     | '/_authed/checkmate'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RenewRoute: typeof RenewRoute
+  SubscribeRoute: typeof SubscribeRoute
   VerifyRoute: typeof VerifyRoute
   ApiForthsoftWebhookRoute: typeof ApiForthsoftWebhookRoute
 }
@@ -210,6 +223,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscribe': {
+      id: '/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof SubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/renew': {
@@ -336,6 +356,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RenewRoute: RenewRoute,
+  SubscribeRoute: SubscribeRoute,
   VerifyRoute: VerifyRoute,
   ApiForthsoftWebhookRoute: ApiForthsoftWebhookRoute,
 }
