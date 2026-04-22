@@ -504,9 +504,6 @@ export const closeSession = createServerFn({ method: "POST" })
       return { success: false as const, error: "Session not found" };
     }
 
-    // TODO: enforce entry lock window server-side before production
-    // Sessions completed between Sunday 19:00–20:00 WAT should award coins only
-    // Currently enforced UI-only via DrawLockBanner — server check needed for production
     // ── Entry calculation ──
     // Hints cost coins only — they do NOT reduce puzzle count for entry math.
     const baseN = 5; // default divisor
@@ -535,6 +532,95 @@ export const closeSession = createServerFn({ method: "POST" })
       const total = attempts?.length ?? 0;
       const correct = (attempts ?? []).filter((a) => a.result === "correct").length;
       wisdomAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    }
+
+    // ── Server-side entry lock enforcement ──
+    // Sessions completed between Sunday 19:00–20:00 WAT award coins only — no entries,
+    // no streak bonus, no missions, no ledger write. XP, coin balance, streak, and
+    // tier still update because playing during the lock window is valid play.
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    const isLockWindow =
+      nowWAT.getUTCDay() === 0 &&
+      nowWAT.getUTCHours() >= 19 &&
+      nowWAT.getUTCHours() < 20;
+
+    if (isLockWindow) {
+      const coinsFromGameplay = data.puzzlesSolved * 5;
+      const xpGained = data.puzzlesSolved * 10;
+
+      await supabaseAdmin
+        .from("winam_game_sessions")
+        .update({
+          puzzles_solved: data.puzzlesSolved,
+          hints_used: data.hintsUsed,
+          entries_awarded: 0,
+          coins_awarded: coinsFromGameplay,
+          duration_seconds: data.durationSeconds,
+          ...(wisdomAccuracy !== null ? { wisdom_accuracy: wisdomAccuracy } : {}),
+        })
+        .eq("id", data.sessionId);
+
+      // NOTE: streak/tier logic duplicated from performance branch — keep in sync if either changes
+      let newStreak = 1;
+      if (player.last_session_date) {
+        const lastDate = new Date(player.last_session_date);
+        const todayWat = new Date(watDate);
+        const diffDays = Math.floor((todayWat.getTime() - lastDate.getTime()) / (86400 * 1000));
+        if (diffDays === 0) newStreak = player.current_streak;
+        else if (diffDays === 1) newStreak = player.current_streak + 1;
+      }
+
+      // NOTE: streak/tier logic duplicated from performance branch — keep in sync if either changes
+      const newXp = player.xp_total + xpGained;
+      let newTier = player.rank_tier;
+      if (newXp >= 10000) newTier = "immortal";
+      else if (newXp >= 7000) newTier = "legend";
+      else if (newXp >= 4500) newTier = "icon";
+      else if (newXp >= 2500) newTier = "champion";
+      else if (newXp >= 1200) newTier = "veteran";
+      else if (newXp >= 500) newTier = "sergeant";
+      else if (newXp >= 150) newTier = "recruit";
+      else newTier = "starter";
+
+      await supabaseAdmin
+        .from("winam_players")
+        .update({
+          xp_total: newXp,
+          coin_balance: player.coin_balance + coinsFromGameplay,
+          current_streak: newStreak,
+          last_session_date: watDate,
+          rank_tier: newTier,
+        })
+        .eq("id", data.playerId);
+
+      // Record served puzzles in history (anti-fraud, same as other branches)
+      if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+        for (const puzzleId of data.servedPuzzleIds) {
+          await supabaseAdmin.from("winam_puzzle_history").insert({
+            player_id: data.playerId,
+            puzzle_id: puzzleId,
+            seen_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      return {
+        success: true as const,
+        entries: 0,
+        sessionEntries: 0,
+        baseEntries: 0,
+        streakBonus: 0,
+        missionEntries: 0,
+        coins: coinsFromGameplay,
+        xp: xpGained,
+        streak: newStreak,
+        weekTotal: weekSoFar,
+        weekCap,
+        overflow: 0,
+        rankTier: newTier,
+        previousRank: player.rank_tier,
+        completedMissions: [],
+      };
     }
 
     // ── Zero-performance gate ──
