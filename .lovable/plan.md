@@ -1,62 +1,96 @@
 
 
-## Implement four draw countdown states
+## Three follow-on tasks: winners empty state, terminology audit, server-side lock enforcement
 
-State machine drives `DrawHeroCard` on `/app`; locked banner appears in both game screens during the entry-lock window.
+### 1. Winners page empty state — `src/routes/_authed/winners.tsx`
 
-### `src/routes/_authed/app.tsx`
+Hard-gate via `HAS_DRAWS = false` constant (no real draws yet — mock data stays in file for future wiring). When false:
+- Hide hero card and past draws list entirely.
+- Render centered empty block:
+  - Large `Trophy` icon (lucide), primary tint
+  - Headline: **"No draws yet"**
+  - Subtext: **"The first draw happens this Sunday at 20:00 WAT. Play now to earn your entries."**
+  - Dynamic line: `Next draw: Sunday {d MMM} at 20:00 WAT` — derived from `getNextEntriesLockWAT()` imported from `@/lib/draw-state` (use the date portion, append "20:00 WAT" literal)
+  - CTA: **"Start playing"** → `Link to="/app"`, primary style
 
-- Add helper `getDrawState(now: Date): 'open' | 'locked' | 'drawn' | 'new_week'` using WAT shift logic (UTC + 1h, Sunday boundaries at 19:00 / 20:00 / 20:15).
-- Replace `getNextSundayWAT()` with `getNextEntriesLockWAT()` — countdown now targets Sunday **19:00** WAT (entries lock), not 20:00.
-- Refactor `DrawHeroCard`:
-  - Two tickers: 1s for countdown digits, 60s for state-boundary recheck.
-  - Branch render on `drawState`:
-    - **`open` / `new_week`** — current UI unchanged (countdown + tickets bar + "View my tickets").
-    - **`locked`** — replace countdown digits with text block: heading "Draw closing soon", subtext "Entries locked — draw executes at 20:00 WAT". Tickets bar + count remain but muted (`bg-muted-foreground/40`, `text-muted-foreground`). Footer "Draw every Sunday…" hidden.
-    - **`drawn`** — hide countdown, bar, ticket count entirely. Show heading "Draw complete", subtext "This week's winners have been selected", primary button "See winners" → `Link to="/winners"`, muted line "New draw week opens in a moment".
-- Card chrome (gradient, border, padding) identical across all states — no layout jump.
+`TopBar` chrome unchanged.
 
-### `src/components/games/DrawLockBanner.tsx` (new)
+### 2. Terminology + route audit
 
-- Self-contained component: computes `getDrawState(new Date())` on mount, re-checks every 60s.
-- Renders only when state is `'locked'` AND `sessionStorage.getItem('winam_draw_lock_banner_dismissed') !== '1'`.
-- Visual: amber strip — `bg-amber-500/10 border border-amber-500/30 text-amber-200`, rounded-lg, full width, `AlertTriangle` icon left, copy "Draw entries locked · Coins only this session", X button right that sets the sessionStorage flag and unmounts.
-- Exports its own copy of `getDrawState` (or imports from a shared util — see note below).
+Replace user-facing "tickets" → "entries" across these files (JSX text, headers, meta, labels — internal identifiers like `TicketSource`, `ticketId`, `Ticket` icon stay as-is):
 
-Shared helper note: extract `getDrawState` and `getNextEntriesLockWAT` into `src/lib/draw-state.ts` so `app.tsx` and `DrawLockBanner.tsx` both import from one source of truth. Avoids drift between the home card and the in-game banner.
+- `src/routes/_authed/entries.tsx` — page title, meta, TopBar title, all body copy ("View tickets", "No tickets yet", `n === 1 ? "ticket" : "tickets"`, "No tickets earned this week")
+- `src/routes/_authed/profile.tsx` — "My Tickets" link → "My Entries"; coins explanation; accordion title + body (all "ticket"/"tickets" → "entry"/"entries"); WeeklyEntriesCard count; StreakTile bonus copy
+- `src/routes/_authed/results.tsx` — streak pills, nudge copy, hero `entry/entries` ternary, `"No tickets this time"`, `"Tickets earned this week"` section header
+- `src/routes/_authed/app.tsx` — DrawHeroCard "tickets this week" both branches → "entries this week"; "View my tickets" → "View my entries" both occurrences; rename helper `pluralizeTickets` → `pluralizeEntries` and update its call site in MissionRow
+- `src/routes/_authed/checkmate.tsx` — meta description; start screen "5 tickets per round" → "5 entries per round"
+- `src/routes/_authed/wisdomdrop.tsx` — same as checkmate
+- `src/routes/renew.tsx` — "Keep playing & earning tickets" + chip "Tickets" → "Entries"
+- `src/routes/index.tsx` — landing copy: "draw ticket" → "draw entry", "More tickets" → "More entries"
+- `src/routes/__root.tsx` — three meta description tags: "earn draw tickets" → "earn draw entries"
+- `src/components/layout/MenuSheet.tsx` — menu label "My Tickets" → "My Entries"; verify Home item targets `/app` (already correct per current code)
 
-### `src/routes/_authed/checkmate.tsx`
+Leaderboard score label already says "puzzles" — confirmed, no change. No "How tickets work" links exist outside the profile accordion (canonical) — nothing to remove.
 
-- Import `DrawLockBanner` and render it as the first child inside the in-game body block (`px-4 pt-4 pb-8 space-y-4`), only when `session.sessionId` exists. Not on the start screen.
+### 3. Server-side entry lock enforcement — `src/utils/game.functions.ts` (`closeSession`)
 
-### `src/routes/_authed/wisdomdrop.tsx`
-
-- Same: render `<DrawLockBanner />` at the top of the in-game scroll block, in-session only.
-
-### `src/utils/game.functions.ts`
-
-- Add the requested TODO comment in `closeSession` at the draw week status check:
+Replace the existing TODO comment with real enforcement. Insert between session lookup and the entry calculation block:
 
 ```ts
-// TODO: enforce entry lock window server-side before production
-// Sessions completed between Sunday 19:00–20:00 WAT should award coins only
-// Currently enforced UI-only via DrawLockBanner — server check needed for production
+// Server-side entry lock enforcement
+// Sessions completed between Sunday 19:00–20:00 WAT award coins only — no entries
+const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+const isLockWindow =
+  nowWAT.getUTCDay() === 0 &&
+  nowWAT.getUTCHours() >= 19 &&
+  nowWAT.getUTCHours() < 20;
 ```
 
-No logic change in this file — comment only.
+Reorder so `weekEntries` ledger query and `wisdomAccuracy` computation sit above the branch (both branches need them).
+
+When `isLockWindow === true`, branch into:
+- `coinsFromGameplay = data.puzzlesSolved * 5`, `xpGained = data.puzzlesSolved * 10`
+- Update `winam_game_sessions`: puzzles_solved, hints_used, `entries_awarded: 0`, `coins_awarded: coinsFromGameplay`, duration, wisdom_accuracy
+- Compute `newStreak` (same-day / +1 / reset), prefixed with required comment:
+  ```ts
+  // NOTE: streak/tier logic duplicated from performance branch — keep in sync if either changes
+  ```
+- Compute `newTier` from `player.xp_total + xpGained`, prefixed with the same comment:
+  ```ts
+  // NOTE: streak/tier logic duplicated from performance branch — keep in sync if either changes
+  ```
+- Update `winam_players`: xp_total, coin_balance + coinsFromGameplay, current_streak, last_session_date, rank_tier
+- Record served wisdomdrop puzzles to `winam_puzzle_history` (same loop as zero-perf branch)
+- **Skip** `winam_entry_ledger` insert
+- **Skip** `evaluatePendingMissions`
+- Return:
+  ```ts
+  {
+    success: true as const,
+    entries: 0, sessionEntries: 0, baseEntries: 0,
+    streakBonus: 0, missionEntries: 0,
+    coins: coinsFromGameplay, xp: xpGained,
+    streak: newStreak,
+    weekTotal: weekSoFar, weekCap, overflow: 0,
+    rankTier: newTier, previousRank: player.rank_tier,
+    completedMissions: [],
+  }
+  ```
+
+Remove the original TODO comment block — replaced by working enforcement. Existing performance branch unchanged.
 
 ### Out of scope
 
-- No DB or schema changes.
-- No server-side lock enforcement (tracked via the TODO above).
-- Banner is per-session; resets on next visit (per spec).
+- No DB or schema changes
+- Internal code identifiers (`TicketSource`, `ticketId`, `FlatTicketList`, `Ticket` lucide icon, `winam_*` columns) stay as-is
+- Mock `DRAW_WEEKS` array stays for future wiring; only `HAS_DRAWS` gate controls render
+- No new dependencies
 
 ### Files touched
 
-- `src/lib/draw-state.ts` (new) — shared `getDrawState` + `getNextEntriesLockWAT`.
-- `src/routes/_authed/app.tsx` — state-driven `DrawHeroCard`.
-- `src/components/games/DrawLockBanner.tsx` (new) — amber locked banner.
-- `src/routes/_authed/checkmate.tsx` — render banner in-session.
-- `src/routes/_authed/wisdomdrop.tsx` — render banner in-session.
-- `src/utils/game.functions.ts` — TODO comment only.
+- `src/routes/_authed/winners.tsx` — empty state + dynamic next-draw date
+- `src/utils/game.functions.ts` — lock window enforcement + duplication NOTE comments, remove TODO
+- `src/routes/_authed/entries.tsx`, `profile.tsx`, `results.tsx`, `app.tsx`, `checkmate.tsx`, `wisdomdrop.tsx`
+- `src/routes/renew.tsx`, `index.tsx`, `__root.tsx`
+- `src/components/layout/MenuSheet.tsx`
 
