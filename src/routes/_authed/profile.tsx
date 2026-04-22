@@ -432,7 +432,7 @@ function WeeklyEntriesCard({
       </div>
 
       <Link
-        to="/"
+        to="/app"
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm"
       >
         Play to earn more
