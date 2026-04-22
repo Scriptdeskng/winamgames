@@ -15,6 +15,7 @@ import { Route as RenewRouteImport } from './routes/renew'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiForthsoftWebhookRouteImport } from './routes/api/forthsoft-webhook'
 import { Route as AuthedWisdomdropRouteImport } from './routes/_authed/wisdomdrop'
 import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
@@ -52,6 +53,11 @@ const LoginRoute = LoginRouteImport.update({
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiForthsoftWebhookRoute = ApiForthsoftWebhookRouteImport.update({
@@ -101,7 +107,7 @@ const AuthedAppRoute = AuthedAppRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthedRouteWithChildren
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
@@ -118,7 +124,7 @@ export interface FileRoutesByFullPath {
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthedRouteWithChildren
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
@@ -136,6 +142,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -189,6 +196,7 @@ export interface FileRouteTypes {
     | '/api/forthsoft-webhook'
   id:
     | '__root__'
+    | '/'
     | '/_authed'
     | '/login'
     | '/onboarding'
@@ -207,6 +215,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -258,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/forthsoft-webhook': {
@@ -352,6 +368,7 @@ const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
