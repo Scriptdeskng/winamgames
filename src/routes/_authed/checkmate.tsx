@@ -1,15 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import React from "react";
 import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
-import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins, Lightbulb } from "lucide-react";
+
+const HINT_TIERS = [
+  { tier: 1 as const, label: "Piece", cost: 25 },
+  { tier: 2 as const, label: "Destination", cost: 75 },
+  { tier: 3 as const, label: "Full move", cost: 150 },
+];
 
 export const Route = createFileRoute("/_authed/checkmate")({
   component: CheckMatePage,
