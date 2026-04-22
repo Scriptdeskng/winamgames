@@ -509,20 +509,9 @@ export const closeSession = createServerFn({ method: "POST" })
     const baseN = 5; // default divisor
     const weekCap = 50;
     const baseEntries = Math.floor(data.puzzlesSolved / baseN);
-
-    // Streak bonus
-    let streakBonus = 0;
-    const streak = player.current_streak;
-    if (streak >= 14) streakBonus = 3;
-    else if (streak >= 7) streakBonus = 2;
-    else if (streak >= 3) streakBonus = 1;
-
-    // Mission bonus is now awarded directly by evaluatePendingMissions (which
-    // writes its own ledger rows). Session-level rawEntries excludes missions.
     const watDate = session.session_date_wat;
-    const rawEntries = baseEntries + streakBonus;
 
-    // Get current week total
+    // Get current week total (used by both branches)
     const { data: weekEntries } = await supabaseAdmin
       .from("winam_entry_ledger")
       .select("week_total_after")
@@ -532,15 +521,6 @@ export const closeSession = createServerFn({ method: "POST" })
       .limit(1);
 
     const weekSoFar = weekEntries && weekEntries.length > 0 ? weekEntries[0].week_total_after : 0;
-    const entriesToAdd = Math.min(rawEntries, weekCap - weekSoFar);
-    const overflow = rawEntries - entriesToAdd;
-
-    // XP: 10 per correct answer
-    const xpGained = data.puzzlesSolved * 10;
-    // Coins: base coins + overflow conversion (1 overflow entry = 5 coins)
-    const coinsFromGameplay = data.puzzlesSolved * 5;
-    const coinsFromOverflow = overflow * 5;
-    const totalCoins = coinsFromGameplay + coinsFromOverflow;
 
     // Compute wisdom_accuracy from puzzle attempts (source of truth — handles early exit)
     let wisdomAccuracy: number | null = null;
@@ -553,6 +533,74 @@ export const closeSession = createServerFn({ method: "POST" })
       const correct = (attempts ?? []).filter((a) => a.result === "correct").length;
       wisdomAccuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
     }
+
+    // ── Zero-performance gate ──
+    // Player solved fewer than 5 puzzles → no entries, no streak, no missions,
+    // no XP, no coins, no rank change. Session row + puzzle history still
+    // written for audit / anti-fraud purposes.
+    if (baseEntries === 0) {
+      await supabaseAdmin
+        .from("winam_game_sessions")
+        .update({
+          puzzles_solved: data.puzzlesSolved,
+          hints_used: data.hintsUsed,
+          entries_awarded: 0,
+          coins_awarded: 0,
+          duration_seconds: data.durationSeconds,
+          ...(wisdomAccuracy !== null ? { wisdom_accuracy: wisdomAccuracy } : {}),
+        })
+        .eq("id", data.sessionId);
+
+      // Still record served puzzles so they aren't re-served (anti-fraud, not a reward)
+      if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+        for (const puzzleId of data.servedPuzzleIds) {
+          await supabaseAdmin.from("winam_puzzle_history").insert({
+            player_id: data.playerId,
+            puzzle_id: puzzleId,
+            seen_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      return {
+        success: true as const,
+        entries: 0,
+        sessionEntries: 0,
+        baseEntries: 0,
+        streakBonus: 0,
+        missionEntries: 0,
+        coins: 0,
+        xp: 0,
+        streak: player.current_streak,
+        weekTotal: weekSoFar,
+        weekCap,
+        overflow: 0,
+        rankTier: player.rank_tier,
+        previousRank: player.rank_tier,
+        completedMissions: [],
+      };
+    }
+
+    // ── Performance branch (baseEntries >= 1) ──
+    // Streak bonus
+    let streakBonus = 0;
+    const streak = player.current_streak;
+    if (streak >= 14) streakBonus = 3;
+    else if (streak >= 7) streakBonus = 2;
+    else if (streak >= 3) streakBonus = 1;
+
+    // Mission bonus is now awarded directly by evaluatePendingMissions (which
+    // writes its own ledger rows). Session-level rawEntries excludes missions.
+    const rawEntries = baseEntries + streakBonus;
+    const entriesToAdd = Math.min(rawEntries, weekCap - weekSoFar);
+    const overflow = rawEntries - entriesToAdd;
+
+    // XP: 10 per correct answer
+    const xpGained = data.puzzlesSolved * 10;
+    // Coins: base coins + overflow conversion (1 overflow entry = 5 coins)
+    const coinsFromGameplay = data.puzzlesSolved * 5;
+    const coinsFromOverflow = overflow * 5;
+    const totalCoins = coinsFromGameplay + coinsFromOverflow;
 
     // Update game session
     await supabaseAdmin
