@@ -309,9 +309,17 @@ function WisdomDropPage() {
 
         {!session.feedback && (
           <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold px-1">
-              Need a hint?
-            </p>
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold">
+                Need a hint?
+              </p>
+              <div className="flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-coin" />
+                <span className="text-xs font-semibold text-coin tabular-nums">
+                  {session.coinBalance} coins
+                </span>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {WISDOM_HINT_TIERS.map(({ tier, label, cost }) => {
                 const purchased = session.currentHintTier >= tier;
