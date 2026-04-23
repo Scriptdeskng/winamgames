@@ -31,6 +31,55 @@ const GROUP_DEFS: { label: string; keys: string[] }[] = [
   },
 ];
 
+const KEY_DESCRIPTIONS: Record<string, string> = {
+  hint_penalty:
+    "Multiplier applied to ticket earnings when hints are used (1 = no penalty)",
+  weekly_cap: "Maximum tickets a single player can earn in one draw week",
+  plan_daily_price: "Price in Naira for a daily subscription plan",
+  plan_weekly_price: "Price in Naira for a weekly subscription plan",
+  plan_daily_sku: "Forthsoft billing SKU identifier for the daily plan",
+  plan_weekly_sku: "Forthsoft billing SKU identifier for the weekly plan",
+  prize_cash_tiers:
+    "JSON array defining cash prize positions and amounts in Naira (1st, 2nd, 3rd place)",
+  prize_airtime_tiers:
+    "JSON array defining airtime prize tiers: count of winners and amount per winner",
+  winners_published_week_id:
+    "UUID of the draw week shown on the public winners screen. Set automatically when you click Publish.",
+  puzzle_weight_checkmate:
+    "Relative weight for CheckMate puzzle selection (higher = shown more often)",
+  puzzle_weight_wisdomdrop:
+    "Relative weight for WisdomDrop puzzle selection (higher = shown more often)",
+  free_session_mode:
+    "JSON config for free play mode: enabled flag, sessions per day allowed, and whether free sessions earn tickets",
+};
+
+function getKeyDescription(key: string): string | null {
+  if (KEY_DESCRIPTIONS[key]) return KEY_DESCRIPTIONS[key];
+  const m = key.match(/^base_(\d+)$/);
+  if (m) return `Base tickets awarded per ${m[1]} puzzles solved in a session`;
+  return null;
+}
+
+function KeyLabel({ name }: { name: string }) {
+  const desc = getKeyDescription(name);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="font-mono text-sm font-semibold">{name}</span>
+      {desc && (
+        <span className="group relative inline-flex">
+          <Info className="h-3 w-3 cursor-help text-muted-foreground/70 hover:text-muted-foreground" />
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-64 -translate-x-1/2 rounded-md border border-border bg-popover px-2 py-1.5 text-xs leading-snug text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+          >
+            {desc}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function isIntegerKey(key: string) {
   if (INTEGER_KEYS.includes(key)) return true;
   if (/^base_\d+$/.test(key)) return true;
