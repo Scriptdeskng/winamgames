@@ -6,7 +6,7 @@ import {
   verifyAdminSession,
   type AdminSession,
 } from "@/utils/admin.auth";
-import { AdminSidebar } from "../-admin/AdminSidebar";
+import { AdminSidebar } from "./-admin/AdminSidebar";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
