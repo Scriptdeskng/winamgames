@@ -80,6 +80,11 @@ function CheckMatePage() {
         setSelectedSquare(null);
         return;
       }
+      // Gate: only submit legal moves
+      if (!legalMoves.has(square)) {
+        setSelectedSquare(null);
+        return;
+      }
       // Detect capture from current FEN before submission
       const fen = (session.currentPuzzle as { fen?: string }).fen;
       let isCapture = false;
@@ -100,7 +105,7 @@ function CheckMatePage() {
     } else {
       setSelectedSquare(square);
     }
-  }, [selectedSquare, session]);
+  }, [selectedSquare, session, legalMoves]);
 
   const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
 
