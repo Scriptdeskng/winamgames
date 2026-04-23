@@ -176,22 +176,18 @@ function WisdomDropPage() {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mx-6 mb-4 rounded-xl bg-gradient-to-br from-coin/15 to-coin/5 border border-coin/30 p-3 flex items-center gap-3"
+                  className="mx-6 mb-4 rounded-lg bg-coin/10 border border-coin/20 px-3 py-2 flex items-center gap-2"
                 >
-                  <div className="h-10 w-10 rounded-lg bg-coin/20 border border-coin/30 flex items-center justify-center shrink-0">
-                    <Lightbulb className="h-5 w-5 text-coin" />
-                  </div>
+                  <Lightbulb className="w-3.5 h-3.5 text-coin shrink-0" />
                   <div className="min-w-0 flex-1">
                     {session.hintData.answer ? (
-                      <>
-                        <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">Answer revealed</p>
-                        <p className="text-sm font-bold text-foreground truncate">Tap "{session.hintData.answer}"</p>
-                      </>
+                      <p className="text-xs font-semibold text-foreground">
+                        Answer revealed · Tap <span className="text-coin">"{session.hintData.answer}"</span>
+                      </p>
                     ) : (
-                      <>
-                        <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">Starts with</p>
-                        <p className="text-2xl font-extrabold text-coin tabular-nums leading-none mt-0.5">{session.hintData.startsWidth}</p>
-                      </>
+                      <p className="text-xs font-semibold text-foreground">
+                        Starts with <span className="text-coin text-base font-extrabold">{session.hintData.startsWidth}</span>
+                      </p>
                     )}
                   </div>
                 </motion.div>
