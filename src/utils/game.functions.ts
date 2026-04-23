@@ -65,7 +65,6 @@ export const startSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
     // Ensure current draw week exists (auto-rollover)
     const drawWeekId = await ensureCurrentDrawWeek();
@@ -98,21 +97,127 @@ export const startSession = createServerFn({ method: "POST" })
 
     // Pick puzzles (shuffle and take 10)
     let puzzleList: { id: string; clientData: Record<string, string | string[]> }[];
-    if (data.gameType === "checkmate") {
-      const shuffled = [...CHECKMATE_PUZZLES].sort(() => Math.random() - 0.5).slice(0, 10);
-      puzzleList = shuffled.map((p) => ({
-        id: p.id,
-        clientData: { fen: p.fen },
-      }));
-    } else {
-      // Fetch player rank for difficulty mix
-      const { data: playerRow } = await supabaseAdmin
-        .from("winam_players")
-        .select("rank_tier")
-        .eq("id", data.playerId)
-        .single();
-      const rankTier = playerRow?.rank_tier ?? "starter";
 
+    // Fetch player rank for difficulty mix (used by both game types)
+    const { data: playerRow } = await supabaseAdmin
+      .from("winam_players")
+      .select("rank_tier")
+      .eq("id", data.playerId)
+      .single();
+    const rankTier = playerRow?.rank_tier ?? "starter";
+
+    if (data.gameType === "checkmate") {
+      // Numeric difficulty mix (1=beginner, 2=intermediate, 3=advanced) keyed by rank
+      const RANK_DIFFICULTY_MIX_CM: Record<string, { 1: number; 2: number; 3: number }> = {
+        starter:  { 1: 7, 2: 2, 3: 1 },
+        recruit:  { 1: 5, 2: 4, 3: 1 },
+        sergeant: { 1: 3, 2: 5, 3: 2 },
+        veteran:  { 1: 1, 2: 5, 3: 4 },
+        champion: { 1: 1, 2: 5, 3: 4 },
+        icon:     { 1: 1, 2: 5, 3: 4 },
+        legend:   { 1: 1, 2: 5, 3: 4 },
+        immortal: { 1: 1, 2: 5, 3: 4 },
+      };
+      const cmMix = RANK_DIFFICULTY_MIX_CM[rankTier] ?? RANK_DIFFICULTY_MIX_CM.starter;
+
+      // Fetch seen Lichess (lc_*) puzzle IDs only — keeps wisdom history isolated
+      const { data: seenCm } = await supabaseAdmin
+        .from("winam_puzzle_history")
+        .select("puzzle_id")
+        .eq("player_id", data.playerId)
+        .like("puzzle_id", "lc_%");
+      const seenCmIds = (seenCm ?? []).map((r) => r.puzzle_id);
+
+      type CmPoolRow = { id: string; difficulty: number };
+      let cmPool: CmPoolRow[];
+      {
+        let q = supabaseAdmin
+          .from("winam_checkmate_puzzles")
+          .select("id, difficulty");
+        if (seenCmIds.length > 0) {
+          const inList = `(${seenCmIds.map((id) => `"${id}"`).join(",")})`;
+          q = q.not("id", "in", inList);
+        }
+        const { data: rows, error: poolErr } = await q;
+        if (poolErr) {
+          console.error("Failed to load checkmate pool:", poolErr);
+          return { success: false as const, error: "No puzzles available" };
+        }
+        cmPool = (rows ?? []) as CmPoolRow[];
+      }
+
+      // Cycle reset: if unseen pool < 15, wipe only lc_-prefixed history
+      if (cmPool.length < 15) {
+        await supabaseAdmin
+          .from("winam_puzzle_history")
+          .delete()
+          .eq("player_id", data.playerId)
+          .like("puzzle_id", "lc_%");
+        const { data: full, error: fullErr } = await supabaseAdmin
+          .from("winam_checkmate_puzzles")
+          .select("id, difficulty");
+        if (fullErr || !full || full.length === 0) {
+          console.error("Failed to load full checkmate pool:", fullErr);
+          return { success: false as const, error: "No puzzles available" };
+        }
+        cmPool = full as CmPoolRow[];
+      }
+
+      const shuffleCm = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+      const cmBuckets: Record<1 | 2 | 3, CmPoolRow[]> = {
+        1: shuffleCm(cmPool.filter((p) => p.difficulty === 1)),
+        2: shuffleCm(cmPool.filter((p) => p.difficulty === 2)),
+        3: shuffleCm(cmPool.filter((p) => p.difficulty === 3)),
+      };
+
+      const cmPicked: CmPoolRow[] = [];
+      const cmPickedIds = new Set<string>();
+      const cmTake = (key: 1 | 2 | 3, n: number): number => {
+        let taken = 0;
+        while (taken < n && cmBuckets[key].length > 0) {
+          const p = cmBuckets[key].shift()!;
+          if (cmPickedIds.has(p.id)) continue;
+          cmPicked.push(p);
+          cmPickedIds.add(p.id);
+          taken++;
+        }
+        return taken;
+      };
+
+      // Cascade: advanced -> intermediate -> beginner; back-fill upward if beginner short
+      const advTakenCm = cmTake(3, cmMix[3]);
+      const advShortCm = cmMix[3] - advTakenCm;
+      const intTargetCm = cmMix[2] + advShortCm;
+      const intTakenCm = cmTake(2, intTargetCm);
+      const intShortCm = intTargetCm - intTakenCm;
+      const begTargetCm = cmMix[1] + intShortCm;
+      const begTakenCm = cmTake(1, begTargetCm);
+      let begShortCm = begTargetCm - begTakenCm;
+      if (begShortCm > 0) begShortCm -= cmTake(2, begShortCm);
+      if (begShortCm > 0) cmTake(3, begShortCm);
+
+      if (cmPicked.length === 0) {
+        return { success: false as const, error: "No puzzles available" };
+      }
+
+      // Re-query for fen + theme; preserve picked order
+      const { data: cmFull, error: cmFullErr } = await supabaseAdmin
+        .from("winam_checkmate_puzzles")
+        .select("id, fen, theme")
+        .in("id", cmPicked.map((p) => p.id));
+      if (cmFullErr || !cmFull) {
+        console.error("Failed to load full checkmate puzzles:", cmFullErr);
+        return { success: false as const, error: "No puzzles available" };
+      }
+      const cmById = new Map(cmFull.map((p) => [p.id, p]));
+      puzzleList = cmPicked
+        .map((sel) => cmById.get(sel.id))
+        .filter((p): p is NonNullable<typeof p> => !!p)
+        .map((p) => ({
+          id: p.id,
+          clientData: { fen: p.fen, theme: p.theme },
+        }));
+    } else {
       // Difficulty values in winam_wisdom_puzzles: beginner (144), intermediate (120), advanced (36)
       // Note: advanced pool is thin — Veteran+ (4/session) exhausts it in ~9 sessions before cascade kicks in.
       // Expand advanced pool in winam_wisdom_puzzles to 80+ for better Veteran+ experience.
@@ -163,11 +268,12 @@ export const startSession = createServerFn({ method: "POST" })
         // 50–89: no change
       }
 
-      // Fetch seen puzzle IDs for this player
+      // Fetch seen wisdom puzzle IDs (exclude lc_-prefixed checkmate ids)
       const { data: seen } = await supabaseAdmin
         .from("winam_puzzle_history")
         .select("puzzle_id")
-        .eq("player_id", data.playerId);
+        .eq("player_id", data.playerId)
+        .not("puzzle_id", "like", "lc_%");
       const seenIds = (seen ?? []).map((r) => r.puzzle_id);
 
       // Fetch unseen pool (light columns only)
@@ -189,12 +295,13 @@ export const startSession = createServerFn({ method: "POST" })
         unseen = (rows ?? []) as PoolRow[];
       }
 
-      // Cycle reset if too few unseen
+      // Cycle reset if too few unseen — wipe only non-lc_ history
       if (unseen.length < 15) {
         await supabaseAdmin
           .from("winam_puzzle_history")
           .delete()
-          .eq("player_id", data.playerId);
+          .eq("player_id", data.playerId)
+          .not("puzzle_id", "like", "lc_%");
         const { data: full, error: fullErr } = await supabaseAdmin
           .from("winam_wisdom_puzzles")
           .select("id, difficulty, region");
@@ -343,18 +450,17 @@ export const submitMove = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       sessionId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(30),
+      puzzleId: z.string().min(1).max(40),
       answer: z.string().min(1).max(50),
       timeMs: z.number().min(0).max(600000),
-      nextPuzzleId: z.string().min(1).max(30).optional(),
+      nextPuzzleId: z.string().min(1).max(40).optional(),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
     // Determine game type from puzzle ID prefix
-    const isCheckmate = data.puzzleId.startsWith("cm-");
+    const isCheckmate = data.puzzleId.startsWith("lc_") || data.puzzleId.startsWith("cm-");
 
     let isCorrect = false;
     let puzzleResult: "correct" | "incorrect" = "incorrect";
@@ -371,13 +477,17 @@ export const submitMove = createServerFn({ method: "POST" })
     const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
     if (isCheckmate) {
-      const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_checkmate_puzzles")
+        .select("fen, solution_move")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
         try {
           const { from, to } = JSON.parse(data.answer) as { from: string; to: string };
           const chess = new Chess(puzzle.fen);
           const move = chess.move({ from, to, promotion: "q" });
-          isCorrect = move !== null && `${from}${to}` === puzzle.solutionMove;
+          isCorrect = move !== null && `${from}${to}` === puzzle.solution_move;
         } catch {
           isCorrect = false;
         }
@@ -423,8 +533,12 @@ export const submitMove = createServerFn({ method: "POST" })
     let nextPuzzle: Record<string, string | string[]> | null = null;
     if (data.nextPuzzleId) {
       if (isCheckmate) {
-        const p = CHECKMATE_PUZZLES.find((x) => x.id === data.nextPuzzleId);
-        if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen };
+        const { data: p } = await supabaseAdmin
+          .from("winam_checkmate_puzzles")
+          .select("id, fen, theme")
+          .eq("id", data.nextPuzzleId)
+          .maybeSingle();
+        if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen, theme: p.theme };
       } else {
         const { data: p } = await supabaseAdmin
           .from("winam_wisdom_puzzles")
@@ -457,13 +571,12 @@ export const useHint = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
       playerId: z.string().uuid(),
-      puzzleId: z.string().min(1).max(30),
+      puzzleId: z.string().min(1).max(40),
       tier: z.number().min(1).max(3),
     })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
     const costs = { 1: 25, 2: 75, 3: 150 } as const;
     const cost = costs[data.tier as 1 | 2 | 3];
@@ -486,17 +599,21 @@ export const useHint = createServerFn({ method: "POST" })
       .eq("id", data.playerId);
 
     // Return hint data
-    const isCheckmate = data.puzzleId.startsWith("cm-");
+    const isCheckmate = data.puzzleId.startsWith("lc_") || data.puzzleId.startsWith("cm-");
     let hintData: Record<string, string> = {};
 
     if (isCheckmate) {
-      const puzzle = CHECKMATE_PUZZLES.find((p) => p.id === data.puzzleId);
+      const { data: puzzle } = await supabaseAdmin
+        .from("winam_checkmate_puzzles")
+        .select("hint_piece, hint_destination, solution_move")
+        .eq("id", data.puzzleId)
+        .maybeSingle();
       if (puzzle) {
-        if (data.tier >= 1) hintData.piece = puzzle.hintPiece;
-        if (data.tier >= 2) hintData.destination = puzzle.hintDestination;
+        if (data.tier >= 1) hintData.piece = puzzle.hint_piece ?? "";
+        if (data.tier >= 2) hintData.destination = puzzle.hint_destination ?? "";
         if (data.tier >= 3) {
-          hintData.from = puzzle.solutionMove.slice(0, 2);
-          hintData.to = puzzle.solutionMove.slice(2, 4);
+          hintData.from = puzzle.solution_move.slice(0, 2);
+          hintData.to = puzzle.solution_move.slice(2, 4);
         }
       }
     } else {
@@ -534,7 +651,7 @@ export const closeSession = createServerFn({ method: "POST" })
       puzzlesSolved: z.number().min(0).max(100),
       hintsUsed: z.number().min(0).max(100),
       durationSeconds: z.number().min(0).max(7200),
-      servedPuzzleIds: z.array(z.string().min(1).max(30)).max(20).optional(),
+      servedPuzzleIds: z.array(z.string().min(1).max(40)).max(20).optional(),
     })
   )
   .handler(async ({ data }) => {
@@ -652,7 +769,7 @@ export const closeSession = createServerFn({ method: "POST" })
         .eq("id", data.playerId);
 
       // Record served puzzles in history (anti-fraud, same as other branches)
-      if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+      if (data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
         for (const puzzleId of data.servedPuzzleIds) {
           await supabaseAdmin.from("winam_puzzle_history").insert({
             player_id: data.playerId,
@@ -699,7 +816,7 @@ export const closeSession = createServerFn({ method: "POST" })
         .eq("id", data.sessionId);
 
       // Still record served puzzles so they aren't re-served (anti-fraud, not a reward)
-      if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+      if (data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
         for (const puzzleId of data.servedPuzzleIds) {
           await supabaseAdmin.from("winam_puzzle_history").insert({
             player_id: data.playerId,
@@ -810,9 +927,9 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.playerId);
 
-    // ── Record served puzzles in history (wisdomdrop only) ──
+    // ── Record served puzzles in history ──
     // TODO: switch to batch insert for puzzle history on session close
-    if (session.game_type === "wisdomdrop" && data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
+    if (data.servedPuzzleIds && data.servedPuzzleIds.length > 0) {
       for (const puzzleId of data.servedPuzzleIds) {
         await supabaseAdmin.from("winam_puzzle_history").insert({
           player_id: data.playerId,

@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      winam_checkmate_puzzles: {
+        Row: {
+          created_at: string | null
+          difficulty: number
+          fen: string
+          hint_destination: string | null
+          hint_piece: string | null
+          id: string
+          rating: number
+          solution_move: string
+          theme: string
+          times_served: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty: number
+          fen: string
+          hint_destination?: string | null
+          hint_piece?: string | null
+          id: string
+          rating: number
+          solution_move: string
+          theme: string
+          times_served?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: number
+          fen?: string
+          hint_destination?: string | null
+          hint_piece?: string | null
+          id?: string
+          rating?: number
+          solution_move?: string
+          theme?: string
+          times_served?: number | null
+        }
+        Relationships: []
+      }
       winam_draw_weeks: {
         Row: {
           draw_executes_at: string
