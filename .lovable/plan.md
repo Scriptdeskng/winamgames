@@ -1,71 +1,46 @@
 
 
-## Landing page polish — 7 fixes
+## Diagnosis: stale browser cache, not a code bug
 
-All edits in `src/routes/index.tsx`. No other files touched.
+I checked the codebase and dev server. Findings:
 
-### 1. Branding: "WinAm Games" / "WinAm" → "WinamGames"
+- **TypeScript passes cleanly** (`bunx tsc --noEmit` returns no errors).
+- **Dev server returns 200** for `/leaderboard` (and all other routes).
+- **Source files are syntactically valid** — `leaderboard.tsx`, `checkmate.tsx`, `wisdomdrop.tsx` all parse OK.
+- **`routeTree.gen.ts` is healthy** — every authed route is registered correctly, no doubled segments.
 
-Replace every occurrence of the brand string in the file:
-- Meta titles (lines 16, 24, 39): `"WinAm Games — Africa's smartest puzzle arena"` → `"WinamGames — Africa's smartest puzzle arena"`
-- Open Graph image URLs (lines 33, 48): leave the host `winamgames.lovable.app` and asset filename `winam-logo.png` untouched (those are external URLs / asset paths, not brand copy).
-- Nav `aria-label` (line 96) and `<img alt>` (line 97): `"WinAm Games home"` → `"WinamGames home"`, alt `"WinAm"` → `"WinamGames"`
-- Footer `aria-label` (line 604), alt (line 605), and copyright (line 608): same treatment, `© {year} WinamGames`
+The console error in the user's preview is:
 
-Asset import path `@/assets/winam-logo.png` is not user-visible — leave it.
-
-### 2. Remove "DAILY PUZZLE ARENA" badge
-
-Delete the entire `<RevealOnScroll>` wrapper at lines 128–133 containing the Sparkles + "Daily puzzle arena" pill. Remove cleanly — nothing replaces it. The H1 below becomes the first hero element. Drop the `mt-4` on the H1 wrapper so spacing doesn't double up (or keep — `RevealOnScroll` doesn't add margin, the `mt-4` was relative to the badge above; remove `mt-4` from line 136 so the H1 sits flush at the top of the copy column).
-
-### 3. Social proof strip — fix mobile overflow + new copy
-
-Lines 531–559. Update the `facts` array to the four shorter strings:
-
-```ts
-const facts = [
-  { icon: Users, label: "500+ players this week" },
-  { icon: Trophy, label: "50+ winners Sunday" },
-  { icon: Coins, label: "₦50,000 prizes weekly" },
-  { icon: Sparkles, label: "2 games · infinite fun" },
-];
+```
+TypeError: Failed to fetch dynamically imported module:
+.../src/routes/_authed/leaderboard.tsx?tsr-split=component
 ```
 
-Replace the wrapper class on line 542 with `flex flex-wrap justify-center gap-2.5` (drop the horizontal-scroll/snap classes and the negative margins). Drop `snap-start shrink-0` from each pill (line 548) so they wrap naturally instead of being forced onto one row.
+…and the route match shows the suspicious doubled path `/_authed/leaderboard/leaderboard`.
 
-### 4. Winners section — refresh dates, remove LIVE badge
+### What actually happened
 
-- Line 453: `"Last drawn · Sunday, Apr 13"` → `"Last drawn · Sunday, Apr 20"`
-- Line 464: `"Week of Apr 7 – 13, 2025"` → `"Week of Apr 20 – 26, 2026"`
-- Lines 467–473: remove the entire green pulsing "Live" pill `<span>`. The header row keeps just the calendar + week label on the left and nothing on the right.
+The dev-server log shows a sequence of historical crashes earlier in this session:
 
-The "Recent draw" eyebrow already exists at line 436 — no change needed there. (The "Updated weekly" pulsing dot at lines 438–444 is a different element from the LIVE pill being removed; user asked for "RECENT DRAW label only" — leave the existing "Recent draw" eyebrow and "Updated weekly" subtle indicator as-is since they're already neutral. Only the prominent green "Live" pill on the table header gets removed.)
+1. A duplicate `puzzleFen` identifier in one route file (line 124) — already fixed.
+2. An "Adjacent JSX elements must be wrapped" error in another route file (line 410:4) — already fixed.
+3. Stale imports of `HeroGameGraphics.tsx` and a missing `_authed/index.tsx` — already cleaned up.
 
-### 5. Games section copy
+While the dev server was crashing, the preview tab fetched and cached chunk URLs (`?tsr-split=component` hashes) that the now-restarted server no longer serves. When the user clicks "Leaderboard" in the menu, the SPA performs a client-side navigation and tries to re-fetch a chunk URL that doesn't exist anymore, throwing `Failed to fetch dynamically imported module`. The error boundary then renders the "Something went wrong" page.
 
-Lines 297, 300:
-- H2: `"Built for the way you think."` → `"Two games. One draw. Every Sunday."`
-- Sub: → `"Play chess puzzles and African proverbs. Solve daily to earn draw tickets and compete for cash prizes every Sunday."`
+The "doubled path" in the route match (`/_authed/leaderboard/leaderboard`) is the error boundary's own match key, not a real routing issue.
 
-### 6. CheckMate card copy
+### Fix
 
-Lines 324, 328:
-- Badge: `"1-move mates · daily"` → `"Tactical puzzles · daily"` (Tailwind `uppercase` class handles caps)
-- Body: → `"Find the best move in tactical chess puzzles. Forks, pins, skewers and more — one puzzle at a time."`
+There is no code change required. The preview tab needs a hard reload to drop the stale module URLs and pick up the current chunk hashes.
 
-### 7. WisdomDrop badge
+**Action when implementation mode resumes:**
 
-Lines 339–341. Replace the purple `bg-xp/10 border-xp/20 text-xp` pill with the same emerald treatment used by CheckMate:
+1. Open the preview, hard-reload it (Cmd/Ctrl+Shift+R), and verify that `/leaderboard`, `/profile`, `/entries`, `/winners`, `/checkmate`, and `/wisdomdrop` all load without the error boundary.
+2. If any route still 500s after reload, capture the live dev-server log (`tail -n 200 /tmp/dev-server-logs/dev-server.log`) — that will show the real current error rather than the historical crash trail — and patch the source from there.
+3. If everything loads, no further code changes ship from this task.
 
-```tsx
-<span className="text-[10px] font-semibold uppercase tracking-wider text-emerald bg-emerald/10 border border-emerald/20 rounded-full px-2.5 py-1">
-  5+ African regions
-</span>
-```
+### Files touched
 
-### Out of scope (explicitly unchanged)
-
-- `src/assets/winam-logo.png` filename and `winamgames.lovable.app` domain — infra, not copy.
-- Any other route file, component, or routing/logic.
-- The pulsing "Updated weekly" dot in the winners eyebrow row — already neutral, not the "LIVE" pill being removed.
+None, unless step 2 surfaces a real error in the post-reload log. In that case, the patch would be scoped to the exact file/line the live log points at, no other changes.
 
