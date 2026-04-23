@@ -84,7 +84,25 @@ function WisdomDropPage() {
             </span>
           </div>
 
-          <div className="flex-1 min-h-6" />
+          <div className="flex-1 flex items-center justify-center w-full py-6">
+            <div className="w-full max-w-[320px] rounded-xl bg-surface-1 border border-border p-4 space-y-3">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold">Example</p>
+              <p className="text-sm text-foreground leading-relaxed">
+                "A child who is not taught at home will teach the village a ____"
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {["lesson", "song", "dance", "game"].map((opt) => (
+                  <div
+                    key={opt}
+                    className="h-10 rounded-lg border border-border bg-surface-2 flex items-center justify-center text-xs text-muted-foreground"
+                  >
+                    {opt}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/50 text-center">Tap the correct word to complete the proverb</p>
+            </div>
+          </div>
 
           <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
             <div className="flex items-center gap-3">
