@@ -31,6 +31,8 @@ const GOAL_BY_THEME: Record<string, string> = {
   "Trapped piece": "An opponent piece has no safe escape. Find the move that proves it.",
   "Capture the defender": "Capturing this piece removes a key defender. Find the winning exchange.",
   "Discovered attack": "Moving one piece reveals a hidden attack from another. Find it.",
+  "Skewer": "A high value piece is under attack — moving it will expose a less valuable piece behind it. Find the skewer.",
+  "Back rank mate": "Your opponent's king is trapped on the back rank with no escape. Find the checkmate.",
 };
 
 export const Route = createFileRoute("/_authed/checkmate")({
