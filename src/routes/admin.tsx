@@ -14,6 +14,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
+  useAllowScroll();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isLoginRoute = pathname === "/admin/login";
