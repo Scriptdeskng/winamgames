@@ -195,39 +195,37 @@ function CheckMatePage() {
           </div>
 
           {/* Example mini board preview */}
-          <div className="flex-1 flex items-center justify-center w-full py-6">
-            <div className="w-full max-w-[320px] rounded-xl bg-surface-1 border border-border p-4 space-y-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold">Example</p>
-              <div className="mx-auto w-[176px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden border border-border">
-                {Array.from({ length: 16 }).map((_, i) => {
-                  const row = Math.floor(i / 4);
-                  const col = i % 4;
-                  const dark = (row + col) % 2 === 1;
-                  const isQueen = row === 2 && col === 2;
-                  const isKing = row === 0 && col === 0;
-                  const isHint = row === 0 && col === 2;
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        "relative aspect-square flex items-center justify-center",
-                        dark ? "bg-[#B58863]" : "bg-[#F0D9B5]",
-                        isHint && "ring-2 ring-inset ring-emerald/70"
-                      )}
-                    >
-                      {isQueen && (
-                        <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-7 h-7" />
-                      )}
-                      {isKing && (
-                        <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-7 h-7" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-sm font-semibold text-foreground text-center">Find the winning move</p>
-              <p className="text-[10px] text-muted-foreground/50 text-center">Tap a piece, then tap its destination</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4">
+            <div className="w-[160px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden border border-border/30">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const row = Math.floor(i / 4);
+                const col = i % 4;
+                const isQueen = row === 2 && col === 2;
+                const isKing = row === 0 && col === 0;
+                const isHint = row === 0 && col === 2;
+                return (
+                  <div
+                    key={i}
+                    className="relative aspect-square flex items-center justify-center"
+                    style={{
+                      backgroundColor: isHint
+                        ? "rgba(255,255,0,0.5)"
+                        : (row + col) % 2 === 0
+                          ? "#F0D9B5"
+                          : "#B58863"
+                    }}
+                  >
+                    {isQueen && (
+                      <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8" />
+                    )}
+                    {isKing && (
+                      <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8" />
+                    )}
+                  </div>
+                );
+              })}
             </div>
+            <p className="text-xs text-muted-foreground/60 text-center">Tap a piece · tap its destination</p>
           </div>
 
           {/* Reward preview */}
