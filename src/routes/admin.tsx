@@ -7,6 +7,7 @@ import {
   type AdminSession,
 } from "@/utils/admin.auth";
 import { AdminSidebar } from "./-admin/AdminSidebar";
+import { useAllowScroll } from "@/hooks/useAllowScroll";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
