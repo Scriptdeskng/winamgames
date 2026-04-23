@@ -52,6 +52,8 @@ export type Database = {
           hint_destination: string | null
           hint_piece: string | null
           id: string
+          opponent_from: string | null
+          opponent_to: string | null
           rating: number
           solution_move: string
           theme: string
@@ -64,6 +66,8 @@ export type Database = {
           hint_destination?: string | null
           hint_piece?: string | null
           id: string
+          opponent_from?: string | null
+          opponent_to?: string | null
           rating: number
           solution_move: string
           theme: string
@@ -76,6 +80,8 @@ export type Database = {
           hint_destination?: string | null
           hint_piece?: string | null
           id?: string
+          opponent_from?: string | null
+          opponent_to?: string | null
           rating?: number
           solution_move?: string
           theme?: string
