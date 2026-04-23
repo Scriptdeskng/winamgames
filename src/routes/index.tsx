@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "WinAm Games — Africa's smartest puzzle arena" },
+      { title: "WinamGames — Africa's smartest puzzle arena" },
       {
         name: "description",
         content:
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:title",
-        content: "WinAm Games — Africa's smartest puzzle arena",
+        content: "WinamGames — Africa's smartest puzzle arena",
       },
       {
         property: "og:description",
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
-        content: "WinAm Games — Africa's smartest puzzle arena",
+        content: "WinamGames — Africa's smartest puzzle arena",
       },
       {
         name: "twitter:description",
@@ -93,8 +93,8 @@ function StickyNav({ scrolled }: { scrolled: boolean }) {
       }`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link to="/" aria-label="WinAm Games home" className="flex items-center">
-          <img src={logo} alt="WinAm" className="h-7 w-auto" />
+        <Link to="/" aria-label="WinamGames home" className="flex items-center">
+          <img src={logo} alt="WinamGames" className="h-7 w-auto" />
         </Link>
         <Link
           to="/subscribe"
@@ -125,15 +125,8 @@ function HeroSection({ onSeeWinners }: { onSeeWinners: () => void }) {
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-12 md:py-20 grid md:grid-cols-2 gap-10 md:gap-12 items-center w-full">
         {/* Copy */}
         <div className="text-center md:text-left">
-          <RevealOnScroll>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-1 border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-              <Sparkles className="h-3 w-3 text-emerald" />
-              Daily puzzle arena
-            </span>
-          </RevealOnScroll>
-
           <RevealOnScroll delayMs={80}>
-            <h1 className="mt-4 text-[2.25rem] sm:text-5xl md:text-[3.5rem] font-bold leading-[1.05] tracking-tight">
+            <h1 className="text-[2.25rem] sm:text-5xl md:text-[3.5rem] font-bold leading-[1.05] tracking-tight">
               Africa's smartest <span className="text-gradient-emerald">puzzle arena.</span>
             </h1>
           </RevealOnScroll>
@@ -294,10 +287,10 @@ function GamesShowcase() {
               The games
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Built for the way you think.
+              Two games. One draw. Every Sunday.
             </h2>
             <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-              Tactical chess puzzles and proverbs from across the continent. Both bite-sized. Both daily.
+              Play chess puzzles and African proverbs. Solve daily to earn draw tickets and compete for cash prizes every Sunday.
             </p>
           </div>
         </RevealOnScroll>
@@ -321,11 +314,11 @@ function CheckMatePreviewCard() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold">CheckMate</h3>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald bg-emerald/10 border border-emerald/20 rounded-full px-2.5 py-1">
-          1-move mates · daily
+          Tactical puzzles · daily
         </span>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">
-        One move. One mate. Train your tactical eye with bite-sized puzzles you can finish on the way to work.
+        Find the best move in tactical chess puzzles. Forks, pins, skewers and more — one puzzle at a time.
       </p>
     </div>
   );
@@ -336,8 +329,8 @@ function WisdomDropPreviewCard() {
     <div className="group h-full rounded-2xl bg-surface-1 border border-border shadow-card p-6 sm:p-7 transition-all md:hover:-translate-y-1 md:hover:shadow-glow flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-bold">WisdomDrop</h3>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-xp bg-xp/10 border border-xp/20 rounded-full px-2.5 py-1">
-          Yoruba · Hausa · Igbo · Akan +
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald bg-emerald/10 border border-emerald/20 rounded-full px-2.5 py-1">
+          5+ African regions
         </span>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -450,7 +443,7 @@ function WinnersSection() {
               50+ winners every week — cash and airtime
             </p>
             <p className="mt-2 text-[11px] uppercase tracking-wider text-muted-foreground/70 tabular-nums">
-              Last drawn · Sunday, Apr 13
+              Last drawn · Sunday, Apr 20
             </p>
           </div>
         </RevealOnScroll>
@@ -461,16 +454,9 @@ function WinnersSection() {
               <div className="inline-flex items-center gap-2 min-w-0">
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span className="text-xs text-muted-foreground tabular-nums truncate">
-                  Week of Apr 7 – 13, 2025
+                  Week of Apr 20 – 26, 2026
                 </span>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald/10 border border-emerald/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald opacity-75 animate-ping" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald" />
-                </span>
-                Live
-              </span>
             </div>
 
             <div className="divide-y divide-border">
@@ -531,21 +517,21 @@ function WinnersSection() {
 function SocialProofStrip() {
   const facts = [
     { icon: Users, label: "500+ players this week" },
-    { icon: Trophy, label: "50+ winners every Sunday" },
-    { icon: Coins, label: "Real cash, every week" },
-    { icon: Sparkles, label: "Infinite challenge" },
+    { icon: Trophy, label: "50+ winners Sunday" },
+    { icon: Coins, label: "₦50,000 prizes weekly" },
+    { icon: Sparkles, label: "2 games · infinite fun" },
   ];
 
   return (
     <section className="py-10 sm:py-14 border-y border-border bg-surface-1/30">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="flex md:flex-wrap md:justify-center gap-2.5 overflow-x-auto snap-x snap-mandatory md:overflow-visible -mx-4 sm:-mx-6 px-4 sm:px-6 md:mx-0 md:px-0">
+        <div className="flex flex-wrap justify-center gap-2.5">
           {facts.map((f) => {
             const Icon = f.icon;
             return (
               <div
                 key={f.label}
-                className="snap-start shrink-0 inline-flex items-center gap-2 rounded-full bg-surface-2 border border-border px-4 py-2 text-sm text-foreground/90"
+                className="inline-flex items-center gap-2 rounded-full bg-surface-2 border border-border px-4 py-2 text-sm text-foreground/90"
               >
                 <Icon className="h-4 w-4 text-emerald shrink-0" />
                 <span className="whitespace-nowrap">{f.label}</span>
@@ -601,11 +587,11 @@ function Footer() {
   return (
     <footer className="border-t border-border py-8">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <Link to="/" aria-label="WinAm Games home" className="flex items-center">
-          <img src={logo} alt="WinAm" className="h-6 w-auto" />
+        <Link to="/" aria-label="WinamGames home" className="flex items-center">
+          <img src={logo} alt="WinamGames" className="h-6 w-auto" />
         </Link>
         <p className="text-xs text-muted-foreground tabular-nums">
-          © {new Date().getFullYear()} WinAm Games
+          © {new Date().getFullYear()} WinamGames
         </p>
       </div>
     </footer>
