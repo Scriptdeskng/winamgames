@@ -351,10 +351,10 @@ function WisdomDropPage() {
                       purchased
                         ? "bg-success/10 border-success/30 text-success"
                         : locked
-                          ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
+                          ? "bg-surface-1/30 border-border/30 text-muted-foreground/40 cursor-not-allowed opacity-40"
                           : !canAfford
-                            ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-40"
-                            : "bg-surface-1 border-border text-foreground hover:border-primary/30 active:scale-95"
+                            ? "bg-surface-1/50 border-border/40 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                            : "bg-primary/10 border-primary/40 text-foreground hover:bg-primary/20 hover:border-primary/60 active:scale-95"
                     )}
                   >
                     {purchased ? <Check className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
