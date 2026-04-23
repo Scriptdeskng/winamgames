@@ -626,7 +626,10 @@ export const useHint = createServerFn({ method: "POST" })
         .eq("id", data.puzzleId)
         .maybeSingle();
       if (puzzle) {
-        if (data.tier >= 1) hintData.piece = puzzle.hint_piece ?? "";
+        if (data.tier >= 1) {
+          hintData.piece = puzzle.hint_piece ?? "";
+          hintData.from = puzzle.solution_move.slice(0, 2);
+        }
         if (data.tier >= 2) hintData.destination = puzzle.hint_destination ?? "";
         // Tier 3 removed for CheckMate — arrow at tier 2 communicates the full move
       }

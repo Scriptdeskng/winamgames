@@ -72,11 +72,30 @@ function CheckMatePage() {
     setShowOnboarding(false);
   };
 
+  const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
+
+  const legalMoves = useMemo(() => {
+    if (!selectedSquare || !puzzleFen) return new Set<string>();
+    try {
+      const chess = new Chess(puzzleFen);
+      return new Set(
+        chess.moves({ square: selectedSquare as Square, verbose: true }).map((m) => m.to as string)
+      );
+    } catch {
+      return new Set<string>();
+    }
+  }, [selectedSquare, puzzleFen]);
+
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
 
     if (selectedSquare) {
       if (square === selectedSquare) {
+        setSelectedSquare(null);
+        return;
+      }
+      // Gate: only submit legal moves
+      if (!legalMoves.has(square)) {
         setSelectedSquare(null);
         return;
       }
@@ -100,9 +119,7 @@ function CheckMatePage() {
     } else {
       setSelectedSquare(square);
     }
-  }, [selectedSquare, session]);
-
-  const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
+  }, [selectedSquare, session, legalMoves]);
 
   const lastMove = useMemo(() => {
     const p = session.currentPuzzle as
@@ -122,17 +139,10 @@ function CheckMatePage() {
     else if (session.feedback === "incorrect") playIncorrect();
   }, [session.feedback]);
 
-  const legalMoves = useMemo(() => {
-    if (!selectedSquare || !puzzleFen) return new Set<string>();
-    try {
-      const chess = new Chess(puzzleFen);
-      return new Set(
-        chess.moves({ square: selectedSquare as Square, verbose: true }).map((m) => m.to as string)
-      );
-    } catch {
-      return new Set<string>();
-    }
-  }, [selectedSquare, puzzleFen]);
+  useEffect(() => {
+    if (!lastMove) return;
+    playMove();
+  }, [lastMove]);
 
   if (!session.sessionId) {
     return (
