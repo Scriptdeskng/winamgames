@@ -2,14 +2,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/games/GameHeader";
-import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins } from "lucide-react";
+import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const WISDOM_HINT_TIERS = [
+  { tier: 1, label: "Eliminate 2", cost: 25 },
+  { tier: 2, label: "First letter", cost: 75 },
+  { tier: 3, label: "Reveal", cost: 150 },
+] as const;
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
   component: WisdomDropPage,
@@ -131,6 +136,7 @@ function WisdomDropPage() {
   const isCorrect = session.feedback === "correct";
   const correctAnswer = session.lastReveal?.blank;
   const selectedAnswer = session.selectedAnswer;
+  const revealedAnswer = session.hintData?.answer ?? null;
   const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
   return (
@@ -163,14 +169,34 @@ function WisdomDropPage() {
               </p>
             </div>
 
-            {/* Hint chip */}
-            {session.hintData && session.hintData.startsWidth && !session.feedback && (
-              <div className="mx-6 mb-4 rounded-xl bg-coin/10 border border-coin/20 p-3">
-                <p className="text-xs font-medium text-coin">
-                  Hint: The word starts with "{session.hintData.startsWidth}"
-                </p>
-              </div>
-            )}
+            {/* Premium hint chip */}
+            <AnimatePresence>
+              {!session.feedback && session.hintData && (session.hintData.startsWidth || session.hintData.answer) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mx-6 mb-4 rounded-xl bg-gradient-to-br from-coin/15 to-coin/5 border border-coin/30 p-3 flex items-center gap-3"
+                >
+                  <div className="h-10 w-10 rounded-lg bg-coin/20 border border-coin/30 flex items-center justify-center shrink-0">
+                    <Lightbulb className="h-5 w-5 text-coin" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {session.hintData.answer ? (
+                      <>
+                        <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">Answer revealed</p>
+                        <p className="text-sm font-bold text-foreground truncate">Tap "{session.hintData.answer}"</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">Starts with</p>
+                        <p className="text-2xl font-extrabold text-coin tabular-nums leading-none mt-0.5">{session.hintData.startsWidth}</p>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Choices */}
             <div className="px-4 pb-4 grid grid-cols-1 gap-3">
@@ -182,6 +208,7 @@ function WisdomDropPage() {
                 const isChecking = session.loading && isThisSelected && !showState;
                 const isWrongSelected = showState && isThisSelected && !isThisCorrect;
                 const isOtherWrong = showState && !isThisSelected && !isThisCorrect;
+                const isRevealed = !showState && !!revealedAnswer && normalize(option) === normalize(revealedAnswer);
 
                 return (
                   <button
@@ -195,7 +222,8 @@ function WisdomDropPage() {
                       isOtherWrong && "bg-surface-1/40 border-border/40 text-muted-foreground/50",
                       isChecking && "bg-surface-1 border-primary/60 text-foreground shadow-glow",
                       !showState && !isChecking && isEliminated && "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed",
-                      !showState && !isChecking && !isEliminated && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
+                      !showState && !isChecking && !isEliminated && isRevealed && "bg-success/10 border-success/40 text-success ring-1 ring-success/30 shadow-glow",
+                      !showState && !isChecking && !isEliminated && !isRevealed && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
                     )}
                   >
                     {showState && isThisCorrect && <Check className="h-4 w-4" />}
@@ -280,12 +308,43 @@ function WisdomDropPage() {
         />
 
         {!session.feedback && (
-          <HintButton
-            currentTier={session.currentHintTier}
-            coinBalance={session.coinBalance}
-            onUseHint={session.requestHint}
-            disabled={session.loading || session.gameOver}
-          />
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold px-1">
+              Need a hint?
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {WISDOM_HINT_TIERS.map(({ tier, label, cost }) => {
+                const purchased = session.currentHintTier >= tier;
+                const locked = tier > session.currentHintTier + 1;
+                const canAfford = session.coinBalance >= cost;
+                const isDisabled = purchased || locked || !canAfford || session.loading || session.gameOver;
+
+                return (
+                  <button
+                    key={tier}
+                    onClick={() => !isDisabled && session.requestHint(tier as 1 | 2 | 3)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all border min-h-[72px]",
+                      purchased
+                        ? "bg-success/10 border-success/30 text-success"
+                        : locked
+                          ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
+                          : !canAfford
+                            ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-40"
+                            : "bg-surface-1 border-border text-foreground hover:border-primary/30 active:scale-95"
+                    )}
+                  >
+                    {purchased ? <Check className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
+                    <span className="font-semibold">{label}</span>
+                    <span className="text-[10px] opacity-70">
+                      {purchased ? "Used" : `${cost} coins`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>
