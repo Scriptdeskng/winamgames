@@ -1,55 +1,54 @@
 
 
-## Fix: /admin/login blank screen
+## Fix admin config: scroll + compact grouped layout
 
-### Root cause
+### 1. Enable scrolling on admin pages
 
-`src/routes/admin.login.tsx` is registered as a **child** of `src/routes/admin.tsx` (the auth-guarded layout) because TanStack's flat-file router treats `admin.login.tsx` as nested under `admin.tsx`. This means visiting `/admin/login` runs the layout's auth guard, which:
+**Modify `src/routes/admin.tsx`:**
+- Import and call `useAllowScroll()` from `@/hooks/useAllowScroll` (existing hook that adds `allow-scroll` class to `<html>`, which `src/styles.css` already styles to override the locked-height defaults).
+- This unlocks vertical scrolling for all admin routes — fixes the cut-off content on Config (and any future long pages).
 
-1. Reads `getAdminSession()` → returns `null` (no session yet)
-2. Calls `navigate({ to: "/admin/login" })` and returns early
-3. Renders the loading spinner because `ready` stays `false`
-4. The `<Outlet />` (which would contain the login form) never renders
+### 2. Redesign `src/routes/admin.config.tsx` as a compact grouped table
 
-The login page is mounted but invisible — the layout shows a spinner forever instead of rendering its child.
+Replace the current card-per-row layout with a dense, grouped row layout.
 
-### Fix
-
-Modify `src/routes/admin.tsx` to **skip the auth guard when the current path is `/admin/login`**. Read the current location with `useLocation()` from `@tanstack/react-router`. If the pathname is `/admin/login`, render `<Outlet />` immediately without running the session check, so the login route renders normally.
-
-Logic:
+**Key grouping (defined as a constant in the file):**
 ```
-const { pathname } = useLocation();
-const isLoginRoute = pathname === "/admin/login";
-
-useEffect(() => {
-  if (isLoginRoute) { setReady(true); return; }
-  // existing session check
-}, [navigate, isLoginRoute]);
-
-if (isLoginRoute) {
-  return <Outlet />;  // bare outlet, no sidebar
-}
-
-// existing layout (sidebar + outlet) for authed admin pages
+Economy:  base_1, base_2, base_3, base_4, base_5, hint_penalty, weekly_cap
+Pricing:  plan_daily_price, plan_weekly_price, plan_daily_sku, plan_weekly_sku
+Draw:     prize_cash_tiers, prize_airtime_tiers, winners_published_week_id
+Game:     puzzle_weight_checkmate, puzzle_weight_wisdomdrop, free_session_mode
+Other:    (catch-all for any keys not in the above lists)
 ```
+The `base_*` set is built dynamically from the returned rows so new tiers are picked up automatically.
 
-This keeps:
-- The same flat-file route structure (no renames, no cascading import changes)
-- The auth guard active for every other `/admin/*` route
-- The login page free of sidebar chrome (it has its own centered layout)
+**Layout:**
+- Warning banner stays at top (unchanged).
+- Each group rendered as a section with a subtle header: small uppercase label + thin `border-b border-border/50` divider, no card wrapper. Groups stacked with `space-y-6`.
+- Within a group, rows use a compact 3-column grid: `grid-cols-[minmax(180px,220px)_1fr_auto] gap-3 items-start`, separated by `border-b border-border/30`, `py-2`.
+  - **Col 1 — Key**: monospace, `text-sm font-semibold`, with `updated_at` shown beneath in `text-[10px] text-muted-foreground` (compact, no extra spacing).
+  - **Col 2 — Value editor**:
+    - Integer keys: `<input type="number">`, `h-8`, `w-[120px]`, right-aligned tabular-nums.
+    - String keys (heuristic: value is a JSON-encoded string with no newlines and length ≤ 80, e.g. SKUs and `winners_published_week_id` when set): single-line `<input>` width `w-full max-w-md`, value shown unquoted, saved as JSON string.
+    - JSON keys (objects/arrays/multi-line): `<textarea>` `rows={2}` by default, expands to `rows={Math.min(12, lines)}` on focus via `onFocus`/`onBlur` state. Monospace, `text-xs`.
+  - **Col 3 — Save**: small `h-8` button, only enabled when the draft differs from the saved value (dirty check via `JSON.stringify`); shows `Saving…` while busy.
+- Inline error text under any field with a validation issue (red).
 
-### Files modified
+**"Add new key" form (bottom):**
+- Single inline row, dashed border, compact: key input | value input | Add button. Same styling as current but tightened to one line on `lg`.
 
-- `src/routes/admin.tsx` — add `useLocation` import, add `isLoginRoute` short-circuit before the auth check and before the sidebar render
+**Behavior preserved:**
+- All server calls (`getPlatformConfig`, `updatePlatformConfig`) and validation logic unchanged.
+- Refresh after save unchanged.
+- Integer key detection (`INTEGER_KEYS` + `base_\d+` regex) unchanged.
+- New: detect string-valued JSON keys to render as plain text input for nicer UX (still validated/saved as JSON).
 
-No other files change. No route tree regeneration needed (the file structure stays the same).
+### Files
 
-### Verification
+**Modified (2):**
+- `src/routes/admin.tsx` — add `useAllowScroll()` call.
+- `src/routes/admin.config.tsx` — full layout rewrite (logic preserved).
 
-After the fix:
-- `/admin/login` → renders the login form immediately
-- `/admin` (no session) → redirects to `/admin/login`
-- `/admin` (with valid session) → renders dashboard with sidebar
-- `/admin/draw`, `/admin/players`, etc. (no session) → redirect to `/admin/login`
+### Out of scope
+- No changes to server functions, no schema changes, no other admin screens.
 
