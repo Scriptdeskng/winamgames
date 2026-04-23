@@ -1,96 +1,67 @@
 
 
-## Migrate CheckMate puzzles from hardcoded TS file to `winam_checkmate_puzzles` table
+## CheckMate — last-move flash + legal move dots
 
-All edits land in **`src/utils/game.functions.ts`**. No client, schema, or dependency changes.
+### 1. `src/components/games/ChessBoard.tsx`
 
-### 1. `startSession` — checkmate branch (replace lines 101–106)
+**New prop**: `legalMoves?: Set<string>`.
 
-Drop the `CHECKMATE_PUZZLES` shuffle and replace with rank-aware DB selection mirroring the WisdomDrop pattern:
+**Legal move indicators** (rendered inside each square button, after the piece `<img>`):
+- Empty square in `legalMoves`: small filled dot — `pointer-events-none absolute w-[28%] h-[28%] rounded-full bg-black/30`.
+- Square with a piece in `legalMoves` (capture target): ring overlay — `pointer-events-none absolute inset-[6%] rounded-full border-[3px] border-black/30` (no fill so the piece shows through).
+- Both use `pointer-events-none` so taps still hit the underlying button.
 
-- Fetch `rank_tier` from `winam_players`.
-- Apply numeric difficulty mix (1/2/3) keyed by rank:
-  ```ts
-  const RANK_DIFFICULTY_MIX: Record<string, Record<1|2|3, number>> = {
-    starter:  { 1: 7, 2: 2, 3: 1 },
-    recruit:  { 1: 5, 2: 4, 3: 1 },
-    sergeant: { 1: 3, 2: 5, 3: 2 },
-    veteran:  { 1: 1, 2: 5, 3: 4 },
-    champion: { 1: 1, 2: 5, 3: 4 },
-    icon:     { 1: 1, 2: 5, 3: 4 },
-    legend:   { 1: 1, 2: 5, 3: 4 },
-    immortal: { 1: 1, 2: 5, 3: 4 },
-  };
+**Last-move pulse on mount/change**: animate the green tint already applied to `lastMove.from` / `lastMove.to`. Implementation:
+- Keep a `useRef` of the previous `lastMove` key (`${from}-${to}`). When it changes, set a local `pulseKey` state to force-remount a `<span>` overlay on those two squares.
+- Overlay span on last-move squares: `absolute inset-0 pointer-events-none animate-checkmate-lastmove-pulse` keyed by `pulseKey` so it re-runs each time a new puzzle loads.
+- Inline `<style>` block at the top of the component (or scoped via a `<style jsx>`-like inline tag) defining:
+  ```css
+  @keyframes checkmate-lastmove-pulse {
+    0%   { background-color: rgba(255, 235, 59, 0.0); }
+    30%  { background-color: rgba(255, 235, 59, 0.75); }
+    100% { background-color: rgba(155, 199, 100, 0.6); }
+  }
+  .animate-checkmate-lastmove-pulse {
+    animation: checkmate-lastmove-pulse 600ms ease-out 1;
+  }
   ```
-- Fetch seen IDs from `winam_puzzle_history` filtered to `puzzle_id LIKE 'lc_%'` (so WisdomDrop history doesn't pollute the checkmate filter, and vice versa).
-- Query `winam_checkmate_puzzles` with `select('id, difficulty')`, `not('id','in',(seen…))` if any.
-- If unseen pool < 15: delete only the `lc_`-prefixed history rows for this player (`like('puzzle_id','lc_%')`), then re-query the full pool.
-- Bucket by integer `difficulty` (1/2/3), shuffle each, then take with the same shortfall cascade WisdomDrop uses: advanced (3) → intermediate (2) → beginner (1) → back-fill upward if beginner is short.
-- Pick 10 IDs, then re-query `winam_checkmate_puzzles` for `id, fen, theme` for those IDs (preserving picked order via a Map).
-- Map to `puzzleList`:
-  ```ts
-  { id, clientData: { fen, theme } }
-  ```
-  This adds `theme` to the client payload (`firstPuzzle` already spreads `clientData` into the response, so `theme` flows through to `checkmate.tsx`'s `GOAL_BY_THEME` lookup with no client change).
-- No adaptive accuracy nudge for checkmate (chess sessions don't track `wisdom_accuracy`); rank mix alone drives difficulty.
+  Single 600ms run, then settles into the existing green last-move tint.
 
-### 2. `submitMove` — checkmate branch (lines 354, 357, 373–384, 425–427)
+### 2. `src/routes/_authed/checkmate.tsx`
 
-- Remove the `CHECKMATE_PUZZLES` import.
-- Update prefix detection to:
-  ```ts
-  const isCheckmate = data.puzzleId.startsWith("lc_") || data.puzzleId.startsWith("cm-");
-  ```
-- Replace the in-memory lookup with:
-  ```ts
-  const { data: puzzle } = await supabaseAdmin
-    .from("winam_checkmate_puzzles")
-    .select("fen, solution_move")
-    .eq("id", data.puzzleId)
-    .maybeSingle();
-  ```
-  Use `puzzle.fen` for the `Chess` instance and compare `${from}${to}` against `puzzle.solution_move`.
-- For `nextPuzzle` in the checkmate branch: query `winam_checkmate_puzzles` for `id, fen, theme` by `data.nextPuzzleId` and return `{ puzzleId, fen, theme }`.
+**Track previous puzzle FEN to derive last move**:
+- `const prevFenRef = useRef<string | null>(null);`
+- `const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);`
+- `useEffect` on `puzzle?.fen`: compare current FEN board layout against `prevFenRef.current`. The two squares whose contents changed are `from` (now empty / different) and `to` (now holds the moved piece). Reuse `parseFen`-equivalent logic locally (small helper). Store result in `lastMove`. Clear `selectedSquare`. Update `prevFenRef` to current FEN.
+- Edge case: first puzzle of the round has no previous FEN → `setLastMove(null)`. No flash on round start; flash kicks in from puzzle 2 onward. (Acceptable per the prompt's "simpler version".)
 
-### 3. `useHint` — checkmate branch (lines 466, 489, 492–501)
-
-- Remove the `CHECKMATE_PUZZLES` import.
-- Update prefix detection (same `lc_` || `cm-` rule).
-- Replace lookup with:
-  ```ts
-  const { data: puzzle } = await supabaseAdmin
-    .from("winam_checkmate_puzzles")
-    .select("hint_piece, hint_destination, solution_move")
-    .eq("id", data.puzzleId)
-    .maybeSingle();
-  ```
-- Tier mapping: tier 1 → `puzzle.hint_piece`, tier 2 → `puzzle.hint_destination`, tier 3 → `solution_move.slice(0,2)` / `slice(2,4)`. Guard against null `hint_piece`/`hint_destination` by falling back to empty string so the response shape stays stable.
-
-### 4. `closeSession` — puzzle history gate (lines 655–663, 702–710, 815–823)
-
-Remove the `session.game_type === "wisdomdrop"` condition from all three history-write blocks (lock-window branch, zero-performance branch, performance branch). New gate is just:
+**Compute legal moves**:
 ```ts
-if (data.servedPuzzleIds && data.servedPuzzleIds.length > 0) { … }
+import { Chess } from "chess.js";
+
+const legalMoves = useMemo(() => {
+  if (!selectedSquare || !puzzle?.fen) return new Set<string>();
+  try {
+    const chess = new Chess(puzzle.fen);
+    return new Set(
+      chess.moves({ square: selectedSquare as any, verbose: true }).map((m: any) => m.to)
+    );
+  } catch {
+    return new Set<string>();
+  }
+}, [selectedSquare, puzzle?.fen]);
 ```
-This makes both checkmate and wisdomdrop sessions populate `winam_puzzle_history`, which is required for the "exclude seen" query in `startSession` to work for checkmate.
 
-### 5. Input validation widening
-
-`puzzleId` validators currently cap at `max(30)`. Lichess IDs like `lc_xxxxx` fit, but bump to `max(40)` on `submitMove.puzzleId`, `submitMove.nextPuzzleId`, `useHint.puzzleId`, and `closeSession.servedPuzzleIds` items — defensive headroom only, no functional impact.
-
-### 6. Remove dead import
-
-Delete the three `await import("@/data/checkmate-puzzles")` lines (in `startSession`, `submitMove`, `useHint`). The file stays in the repo untouched — server simply no longer references it.
+**Pass to ChessBoard**: add `lastMove={lastMove}` and `legalMoves={legalMoves}` to the existing `<ChessBoard …>` element.
 
 ### Technical notes
 
-- `winam_checkmate_puzzles` has 1304 / 1433 / 1259 rows across difficulties 1/2/3 — ample pool for rank-based selection without immediate cycle reset.
-- The `lc_`-prefix filter on history reads/deletes is essential: `winam_puzzle_history` is shared with WisdomDrop, and unprefixed deletes would wipe wisdom history and re-serve already-seen proverbs.
-- `puzzle_id` validation in attempt/history inserts already accepts text — no schema friction.
-- The `theme` field flows from the new query into `clientData.theme`, which the existing `firstPuzzle: { puzzleId, ...clientData }` spread surfaces to the client. `checkmate.tsx`'s `GOAL_BY_THEME` map already keys on the Lichess theme strings ("Fork", "Pin", etc.), matching the table contents.
-- Next-puzzle fetch on `submitMove` adds one DB round-trip per move. Acceptable for puzzle pacing; can be batched later if latency becomes an issue.
-- No transition shim needed for `cm-` IDs in the wild: existing in-flight sessions still resolve via the `cm-` prefix branch fallback in `submitMove`/`useHint`, which now queries the same DB table — but those rows won't exist there. Acceptable because no live `cm-` sessions are expected; if any exist they fail gracefully (incorrect answer, no hint data) rather than crashing.
+- FEN diff is purely client-side (no server changes) — `parseFen` returns 8x8 piece arrays; iterate both, collect coords where they differ. Castling/en-passant edge cases (3–4 changed squares) → take the two squares whose changes most plausibly represent the move (heuristic: square that became empty = `from`, square whose piece is new/changed = `to`). For the simplified MVP, just take the first two differing coords; misclassification only affects a cosmetic flash, never gameplay.
+- `legalMoves` recomputes only when `selectedSquare` or `puzzle.fen` changes — cheap, chess.js move generation on a single position is sub-millisecond.
+- The capture-ring style differs from the empty-square dot to match the universal chess UI convention (Lichess/Chess.com).
+- No DB, schema, or dependency changes. `chess.js@^1.4.0` already installed.
 
 ### Files touched
-- `src/utils/game.functions.ts` — all four handlers, validator widening, dead-import removal
+- `src/components/games/ChessBoard.tsx` — `legalMoves` prop, dot/ring overlays, mount-pulse animation on last-move squares, scoped keyframe injection.
+- `src/routes/_authed/checkmate.tsx` — derive `lastMove` from prev FEN diff, compute `legalMoves` via chess.js, pass both to `ChessBoard`.
 
