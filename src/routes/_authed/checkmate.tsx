@@ -194,8 +194,41 @@ function CheckMatePage() {
             </span>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1 min-h-6" />
+          {/* Example mini board preview */}
+          <div className="flex-1 flex items-center justify-center w-full py-6">
+            <div className="w-full max-w-[320px] rounded-xl bg-surface-1 border border-border p-4 space-y-3">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold">Example</p>
+              <div className="mx-auto w-[176px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden border border-border">
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const row = Math.floor(i / 4);
+                  const col = i % 4;
+                  const dark = (row + col) % 2 === 1;
+                  const isQueen = row === 2 && col === 2;
+                  const isKing = row === 0 && col === 0;
+                  const isHint = row === 0 && col === 2;
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "relative aspect-square flex items-center justify-center",
+                        dark ? "bg-[#B58863]" : "bg-[#F0D9B5]",
+                        isHint && "ring-2 ring-inset ring-emerald/70"
+                      )}
+                    >
+                      {isQueen && (
+                        <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-7 h-7" />
+                      )}
+                      {isKing && (
+                        <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-7 h-7" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-sm font-semibold text-foreground text-center">Find the winning move</p>
+              <p className="text-[10px] text-muted-foreground/50 text-center">Tap a piece, then tap its destination</p>
+            </div>
+          </div>
 
           {/* Reward preview */}
           <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
@@ -385,9 +418,11 @@ function CheckMatePage() {
                     "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all border min-h-[72px]",
                     purchased
                       ? "bg-success/10 border-success/30 text-success"
-                      : disabled
-                        ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
-                        : "bg-surface-1 border-border text-foreground hover:border-primary/30"
+                      : locked
+                        ? "bg-surface-1/30 border-border/30 text-muted-foreground/40 cursor-not-allowed opacity-40"
+                        : !canAfford
+                          ? "bg-surface-1/50 border-border/40 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                          : "bg-primary/10 border-primary/40 text-foreground hover:bg-primary/20 hover:border-primary/60 active:scale-95"
                   )}
                 >
                   {purchased ? (
