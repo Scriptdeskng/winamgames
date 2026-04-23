@@ -286,7 +286,7 @@ export const adjustPlayerCoins = createServerFn({ method: "POST" })
     return { success: true, newBalance: next };
   });
 
-const RANK_TIERS = [
+export const RANK_TIERS = [
   { tier: "starter", min: 0 },
   { tier: "recruit", min: 150 },
   { tier: "sergeant", min: 500 },
@@ -296,7 +296,8 @@ const RANK_TIERS = [
   { tier: "legend", min: 7000 },
   { tier: "immortal", min: 10000 },
 ] as const;
-function tierFor(xp: number) {
+
+export function computeRankTier(xp: number) {
   let t: (typeof RANK_TIERS)[number]["tier"] = "starter";
   for (const r of RANK_TIERS) if (xp >= r.min) t = r.tier;
   return t;
@@ -321,7 +322,7 @@ export const adjustPlayerXP = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!p) throw new Error("Player not found");
     const next = Math.max(0, (p.xp_total ?? 0) + data.amount);
-    const newTier = tierFor(next);
+    const newTier = computeRankTier(next);
     const { error } = await supabaseAdmin
       .from("winam_players")
       .update({ xp_total: next, rank_tier: newTier })
@@ -890,5 +891,4 @@ export const getPublishedWinners = createServerFn({ method: "POST" })
     };
   });
 
-// rank thresholds verified
 
