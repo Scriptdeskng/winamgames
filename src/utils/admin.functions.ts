@@ -322,7 +322,7 @@ export const adjustPlayerXP = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!p) throw new Error("Player not found");
     const next = Math.max(0, (p.xp_total ?? 0) + data.amount);
-    const newTier = tierFor(next);
+    const newTier = computeRankTier(next);
     const { error } = await supabaseAdmin
       .from("winam_players")
       .update({ xp_total: next, rank_tier: newTier })
