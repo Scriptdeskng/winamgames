@@ -1,113 +1,90 @@
 
 
-## WinamGames Admin Panel
+## Finish admin panel: wire winners, build 7 screens, seed admin
 
-A separate password-protected admin section sharing the same TanStack Start app and Supabase database. All admin code lives in **new files only**. Two existing files are touched: `src/routes/_authed/winners.tsx` (wire to real winners) and `src/routes/__root.tsx` (no structural change — admin routes auto-register via the file-based router; this file only needs touching if tabs/router context need adjusting, otherwise left untouched).
+### 1. Player-facing winners screen
 
-### Architecture
+**Modify `src/routes/_authed/winners.tsx`** (the only `_authed/` exception per your constraint):
+- Replace `const HAS_DRAWS = false` and the mock `DRAW_WEEKS` array with a route `loader` that calls `getPublishedWinners()`.
+- If `weekId === null` → render the existing empty state (untouched, including next-draw countdown).
+- If a week is published → render real winners from `winam_winners`:
+  - Cash winners (positions 1–3) in the existing podium card style with masked MSISDN `***${msisdnLast4}` and nickname.
+  - Airtime/data winners grouped by `prize_amount` into collapsible tiers using the existing `Collapsible` UI.
+  - Week label derived from `week_start_wat` → `week_end_wat`.
+- Add `errorComponent` and `notFoundComponent` (required by route conventions when adding a loader).
 
-- **Auth model:** Email + bcrypt password against `winam_admin_users`. Session in `localStorage` under `winam_admin_session` (key separate from player `winam-session`). No collision with player MSISDN/OTP flow.
-- **Route protection:** `_admin.tsx` layout route runs `verifyAdminSession` in a client `beforeLoad`-equivalent (router context-free; mirrors the existing `_authed.tsx` pattern using `useEffect` + `navigate`). Redirects to `/admin/login` if missing/invalid.
-- **Server boundary:** Every admin server function calls `assertAdmin(adminId)` before any DB op. Writes go through `supabaseAdmin` (service role, bypasses RLS). All mutations append to `winam_admin_audit_log`.
-- **UI shell:** Independent dark layout — fixed 240px left sidebar (logo + "Admin" badge + nav + email + logout), right outlet. No player TopBar / BannerStack / bottom nav. Mobile collapses sidebar behind a hamburger.
+### 2. Build 7 stub admin screens
 
-### Files created
+All screens use the existing `AdminSidebar` layout, shared `<ConfirmModal>`, and call existing server functions in `admin.functions.ts`. Patterns reused from `admin.index.tsx`: read `getAdminSession()`, call server fn with `{ data: { adminId } }`, surface errors inline.
 
-```text
-src/utils/admin.auth.ts             — bcrypt + session helpers + adminLogin/Logout/verify server fns
-src/utils/admin.functions.ts        — all admin server functions (assertAdmin gate + audit log)
-src/utils/draw-engine.ts            — pure mulberry32 PRNG + ticket-pool selection
-src/routes/_admin.tsx               — auth-gated layout (sidebar + Outlet)
-src/routes/admin.login.tsx          — public login (no layout)
-src/routes/_admin.index.tsx         — /admin dashboard
-src/routes/_admin.draw.tsx          — /admin/draw
-src/routes/_admin.players.tsx       — /admin/players (search + list)
-src/routes/_admin.players.$playerId.tsx — /admin/players/:id detail
-src/routes/_admin.banners.tsx       — /admin/banners
-src/routes/_admin.missions.tsx      — /admin/missions
-src/routes/_admin.config.tsx        — /admin/config
-src/routes/_admin.winners.tsx       — /admin/winners
+**`admin.draw.tsx`** — Current week panel + 4 action buttons gated by status:
+- Lock (status='open' & within 1h of lock time) → `lockDrawWeek` with confirmation
+- Execute (status='locked') → `executeDrawWeek`, modal requires typed input "EXECUTE DRAW" to enable confirm (uses `disableConfirm` prop)
+- Publish (status='drawn') → `publishWinners` with confirmation
+- Settle (status='drawn') → `settleDrawWeek` with confirmation
+- Winners preview table (when status drawn/settled) with CSV export button (client-side blob download)
+- History table of past weeks via `getDrawWeeks`, click row → load + show winners inline
+
+**`admin.players.tsx`** — Search input (debounced 300ms) → `getPlayers`, paginated table with columns: nickname, ***last4, rank tier badge, coins, XP, streak, flagged dot, last session. Each row links to `/admin/players/$playerId`.
+
+**`admin.players.$playerId.tsx`** — `getPlayerDetail` on mount. Five sections:
+- Profile card (all `winam_players` fields)
+- Action toolbar: Flag/Unflag, ±Coins, ±XP, Cancel sub, Extend sub — each opens `<ConfirmModal>` with reason textarea (required)
+- Subscription history table
+- Last 20 sessions table
+- Weekly entry rollup (group ledger by `draw_week_id`)
+- Mission progress table
+
+**`admin.banners.tsx`** — `getBanners` list. Drag-to-reorder using `@dnd-kit/core` + `@dnd-kit/sortable` (already installed):
+- `DndContext` + `SortableContext` wrapping the list
+- On drop → `reorderBanners` with new id order
+- Each row: icon preview, title, subtitle, inline `is_active` switch (saves immediately via `updateBanner`), Edit/Delete buttons
+- Create/Edit modal: title, subtitle, icon URL with live preview, is_active, display_order
+- Delete via `<ConfirmModal>` (destructive)
+
+**`admin.missions.tsx`** — `getMissions` list with columns: title, game_type badge, condition (`type: value`), reward (`type: amount`), is_active toggle, Edit. Create/Edit modal with selects matching the Zod enums (`condition_type`, `reward_type`, `game_type`). Warning banner: "Changes apply on next session start."
+
+**`admin.config.tsx`** — `getPlatformConfig` rendered as table, one row per key. Type-aware editor by key prefix:
+- Integer keys (`base_N`, `weekly_cap`, `hint_penalty`, `plan_daily_price`, `plan_weekly_price`) → number input
+- All others → JSON textarea with `JSON.parse` validation on blur (red border + error if invalid)
+- Each row has its own Save button calling `updatePlatformConfig`
+- "Add new key" form at bottom (key + JSON value)
+- Top warning banner about retroactive effects
+
+**`admin.winners.tsx`** — `getDrawWeeks` filtered to status `drawn`/`settled`. Click week → expand inline `getWinners` table: position, ***last4, nickname, prize_type, prize_amount, ticket_id, flag toggle (`flagWinner`). Per-week CSV export button.
+
+### 3. Seed admin user
+
+Generate bcrypt hash for password `safehouse` with `bcryptjs.hashSync(password, 10)`, then insert via Supabase insert tool:
+
+```sql
+INSERT INTO winam_admin_users (email, password_hash, role)
+VALUES ('dward009@gmail.com', '<bcrypt-hash>', 'admin');
 ```
 
-Note on routing: TanStack Start's file router uses **dot-separated flat naming**, so `_admin.draw.tsx` resolves to `/admin/draw` (the `_admin` layout is pathless and provides the `<Outlet />`). The user-spec paths (`src/routes/admin/draw.tsx`) would mix nesting conventions and break the route tree. URLs are identical.
+Hash will be generated in a one-off `code--exec` step using the already-installed `bcryptjs`.
 
-### Files modified
+### Files
 
-- `src/routes/_authed/winners.tsx` — replace `HAS_DRAWS = false` with a server function `getPublishedWinners()` that reads `winam_platform_config.winners_published_week_id` and, if set, returns rows from `winam_winners` joined with player nicknames + masked MSISDNs. Empty state preserved when null.
-- `src/routes/__root.tsx` — **no changes**. Routes auto-register via the Vite plugin. Listed in spec for completeness only; will not touch unless a meta tag for `/admin/*` needs suppressing (decision: leave as-is).
+**Modified (1):**
+- `src/routes/_authed/winners.tsx` — wire loader to `getPublishedWinners`, render real data when published
 
-### Admin auth flow
+**Created (7):**
+- `src/routes/admin.draw.tsx`
+- `src/routes/admin.players.tsx`
+- `src/routes/admin.players.$playerId.tsx`
+- `src/routes/admin.banners.tsx`
+- `src/routes/admin.missions.tsx`
+- `src/routes/admin.config.tsx`
+- `src/routes/admin.winners.tsx`
 
-1. `/admin/login` → form posts email+password → `adminLogin` server fn → bcrypt compare → returns `{ adminId, email, role }` → client writes to `localStorage.winam_admin_session`.
-2. Any `_admin/*` route mounts → reads session → calls `verifyAdminSession({ adminId })` → on failure clears storage and redirects to `/admin/login`.
-3. Logout clears storage + redirects.
+(These files exist as stubs and will be rewritten — the file count is the same.)
 
-### Draw execution engine (`draw-engine.ts`)
+**Database (1 insert):** Seed `winam_admin_users` row.
 
-Pure functions, no DB:
+### Out of scope
 
-- `mulberry32(seed: number)` — deterministic PRNG.
-- `seedFromHex(hex: string)` — first 8 hex chars → uint32.
-- `expandTickets(ledgerRows, weeklyCap)` — group by `player_id`, clamp to cap, expand into virtual ticket array `[{playerId, ticketId}]` where `ticketId = "${playerId.slice(0,8)}-${i}"`.
-- `selectWinners(tickets, seed, cashTiers, airtimeTiers)` — Fisher–Yates shuffle with seeded PRNG, dedupe by player (one prize per player), assign positions per tier config.
-
-Called by `executeDrawWeek` server fn which:
-1. Loads draw week, asserts `status='locked'`.
-2. Fetches all `winam_entry_ledger` rows for the week.
-3. Fetches `is_flagged=true` players → exclusion set.
-4. Generates `draw_seed` via `crypto.randomBytes(32).toString('hex')`.
-5. Builds ticket pool (excluding flagged players), runs `selectWinners`.
-6. Bulk-inserts into `winam_winners`.
-7. Updates draw week: `status='drawn'`, `draw_seed=...`.
-8. Writes audit log entry with `{ winner_count, total_tickets, seed }`.
-
-### Screen specs (concise)
-
-- **Dashboard** — 4 stat cards (players, active subs, current-week entries, sessions today) + current-week panel + last 10 sessions. Polls every 60s via `setInterval` invalidating the queries.
-- **Draw** — current week panel, 4 action buttons (Lock / Execute / Publish / Settle) gated by status + time, typed-confirmation modal for Execute ("EXECUTE DRAW"), winners preview table with CSV export, history table.
-- **Players** — search by `msisdn_last4` or `nickname` (server-side ILIKE), paginated table.
-- **Player detail** — all columns + sub history + last 20 sessions + weekly entry rollup + missions; action buttons (flag/unflag, ±coins, ±XP, cancel sub, extend sub) — each opens a confirmation modal with required reason field.
-- **Banners** — drag-reorder list using `@dnd-kit/sortable` (already a common shadcn pattern; if unavailable, falls back to up/down arrows), inline `is_active` toggle, create/edit modal.
-- **Missions** — list + inline toggle + create/edit modal with the 4 condition types and 2 reward types from existing enums. Note banner about next-session effect.
-- **Config** — one row per key with type-aware input (integer / JSON textarea with `JSON.parse` validation on blur). Each row has its own Save button. Warning banner about retroactive effects.
-- **Winners** — settled weeks list, click expands inline winner table, per-week CSV export, "flag winner" toggles `winam_winners.is_flagged` only.
-
-### Audit logging
-
-Every mutation server fn ends with:
-```ts
-await supabaseAdmin.from('winam_admin_audit_log').insert({
-  admin_id: adminId, action, target_type, target_id, details
-});
-```
-Failures of audit insert log to console but do not roll back the action (audit is best-effort).
-
-### Security checklist
-
-- `assertAdmin` on every server fn (throws → server fn rejects → UI surfaces error).
-- Service role key never imported in route files; `client.server.ts` is dynamically imported inside handlers.
-- Password input only in `adminLogin`; bcrypt compare via the `bcryptjs` pure-JS package (Worker-compatible — `bcrypt` native bindings are not).
-- Typed-confirmation gate on draw execution.
-- All destructive UI actions go through a shared `<ConfirmModal>` component.
-- Admin session key namespaced; player session untouched.
-
-### Dependencies to add
-
-- `bcryptjs` (Worker-safe pure JS) — for admin password hashing.
-- `@dnd-kit/core` + `@dnd-kit/sortable` — for banner reorder. (Skip and use up/down arrow buttons if either fails to install.)
-
-### Player app integration
-
-`src/routes/_authed/winners.tsx`:
-- Add a route `loader` calling new server fn `getPublishedWinners()`.
-- If `publishedWeekId === null` → render existing empty state (untouched).
-- Else → render real `winam_winners` rows in the existing card structure, masking MSISDN as `***${last4}`.
-
-### Out of scope (explicit)
-
-- No changes to `_authed/`, `components/`, `game.functions.ts`, `auth.functions.ts`, `mission.functions.ts` beyond the single `winners.tsx` modification.
-- No new RLS policies (admin uses service role exclusively).
-- No admin password reset flow (admin rows seeded directly in DB).
-- No real-time subscriptions; dashboard uses 60s polling.
-- OTP bypass and Forthsoft webhook stub remain as-is.
+- No changes to `src/routes/_authed/*` (other than `winners.tsx`), `src/components/`, `src/utils/game.functions.ts`, `src/utils/auth.functions.ts`, `src/utils/mission.functions.ts`.
+- No new server functions — all 22 needed already exist in `admin.functions.ts`.
+- No password reset flow — admin can request a re-seed if forgotten.
 
