@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { Award, ChevronDown, Hash, Gamepad2, Trophy } from "lucide-react";
 import {
@@ -9,14 +9,38 @@ import {
 import { useState } from "react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getNextEntriesLockWAT } from "@/lib/draw-state";
-
-// No real draws have executed yet — render the empty state until the first
-// draw lands in winam_draw_weeks (status = 'drawn' | 'settled'). Mock
-// DRAW_WEEKS data below stays in place for future wiring.
-const HAS_DRAWS = false;
+import { getPublishedWinners } from "@/utils/admin.functions";
 
 export const Route = createFileRoute("/_authed/winners")({
   component: WinnersPage,
+  loader: () => getPublishedWinners(),
+  errorComponent: ({ error, reset }) => {
+    const router = useRouter();
+    return (
+      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
+        <TopBar backTo="/app" title="Winners" />
+        <div className="px-6 pt-12 text-center">
+          <p className="text-sm text-muted-foreground">Failed to load winners.</p>
+          <p className="mt-2 text-xs text-destructive">{error.message}</p>
+          <button
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
+            className="mt-6 inline-flex h-10 items-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  },
+  notFoundComponent: () => (
+    <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
+      <TopBar backTo="/app" title="Winners" />
+      <div className="px-6 pt-12 text-center text-sm text-muted-foreground">Not found.</div>
+    </div>
+  ),
   head: () => ({
     meta: [
       { title: "Winners — WinamGames" },
@@ -25,131 +49,66 @@ export const Route = createFileRoute("/_authed/winners")({
   }),
 });
 
-interface Winner {
-  phone: string;
-  entryId: string;
-  prize: string;
-  type: "cash" | "airtime";
-}
-
-interface DrawWeek {
-  label: string;
-  cashWinners: Winner[];
-  airtimeTiers: { label: string; winners: Winner[] }[];
-  isPlaceholder?: boolean;
-}
-
-const DRAW_WEEKS: DrawWeek[] = [
-  {
-    label: "Apr 7 – 13, 2025",
-    cashWinners: [
-      { phone: "080*****31", entryId: "#3F8A2C1D", prize: "₦35,000", type: "cash" },
-      { phone: "081*****07", entryId: "#7B2E9F4A", prize: "₦10,000", type: "cash" },
-      { phone: "070*****90", entryId: "#A1C5D8E2", prize: "₦5,000", type: "cash" },
-    ],
-    airtimeTiers: [
-      {
-        label: "₦2,000 Airtime",
-        winners: [
-          { phone: "090*****42", entryId: "#D4E7F1A3", prize: "₦2,000", type: "airtime" },
-          { phone: "081*****91", entryId: "#B8C2D5E9", prize: "₦2,000", type: "airtime" },
-          { phone: "080*****56", entryId: "#F3A1B4C7", prize: "₦2,000", type: "airtime" },
-          { phone: "070*****14", entryId: "#9E5D2F8A", prize: "₦2,000", type: "airtime" },
-          { phone: "091*****03", entryId: "#1C7B3E4D", prize: "₦2,000", type: "airtime" },
-        ],
-      },
-      {
-        label: "₦1,000 Airtime",
-        winners: [
-          { phone: "080*****21", entryId: "#E2F4A6B8", prize: "₦1,000", type: "airtime" },
-          { phone: "081*****34", entryId: "#4D6E8F1A", prize: "₦1,000", type: "airtime" },
-          { phone: "090*****47", entryId: "#7A3C5E9B", prize: "₦1,000", type: "airtime" },
-          { phone: "070*****90", entryId: "#C8D1E3F5", prize: "₦1,000", type: "airtime" },
-          { phone: "091*****03", entryId: "#2B4D6F8A", prize: "₦1,000", type: "airtime" },
-          { phone: "080*****58", entryId: "#F1A3C5E7", prize: "₦1,000", type: "airtime" },
-          { phone: "081*****72", entryId: "#8B2D4F6A", prize: "₦1,000", type: "airtime" },
-          { phone: "070*****85", entryId: "#3E5A7C9D", prize: "₦1,000", type: "airtime" },
-          { phone: "090*****16", entryId: "#D7F1A3B5", prize: "₦1,000", type: "airtime" },
-          { phone: "080*****49", entryId: "#5C8E1A3D", prize: "₦1,000", type: "airtime" },
-        ],
-      },
-      {
-        label: "₦500 Data",
-        winners: Array.from({ length: 60 }, (_, i) => {
-          const prefixes = ["080", "081", "070", "090", "091"];
-          const prefix = prefixes[i % prefixes.length];
-          const last2 = String((i * 13 + 7) % 100).padStart(2, "0");
-          return {
-            phone: `${prefix}*****${last2}`,
-            entryId: `#${((i * 2654435761) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
-            prize: "₦500",
-            type: "airtime" as const,
-          };
-        }),
-      },
-    ],
-  },
-  {
-    label: "Mar 31 – Apr 6, 2025",
-    cashWinners: [
-      { phone: "081*****14", entryId: "#2A4C6E8F", prize: "₦35,000", type: "cash" },
-      { phone: "090*****87", entryId: "#B1D3F5A7", prize: "₦10,000", type: "cash" },
-      { phone: "070*****41", entryId: "#8E1A3C5D", prize: "₦5,000", type: "cash" },
-    ],
-    airtimeTiers: [
-      {
-        label: "₦2,000 Airtime",
-        winners: [
-          { phone: "080*****28", entryId: "#C7E9F1A3", prize: "₦2,000", type: "airtime" },
-          { phone: "091*****53", entryId: "#5A3D1E8B", prize: "₦2,000", type: "airtime" },
-          { phone: "070*****96", entryId: "#D2F4B6C8", prize: "₦2,000", type: "airtime" },
-          { phone: "081*****71", entryId: "#A1E3C5D7", prize: "₦2,000", type: "airtime" },
-          { phone: "090*****05", entryId: "#6B8D2F4A", prize: "₦2,000", type: "airtime" },
-        ],
-      },
-      {
-        label: "₦1,000 Airtime",
-        winners: [
-          { phone: "080*****34", entryId: "#F5A7C9E1", prize: "₦1,000", type: "airtime" },
-          { phone: "091*****07", entryId: "#3D5F8A2B", prize: "₦1,000", type: "airtime" },
-          { phone: "070*****40", entryId: "#B4D6E8F1", prize: "₦1,000", type: "airtime" },
-          { phone: "081*****73", entryId: "#7C1A3E5D", prize: "₦1,000", type: "airtime" },
-          { phone: "090*****06", entryId: "#E9F1A3C5", prize: "₦1,000", type: "airtime" },
-          { phone: "080*****39", entryId: "#2D4F6B8A", prize: "₦1,000", type: "airtime" },
-          { phone: "070*****62", entryId: "#A5C7E9F1", prize: "₦1,000", type: "airtime" },
-          { phone: "081*****95", entryId: "#8B1D3F5A", prize: "₦1,000", type: "airtime" },
-          { phone: "090*****28", entryId: "#D6E8F1A3", prize: "₦1,000", type: "airtime" },
-          { phone: "080*****51", entryId: "#4A6C8E2D", prize: "₦1,000", type: "airtime" },
-        ],
-      },
-      {
-        label: "₦500 Data",
-        winners: Array.from({ length: 60 }, (_, i) => {
-          const prefixes = ["080", "081", "070", "090", "091"];
-          const prefix = prefixes[(i + 2) % prefixes.length];
-          const last2 = String((i * 17 + 3) % 100).padStart(2, "0");
-          return {
-            phone: `${prefix}*****${last2}`,
-            entryId: `#${((i * 1597334677) >>> 0).toString(16).toUpperCase().padStart(8, "0")}`,
-            prize: "₦500",
-            type: "airtime" as const,
-          };
-        }),
-      },
-    ],
-  },
-];
-
 const POSITION_STYLES = [
   { bg: "bg-[oklch(0.75_0.15_85)]/15", text: "text-[oklch(0.75_0.15_85)]", label: "1st" },
   { bg: "bg-[oklch(0.65_0.01_250)]/15", text: "text-[oklch(0.65_0.01_250)]", label: "2nd" },
   { bg: "bg-[oklch(0.55_0.05_55)]/15", text: "text-[oklch(0.55_0.05_55)]", label: "3rd" },
 ];
 
-function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: boolean }) {
+function maskPhone(last4: string) {
+  return `***${last4}`;
+}
+
+function formatMoney(n: number) {
+  return `₦${n.toLocaleString("en-NG")}`;
+}
+
+function formatWeekLabel(start: string, end: string) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const sameYear = s.getUTCFullYear() === e.getUTCFullYear();
+  const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
+    d.toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
+  if (sameYear) {
+    return `${fmt(s, { month: "short", day: "numeric" })} – ${fmt(e, { month: "short", day: "numeric", year: "numeric" })}`;
+  }
+  return `${fmt(s, { month: "short", day: "numeric", year: "numeric" })} – ${fmt(e, { month: "short", day: "numeric", year: "numeric" })}`;
+}
+
+interface WinnerRow {
+  id: string;
+  position: number;
+  prizeType: string;
+  prizeAmount: number;
+  ticketId: string;
+  nickname: string | null;
+  msisdnLast4: string;
+}
+
+function WinnersList({
+  weekLabel,
+  winners,
+  defaultOpen,
+}: {
+  weekLabel: string;
+  winners: WinnerRow[];
+  defaultOpen: boolean;
+}) {
   const [open, setOpen] = useState(defaultOpen);
-  const totalAirtimeWinners = draw.airtimeTiers.reduce((s, t) => s + t.winners.length, 0);
-  const totalWinners = draw.cashWinners.length + totalAirtimeWinners;
+  const cashWinners = winners
+    .filter((w) => w.prizeType === "cash")
+    .sort((a, b) => a.position - b.position);
+  const nonCash = winners.filter((w) => w.prizeType !== "cash");
+
+  // Group non-cash by prizeAmount desc
+  const tierMap = new Map<number, WinnerRow[]>();
+  for (const w of nonCash) {
+    const arr = tierMap.get(w.prizeAmount) ?? [];
+    arr.push(w);
+    tierMap.set(w.prizeAmount, arr);
+  }
+  const tiers = Array.from(tierMap.entries()).sort((a, b) => b[0] - a[0]);
+  const totalWinners = winners.length;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -158,10 +117,8 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
           <div className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-primary" />
             <div className="text-left">
-              <p className="text-sm font-semibold">{draw.label}</p>
-              <p className="text-[10px] text-muted-foreground">
-                {draw.isPlaceholder ? "50+ winners" : `${totalWinners} winners`}
-              </p>
+              <p className="text-sm font-semibold">{weekLabel}</p>
+              <p className="text-[10px] text-muted-foreground">{totalWinners} winners</p>
             </div>
           </div>
           <ChevronDown
@@ -171,41 +128,70 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
 
         <CollapsibleContent>
           <div className="px-4 pb-4 space-y-3">
-            {/* Cash winners */}
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-                Cash Prizes
-              </p>
-              {draw.cashWinners.map((w, j) => (
-                <div
-                  key={j}
-                  className={`flex items-center justify-between py-2 ${
-                    j < draw.cashWinners.length - 1 ? "border-b border-border/40" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
+            {cashWinners.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
+                  Cash Prizes
+                </p>
+                {cashWinners.map((w, j) => {
+                  const style = POSITION_STYLES[w.position - 1] ?? POSITION_STYLES[2];
+                  return (
                     <div
-                      className={`h-7 w-7 rounded-full ${POSITION_STYLES[j].bg} flex items-center justify-center text-[10px] font-bold ${POSITION_STYLES[j].text}`}
+                      key={w.id}
+                      className={`flex items-center justify-between py-2 ${
+                        j < cashWinners.length - 1 ? "border-b border-border/40" : ""
+                      }`}
                     >
-                      {POSITION_STYLES[j].label}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium tabular-nums">{w.phone}</span>
-                      <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
-                        <Hash className="h-2 w-2" />
-                        {w.entryId.slice(1)}
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`h-7 w-7 rounded-full ${style.bg} flex items-center justify-center text-[10px] font-bold ${style.text}`}
+                        >
+                          {style.label}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium tabular-nums">
+                            {w.nickname ?? maskPhone(w.msisdnLast4)}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
+                            <Hash className="h-2 w-2" />
+                            {w.ticketId.slice(0, 8).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-primary">
+                        {formatMoney(w.prizeAmount)}
                       </span>
                     </div>
-                  </div>
-                  <span className="text-xs font-bold text-primary">{w.prize}</span>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
 
-            {/* Airtime & data summary */}
-            <p className="text-xs text-muted-foreground px-1">
-              + {totalAirtimeWinners} airtime & data winners
-            </p>
+            {tiers.map(([amount, ws]) => (
+              <details key={amount} className="group">
+                <summary className="flex cursor-pointer items-center justify-between rounded-lg bg-surface-2/50 px-3 py-2 text-xs">
+                  <span className="font-semibold">
+                    {formatMoney(amount)} {ws[0].prizeType === "airtime" ? "Airtime" : "Data"}
+                  </span>
+                  <span className="text-muted-foreground">{ws.length} winners</span>
+                </summary>
+                <div className="mt-1.5 space-y-1 px-2">
+                  {ws.map((w) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0"
+                    >
+                      <span className="text-[11px] tabular-nums">
+                        {w.nickname ?? maskPhone(w.msisdnLast4)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground tabular-nums">
+                        #{w.ticketId.slice(0, 6).toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ))}
           </div>
         </CollapsibleContent>
       </div>
@@ -215,10 +201,10 @@ function DrawWeekCard({ draw, defaultOpen }: { draw: DrawWeek; defaultOpen: bool
 
 function WinnersPage() {
   useAllowScroll();
+  const data = Route.useLoaderData();
 
-  if (!HAS_DRAWS) {
+  if (!data.weekId || !data.week || data.winners.length === 0) {
     const nextLock = getNextEntriesLockWAT();
-    // Add 1 hour to the lock time → draw executes at 20:00 WAT
     const drawDate = new Date(nextLock.getTime() + 60 * 60 * 1000);
     const formatted = drawDate.toLocaleDateString("en-US", {
       day: "numeric",
@@ -238,7 +224,7 @@ function WinnersPage() {
 
           <h1 className="text-2xl font-bold text-foreground">No draws yet</h1>
           <p className="mt-3 text-sm text-muted-foreground max-w-[300px] leading-relaxed">
-            The first draw happens this Sunday at 20:00 WAT. Play now to earn your entries.
+            The first draw happens this Sunday at 20:00 WAT. Play now to earn your tickets.
           </p>
 
           <p className="mt-5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70 tabular-nums">
@@ -257,17 +243,18 @@ function WinnersPage() {
     );
   }
 
+  const weekLabel = formatWeekLabel(data.week.week_start_wat, data.week.week_end_wat);
+
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/app" title="Winners" />
       <div className="px-4 pb-6 space-y-4">
-        {/* Hero / Ad Card */}
         <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-2">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-primary/10 to-transparent" />
           <Award className="relative h-8 w-8 text-primary mx-auto" />
           <h1 className="relative text-xl font-bold">Real people. Real wins.</h1>
           <p className="relative text-xs text-muted-foreground">
-            50+ winners every week — cash, airtime & data
+            Winners every week — cash, airtime & data
           </p>
           <Link
             to="/app"
@@ -278,13 +265,11 @@ function WinnersPage() {
           </Link>
         </div>
 
-        {/* Draw weeks */}
-        <div className="space-y-3">
-          {DRAW_WEEKS.map((draw, i) => (
-            <DrawWeekCard key={i} draw={draw} defaultOpen={i === 0} />
-          ))}
-        </div>
-
+        <WinnersList
+          weekLabel={weekLabel}
+          winners={data.winners as WinnerRow[]}
+          defaultOpen
+        />
       </div>
     </div>
   );
