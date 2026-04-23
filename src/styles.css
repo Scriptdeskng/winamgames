@@ -273,4 +273,19 @@
   .animate-checkmate-lastmove-pulse {
     animation: checkmate-lastmove-pulse 600ms ease-out forwards;
   }
+
+  @keyframes chess-piece-slide {
+    0% {
+      transform: translate(var(--slide-x), var(--slide-y));
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+  }
+
+  .animate-chess-piece-slide {
+    animation: chess-piece-slide 400ms ease-out forwards;
+  }
 }
