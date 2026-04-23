@@ -11,11 +11,11 @@ import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins, Lightbulb } from "lucide-react";
+import { playMove, playCapture, playCorrect, playIncorrect } from "@/utils/sound";
 
 const HINT_TIERS = [
   { tier: 1 as const, label: "Piece", cost: 25 },
-  { tier: 2 as const, label: "Destination", cost: 75 },
-  { tier: 3 as const, label: "Full move", cost: 150 },
+  { tier: 2 as const, label: "Move", cost: 75 },
 ];
 
 const GOAL_BY_THEME: Record<string, string> = {
@@ -56,6 +56,7 @@ function CheckMatePage() {
   const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
   const session = useGameSession("checkmate", playerId);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [committedMove, setCommittedMove] = useState<{ from: string; to: string } | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -79,6 +80,21 @@ function CheckMatePage() {
         setSelectedSquare(null);
         return;
       }
+      // Detect capture from current FEN before submission
+      const fen = (session.currentPuzzle as { fen?: string }).fen;
+      let isCapture = false;
+      if (fen) {
+        try {
+          const chess = new Chess(fen);
+          const target = chess.get(square as Square);
+          isCapture = !!target;
+        } catch {
+          isCapture = false;
+        }
+      }
+      setCommittedMove({ from: selectedSquare, to: square });
+      if (isCapture) playCapture();
+      else playMove();
       session.submit(JSON.stringify({ from: selectedSquare, to: square }));
       setSelectedSquare(null);
     } else {
@@ -98,7 +114,13 @@ function CheckMatePage() {
 
   useEffect(() => {
     setSelectedSquare(null);
+    setCommittedMove(null);
   }, [puzzleFen]);
+
+  useEffect(() => {
+    if (session.feedback === "correct") playCorrect();
+    else if (session.feedback === "incorrect") playIncorrect();
+  }, [session.feedback]);
 
   const legalMoves = useMemo(() => {
     if (!selectedSquare || !puzzleFen) return new Set<string>();
