@@ -327,28 +327,26 @@ function CheckMatePage() {
           />
         )}
 
-        <AnimatePresence>
-          {session.currentHintTier >= 1 && !session.feedback && session.hintData?.piece && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="rounded-xl bg-gradient-to-br from-coin/15 to-coin/5 border border-coin/30 p-3 flex items-center gap-3"
-            >
-              <div className="h-10 w-10 rounded-lg bg-coin/20 border border-coin/30 flex items-center justify-center shrink-0">
-                <Lightbulb className="h-5 w-5 text-coin" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">
-                  {session.currentHintTier >= 2 ? "Move hint" : "Piece hint"}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  Move the highlighted <span className="text-coin">{session.hintData.piece}</span>
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {session.currentHintTier >= 1 && !session.feedback && session.hintData?.piece && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="rounded-xl bg-gradient-to-br from-coin/15 to-coin/5 border border-coin/30 p-3 flex items-center gap-3"
+          >
+            <div className="h-10 w-10 rounded-lg bg-coin/20 border border-coin/30 flex items-center justify-center shrink-0">
+              <Lightbulb className="h-5 w-5 text-coin" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">
+                {session.currentHintTier >= 2 ? "Move hint" : "Piece hint"}
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                Move the highlighted <span className="text-coin">{session.hintData.piece}</span>
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         <AnswerFooter
           feedback={session.feedback}
