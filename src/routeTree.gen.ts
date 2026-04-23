@@ -14,9 +14,18 @@ import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as RenewRouteImport } from './routes/renew'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ApiForthsoftWebhookRouteImport } from './routes/api/forthsoft-webhook'
+import { Route as AdminWinnersRouteImport } from './routes/admin.winners'
+import { Route as AdminPlayersRouteImport } from './routes/admin.players'
+import { Route as AdminMissionsRouteImport } from './routes/admin.missions'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminDrawRouteImport } from './routes/admin.draw'
+import { Route as AdminConfigRouteImport } from './routes/admin.config'
+import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AuthedWisdomdropRouteImport } from './routes/_authed/wisdomdrop'
 import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
 import { Route as AuthedResultsRouteImport } from './routes/_authed/results'
@@ -25,6 +34,7 @@ import { Route as AuthedLeaderboardRouteImport } from './routes/_authed/leaderbo
 import { Route as AuthedEntriesRouteImport } from './routes/_authed/entries'
 import { Route as AuthedCheckmateRouteImport } from './routes/_authed/checkmate'
 import { Route as AuthedAppRouteImport } from './routes/_authed/app'
+import { Route as AdminPlayersPlayerIdRouteImport } from './routes/admin.players.$playerId'
 
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
@@ -51,6 +61,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -60,10 +75,50 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiForthsoftWebhookRoute = ApiForthsoftWebhookRouteImport.update({
   id: '/api/forthsoft-webhook',
   path: '/api/forthsoft-webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminWinnersRoute = AdminWinnersRouteImport.update({
+  id: '/winners',
+  path: '/winners',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPlayersRoute = AdminPlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMissionsRoute = AdminMissionsRouteImport.update({
+  id: '/missions',
+  path: '/missions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDrawRoute = AdminDrawRouteImport.update({
+  id: '/draw',
+  path: '/draw',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfigRoute = AdminConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBannersRoute = AdminBannersRouteImport.update({
+  id: '/banners',
+  path: '/banners',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AuthedWisdomdropRoute = AuthedWisdomdropRouteImport.update({
   id: '/wisdomdrop',
@@ -105,9 +160,15 @@ const AuthedAppRoute = AuthedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AdminPlayersPlayerIdRoute = AdminPlayersPlayerIdRouteImport.update({
+  id: '/$playerId',
+  path: '/$playerId',
+  getParentRoute: () => AdminPlayersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
@@ -121,7 +182,16 @@ export interface FileRoutesByFullPath {
   '/results': typeof AuthedResultsRoute
   '/winners': typeof AuthedWinnersRoute
   '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/draw': typeof AdminDrawRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/missions': typeof AdminMissionsRoute
+  '/admin/players': typeof AdminPlayersRouteWithChildren
+  '/admin/winners': typeof AdminWinnersRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/players/$playerId': typeof AdminPlayersPlayerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -138,12 +208,22 @@ export interface FileRoutesByTo {
   '/results': typeof AuthedResultsRoute
   '/winners': typeof AuthedWinnersRoute
   '/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/draw': typeof AdminDrawRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/missions': typeof AdminMissionsRoute
+  '/admin/players': typeof AdminPlayersRouteWithChildren
+  '/admin/winners': typeof AdminWinnersRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/players/$playerId': typeof AdminPlayersPlayerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/renew': typeof RenewRoute
@@ -157,12 +237,22 @@ export interface FileRoutesById {
   '/_authed/results': typeof AuthedResultsRoute
   '/_authed/winners': typeof AuthedWinnersRoute
   '/_authed/wisdomdrop': typeof AuthedWisdomdropRoute
+  '/admin/banners': typeof AdminBannersRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/draw': typeof AdminDrawRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/admin/missions': typeof AdminMissionsRoute
+  '/admin/players': typeof AdminPlayersRouteWithChildren
+  '/admin/winners': typeof AdminWinnersRoute
   '/api/forthsoft-webhook': typeof ApiForthsoftWebhookRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/players/$playerId': typeof AdminPlayersPlayerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/onboarding'
     | '/renew'
@@ -176,7 +266,16 @@ export interface FileRouteTypes {
     | '/results'
     | '/winners'
     | '/wisdomdrop'
+    | '/admin/banners'
+    | '/admin/config'
+    | '/admin/draw'
+    | '/admin/login'
+    | '/admin/missions'
+    | '/admin/players'
+    | '/admin/winners'
     | '/api/forthsoft-webhook'
+    | '/admin/'
+    | '/admin/players/$playerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -193,11 +292,21 @@ export interface FileRouteTypes {
     | '/results'
     | '/winners'
     | '/wisdomdrop'
+    | '/admin/banners'
+    | '/admin/config'
+    | '/admin/draw'
+    | '/admin/login'
+    | '/admin/missions'
+    | '/admin/players'
+    | '/admin/winners'
     | '/api/forthsoft-webhook'
+    | '/admin'
+    | '/admin/players/$playerId'
   id:
     | '__root__'
     | '/'
     | '/_authed'
+    | '/admin'
     | '/login'
     | '/onboarding'
     | '/renew'
@@ -211,12 +320,22 @@ export interface FileRouteTypes {
     | '/_authed/results'
     | '/_authed/winners'
     | '/_authed/wisdomdrop'
+    | '/admin/banners'
+    | '/admin/config'
+    | '/admin/draw'
+    | '/admin/login'
+    | '/admin/missions'
+    | '/admin/players'
+    | '/admin/winners'
     | '/api/forthsoft-webhook'
+    | '/admin/'
+    | '/admin/players/$playerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RenewRoute: typeof RenewRoute
@@ -262,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -276,12 +402,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/forthsoft-webhook': {
       id: '/api/forthsoft-webhook'
       path: '/api/forthsoft-webhook'
       fullPath: '/api/forthsoft-webhook'
       preLoaderRoute: typeof ApiForthsoftWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/winners': {
+      id: '/admin/winners'
+      path: '/winners'
+      fullPath: '/admin/winners'
+      preLoaderRoute: typeof AdminWinnersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/players': {
+      id: '/admin/players'
+      path: '/players'
+      fullPath: '/admin/players'
+      preLoaderRoute: typeof AdminPlayersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/missions': {
+      id: '/admin/missions'
+      path: '/missions'
+      fullPath: '/admin/missions'
+      preLoaderRoute: typeof AdminMissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/draw': {
+      id: '/admin/draw'
+      path: '/draw'
+      fullPath: '/admin/draw'
+      preLoaderRoute: typeof AdminDrawRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/config': {
+      id: '/admin/config'
+      path: '/config'
+      fullPath: '/admin/config'
+      preLoaderRoute: typeof AdminConfigRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/banners': {
+      id: '/admin/banners'
+      path: '/banners'
+      fullPath: '/admin/banners'
+      preLoaderRoute: typeof AdminBannersRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_authed/wisdomdrop': {
       id: '/_authed/wisdomdrop'
@@ -339,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAppRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/admin/players/$playerId': {
+      id: '/admin/players/$playerId'
+      path: '/$playerId'
+      fullPath: '/admin/players/$playerId'
+      preLoaderRoute: typeof AdminPlayersPlayerIdRouteImport
+      parentRoute: typeof AdminPlayersRoute
+    }
   }
 }
 
@@ -367,9 +556,46 @@ const AuthedRouteChildren: AuthedRouteChildren = {
 const AuthedRouteWithChildren =
   AuthedRoute._addFileChildren(AuthedRouteChildren)
 
+interface AdminPlayersRouteChildren {
+  AdminPlayersPlayerIdRoute: typeof AdminPlayersPlayerIdRoute
+}
+
+const AdminPlayersRouteChildren: AdminPlayersRouteChildren = {
+  AdminPlayersPlayerIdRoute: AdminPlayersPlayerIdRoute,
+}
+
+const AdminPlayersRouteWithChildren = AdminPlayersRoute._addFileChildren(
+  AdminPlayersRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminBannersRoute: typeof AdminBannersRoute
+  AdminConfigRoute: typeof AdminConfigRoute
+  AdminDrawRoute: typeof AdminDrawRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminMissionsRoute: typeof AdminMissionsRoute
+  AdminPlayersRoute: typeof AdminPlayersRouteWithChildren
+  AdminWinnersRoute: typeof AdminWinnersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminBannersRoute: AdminBannersRoute,
+  AdminConfigRoute: AdminConfigRoute,
+  AdminDrawRoute: AdminDrawRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminMissionsRoute: AdminMissionsRoute,
+  AdminPlayersRoute: AdminPlayersRouteWithChildren,
+  AdminWinnersRoute: AdminWinnersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RenewRoute: RenewRoute,
