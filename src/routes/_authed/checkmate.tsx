@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import React from "react";
 import { Chess, type Square } from "chess.js";
 import { ChessBoard } from "@/components/games/ChessBoard";
@@ -42,20 +42,6 @@ export const Route = createFileRoute("/_authed/checkmate")({
   }),
 });
 
-function parseFenLocal(fen: string): (string | null)[][] {
-  const rows = fen.split(" ")[0].split("/");
-  return rows.map((row) => {
-    const squares: (string | null)[] = [];
-    for (const ch of row) {
-      if (/\d/.test(ch)) {
-        for (let i = 0; i < parseInt(ch); i++) squares.push(null);
-      } else {
-        squares.push(ch);
-      }
-    }
-    return squares;
-  });
-}
 
 function CheckMatePage() {
   const sessionData = getSession();
@@ -102,43 +88,15 @@ function CheckMatePage() {
 
   const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
 
-  const prevFenRef = useRef<string | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const lastMove = useMemo(() => {
+    const p = session.currentPuzzle as
+      | { opponentFrom?: string | null; opponentTo?: string | null }
+      | null;
+    if (!p?.opponentFrom || !p?.opponentTo) return null;
+    return { from: p.opponentFrom, to: p.opponentTo };
+  }, [session.currentPuzzle]);
 
   useEffect(() => {
-    if (!puzzleFen) {
-      prevFenRef.current = null;
-      setLastMove(null);
-      return;
-    }
-    const prev = prevFenRef.current;
-    if (!prev) {
-      setLastMove(null);
-    } else {
-      const prevBoard = parseFenLocal(prev);
-      const currBoard = parseFenLocal(puzzleFen);
-      const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
-      const diffs: { square: string; before: string | null; after: string | null }[] = [];
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          if (prevBoard[r][c] !== currBoard[r][c]) {
-            diffs.push({
-              square: `${files[c]}${8 - r}`,
-              before: prevBoard[r][c],
-              after: currBoard[r][c],
-            });
-          }
-        }
-      }
-      if (diffs.length >= 2) {
-        const fromSq = diffs.find((d) => d.before && !d.after) ?? diffs[0];
-        const toSq = diffs.find((d) => d !== fromSq && d.after) ?? diffs[1];
-        setLastMove({ from: fromSq.square, to: toSq.square });
-      } else {
-        setLastMove(null);
-      }
-    }
-    prevFenRef.current = puzzleFen;
     setSelectedSquare(null);
   }, [puzzleFen]);
 

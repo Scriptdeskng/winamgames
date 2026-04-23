@@ -96,7 +96,7 @@ export const startSession = createServerFn({ method: "POST" })
     }
 
     // Pick puzzles (shuffle and take 10)
-    let puzzleList: { id: string; clientData: Record<string, string | string[]> }[];
+    let puzzleList: { id: string; clientData: Record<string, string | string[] | null> }[];
 
     // Fetch player rank for difficulty mix (used by both game types)
     const { data: playerRow } = await supabaseAdmin
@@ -200,10 +200,10 @@ export const startSession = createServerFn({ method: "POST" })
         return { success: false as const, error: "No puzzles available" };
       }
 
-      // Re-query for fen + theme; preserve picked order
+      // Re-query for fen + theme + opponent move; preserve picked order
       const { data: cmFull, error: cmFullErr } = await supabaseAdmin
         .from("winam_checkmate_puzzles")
-        .select("id, fen, theme")
+        .select("id, fen, theme, opponent_from, opponent_to")
         .in("id", cmPicked.map((p) => p.id));
       if (cmFullErr || !cmFull) {
         console.error("Failed to load full checkmate puzzles:", cmFullErr);
@@ -215,7 +215,12 @@ export const startSession = createServerFn({ method: "POST" })
         .filter((p): p is NonNullable<typeof p> => !!p)
         .map((p) => ({
           id: p.id,
-          clientData: { fen: p.fen, theme: p.theme },
+          clientData: {
+            fen: p.fen,
+            theme: p.theme,
+            opponentFrom: p.opponent_from,
+            opponentTo: p.opponent_to,
+          },
         }));
     } else {
       // Difficulty values in winam_wisdom_puzzles: beginner (144), intermediate (120), advanced (36)
@@ -530,15 +535,21 @@ export const submitMove = createServerFn({ method: "POST" })
     });
 
     // Get next puzzle data if requested
-    let nextPuzzle: Record<string, string | string[]> | null = null;
+    let nextPuzzle: Record<string, string | string[] | null> | null = null;
     if (data.nextPuzzleId) {
       if (isCheckmate) {
         const { data: p } = await supabaseAdmin
           .from("winam_checkmate_puzzles")
-          .select("id, fen, theme")
+          .select("id, fen, theme, opponent_from, opponent_to")
           .eq("id", data.nextPuzzleId)
           .maybeSingle();
-        if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen, theme: p.theme };
+        if (p) nextPuzzle = {
+          puzzleId: p.id,
+          fen: p.fen,
+          theme: p.theme,
+          opponentFrom: p.opponent_from,
+          opponentTo: p.opponent_to,
+        };
       } else {
         const { data: p } = await supabaseAdmin
           .from("winam_wisdom_puzzles")
