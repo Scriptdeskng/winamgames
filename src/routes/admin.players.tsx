@@ -1,16 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Search, Loader2, Flag } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
 import { getPlayers } from "@/utils/admin.functions";
 
 export const Route = createFileRoute("/admin/players")({
-  component: PlayersPage,
+  component: PlayersRoute,
 });
 
 type Player = Awaited<ReturnType<typeof getPlayers>>["players"][number];
 
-function PlayersPage() {
+function PlayersRoute() {
+  const { pathname } = useLocation();
+  const isIndex = pathname === "/admin/players" || pathname === "/admin/players/";
+  if (!isIndex) return <Outlet />;
+  return <PlayersIndex />;
+}
+
+function PlayersIndex() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
