@@ -121,8 +121,6 @@ function CheckMatePage() {
     }
   }, [selectedSquare, session, legalMoves]);
 
-  const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
-
   const lastMove = useMemo(() => {
     const p = session.currentPuzzle as
       | { opponentFrom?: string | null; opponentTo?: string | null }
@@ -141,17 +139,10 @@ function CheckMatePage() {
     else if (session.feedback === "incorrect") playIncorrect();
   }, [session.feedback]);
 
-  const legalMoves = useMemo(() => {
-    if (!selectedSquare || !puzzleFen) return new Set<string>();
-    try {
-      const chess = new Chess(puzzleFen);
-      return new Set(
-        chess.moves({ square: selectedSquare as Square, verbose: true }).map((m) => m.to as string)
-      );
-    } catch {
-      return new Set<string>();
-    }
-  }, [selectedSquare, puzzleFen]);
+  useEffect(() => {
+    if (!lastMove) return;
+    playMove();
+  }, [lastMove]);
 
   if (!session.sessionId) {
     return (
