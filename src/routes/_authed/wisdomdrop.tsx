@@ -2,14 +2,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameHeader } from "@/components/games/GameHeader";
-import { HintButton } from "@/components/games/HintButton";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
 import { useGameSession } from "@/components/games/useGameSession";
 import { DrawLockBanner } from "@/components/games/DrawLockBanner";
 import { getPlayerData } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
-import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins } from "lucide-react";
+import { BookOpen, Check, X, ArrowLeft, Heart, ScrollText, Globe, ArrowRight, Coins, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const WISDOM_HINT_TIERS = [
+  { tier: 1, label: "Eliminate 2", cost: 25 },
+  { tier: 2, label: "First letter", cost: 75 },
+  { tier: 3, label: "Reveal", cost: 150 },
+] as const;
 
 export const Route = createFileRoute("/_authed/wisdomdrop")({
   component: WisdomDropPage,
