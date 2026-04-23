@@ -271,7 +271,7 @@ function CheckMatePage() {
         )}
 
         {puzzle && (
-          <div className="rounded-xl bg-surface-1 border border-border px-4 py-3 flex gap-3 items-start">
+          <div className="rounded-xl bg-surface-1 border border-border px-4 py-3 flex gap-3 items-center">
             <div
               className="shrink-0 w-8 h-8 rounded flex items-center justify-center"
               style={{ backgroundColor: puzzle.fen.split(" ")[1] === "w" ? "#F0D9B5" : "#B58863" }}
