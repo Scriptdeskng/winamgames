@@ -96,7 +96,7 @@ export const startSession = createServerFn({ method: "POST" })
     }
 
     // Pick puzzles (shuffle and take 10)
-    let puzzleList: { id: string; clientData: Record<string, string | string[]> }[];
+    let puzzleList: { id: string; clientData: Record<string, string | string[] | null> }[];
 
     // Fetch player rank for difficulty mix (used by both game types)
     const { data: playerRow } = await supabaseAdmin
