@@ -1,44 +1,47 @@
 
 
-## Two updates: coin label + test account top-up
+## Compact WisdomDrop hint chip
 
-### 1. Coin balance label (both game screens)
+Single change in `src/routes/_authed/wisdomdrop.tsx` — replace the current tall hint chip card with a slim, single-line pill. Keep `motion.div` + `AnimatePresence` wrapper for the entrance animation; only the inner markup and classes shrink.
 
-**`src/routes/_authed/checkmate.tsx`** — update the coin balance span:
+### Change
 
-```tsx
-<span className="text-xs font-semibold text-coin tabular-nums">
-  Coins: {session.coinBalance}
-</span>
-```
-
-**`src/routes/_authed/wisdomdrop.tsx`** — same change:
+Inside the existing `<AnimatePresence>` block (the chip rendered between the proverb prompt and the choices), swap the contents of the `motion.div`:
 
 ```tsx
-<span className="text-xs font-semibold text-coin tabular-nums">
-  Coins: {session.coinBalance}
-</span>
+<AnimatePresence>
+  {!session.feedback && session.hintData && (session.hintData.startsWidth || session.hintData.answer) && (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="mx-6 mb-4 rounded-lg bg-coin/10 border border-coin/20 px-3 py-2 flex items-center gap-2"
+    >
+      <Lightbulb className="w-3.5 h-3.5 text-coin shrink-0" />
+      <div className="min-w-0 flex-1">
+        {session.hintData.answer ? (
+          <p className="text-xs font-semibold text-foreground">
+            Answer revealed · Tap <span className="text-coin">"{session.hintData.answer}"</span>
+          </p>
+        ) : (
+          <p className="text-xs font-semibold text-foreground">
+            Starts with <span className="text-coin text-base font-extrabold">{session.hintData.startsWidth}</span>
+          </p>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 ```
 
-The `Coins` icon stays in place; only the text content of the `<span>` changes from `{session.coinBalance} coins` to `Coins: {session.coinBalance}`.
-
-### 2. Credit test account with 1000 coins
-
-Run via the database insert/update tool:
-
-```sql
-UPDATE winam_players
-SET coin_balance = 1000
-WHERE id = '2f0531f4-75eb-43d7-8cdd-1d817b877344';
-```
-
-This is a data update (not a schema change), so it goes through the data tool, not a migration.
+Notes:
+- Drops the 40×40 icon tile, gradient background, two-line label/value layout, and large 2xl letter — replaced by a single-line pill.
+- Keeps `mx-6 mb-4` so spacing inside the puzzle card stays consistent.
+- Coin colour + bold preserved on the first letter / answer for emphasis.
 
 ### Files touched
 
-- `src/routes/_authed/checkmate.tsx` — coin label text
-- `src/routes/_authed/wisdomdrop.tsx` — coin label text
-- Database: one `UPDATE` on `winam_players`
+- `src/routes/_authed/wisdomdrop.tsx` — only this file.
 
-No schema, logic, or component changes.
+No other components, logic, styles, or backend changes.
 
