@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_admin/missions")({
+export const Route = createFileRoute("/admin/missions")({
   component: () => (
     <div>
       <h1 className="text-2xl font-bold">Missions</h1>

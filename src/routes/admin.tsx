@@ -8,7 +8,7 @@ import {
 } from "@/utils/admin.auth";
 import { AdminSidebar } from "../-admin/AdminSidebar";
 
-export const Route = createFileRoute("/_admin")({
+export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 

@@ -4,7 +4,7 @@ import { getAdminSession } from "@/utils/admin.auth";
 import { getDashboardStats } from "@/utils/admin.functions";
 import { Users, CreditCard, Ticket, Gamepad2 } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/")({
+export const Route = createFileRoute("/admin/")({
   component: DashboardPage,
 });
 

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_admin/config")({
+export const Route = createFileRoute("/admin/config")({
   component: () => (
     <div>
       <h1 className="text-2xl font-bold">Platform config</h1>

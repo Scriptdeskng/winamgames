@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_admin/draw")({
+export const Route = createFileRoute("/admin/draw")({
   component: () => (
     <div>
       <h1 className="text-2xl font-bold">Draw management</h1>
