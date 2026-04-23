@@ -418,9 +418,11 @@ function CheckMatePage() {
                     "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all border min-h-[72px]",
                     purchased
                       ? "bg-success/10 border-success/30 text-success"
-                      : disabled
-                        ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
-                        : "bg-surface-1 border-border text-foreground hover:border-primary/30"
+                      : locked
+                        ? "bg-surface-1/30 border-border/30 text-muted-foreground/40 cursor-not-allowed opacity-40"
+                        : !canAfford
+                          ? "bg-surface-1/50 border-border/40 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                          : "bg-primary/10 border-primary/40 text-foreground hover:bg-primary/20 hover:border-primary/60 active:scale-95"
                   )}
                 >
                   {purchased ? (
