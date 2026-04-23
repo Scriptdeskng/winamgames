@@ -196,7 +196,7 @@ function CheckMatePage() {
 
           {/* Example mini board preview */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4">
-            <div className="w-[160px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden border border-border/30">
+            <div className="w-[180px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden">
               {Array.from({ length: 16 }).map((_, i) => {
                 const row = Math.floor(i / 4);
                 const col = i % 4;
@@ -209,17 +209,17 @@ function CheckMatePage() {
                     className="relative aspect-square flex items-center justify-center"
                     style={{
                       backgroundColor: isHint
-                        ? "rgba(255,255,0,0.5)"
+                        ? "rgba(255,255,255,0.15)"
                         : (row + col) % 2 === 0
-                          ? "#F0D9B5"
-                          : "#B58863"
+                          ? "rgba(255,255,255,0.08)"
+                          : "rgba(255,255,255,0.04)"
                     }}
                   >
                     {isQueen && (
-                      <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8" />
+                      <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8 opacity-40" />
                     )}
                     {isKing && (
-                      <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8" />
+                      <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8 opacity-40" />
                     )}
                   </div>
                 );
