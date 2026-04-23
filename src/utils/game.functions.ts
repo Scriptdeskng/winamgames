@@ -65,7 +65,6 @@ export const startSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { CHECKMATE_PUZZLES } = await import("@/data/checkmate-puzzles");
 
     // Ensure current draw week exists (auto-rollover)
     const drawWeekId = await ensureCurrentDrawWeek();
