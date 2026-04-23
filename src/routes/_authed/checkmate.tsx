@@ -272,8 +272,18 @@ function CheckMatePage() {
 
         {puzzle && (
           <div className="rounded-xl bg-surface-1 border border-border px-4 py-3 flex gap-3 items-start">
-            <div className="text-2xl leading-none shrink-0">
-              {puzzle.fen.split(" ")[1] === "w" ? "♙" : "♟"}
+            <div
+              className="shrink-0 w-8 h-8 rounded flex items-center justify-center"
+              style={{ backgroundColor: puzzle.fen.split(" ")[1] === "w" ? "#F0D9B5" : "#B58863" }}
+            >
+              <img
+                src={puzzle.fen.split(" ")[1] === "w"
+                  ? "https://lichess1.org/assets/piece/staunty/wP.svg"
+                  : "https://lichess1.org/assets/piece/staunty/bP.svg"
+                }
+                alt={puzzle.fen.split(" ")[1] === "w" ? "White" : "Black"}
+                className="w-6 h-6"
+              />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-foreground">
