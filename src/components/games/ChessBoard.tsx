@@ -42,17 +42,6 @@ interface ChessBoardProps {
   legalMoves?: Set<string>;
 }
 
-const PULSE_STYLE = `
-@keyframes checkmate-lastmove-pulse {
-  0%   { background-color: rgba(255, 235, 59, 0.0); }
-  30%  { background-color: rgba(255, 235, 59, 0.75); }
-  100% { background-color: rgba(155, 199, 100, 0.6); }
-}
-.animate-checkmate-lastmove-pulse {
-  animation: checkmate-lastmove-pulse 600ms ease-out 1;
-}
-`;
-
 export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintFrom, hintTo, disabled, legalMoves }: ChessBoardProps) {
   const board = parseFen(fen);
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
