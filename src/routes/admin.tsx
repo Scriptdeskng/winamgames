@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Outlet } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useLocation, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   getAdminSession,
@@ -14,10 +14,16 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isLoginRoute = pathname === "/admin/login";
   const [session, setSession] = useState<AdminSession | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (isLoginRoute) {
+      setReady(true);
+      return;
+    }
     const local = getAdminSession();
     if (!local) {
       navigate({ to: "/admin/login" });
@@ -37,7 +43,11 @@ function AdminLayout() {
         clearAdminSession();
         navigate({ to: "/admin/login" });
       });
-  }, [navigate]);
+  }, [navigate, isLoginRoute]);
+
+  if (isLoginRoute) {
+    return <Outlet />;
+  }
 
   if (!ready || !session) {
     return (
