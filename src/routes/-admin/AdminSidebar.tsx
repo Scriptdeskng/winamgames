@@ -18,7 +18,8 @@ interface Props {
   onLogout: () => void;
 }
 
-const NAV = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const NAV: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/draw", label: "Draw", icon: Trophy },
   { to: "/admin/players", label: "Players", icon: Users },
@@ -26,7 +27,7 @@ const NAV = [
   { to: "/admin/missions", label: "Missions", icon: Target },
   { to: "/admin/config", label: "Config", icon: Settings },
   { to: "/admin/winners", label: "Winners", icon: Award },
-] as const;
+];
 
 export function AdminSidebar({ email, onLogout }: Props) {
   const [open, setOpen] = useState(false);
