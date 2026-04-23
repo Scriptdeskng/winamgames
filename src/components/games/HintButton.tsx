@@ -2,9 +2,9 @@ import { Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HINT_TIERS = [
-  { tier: 1, label: "Which piece", cost: 25 },
-  { tier: 2, label: "Destination", cost: 75 },
-  { tier: 3, label: "Full answer", cost: 150 },
+  { tier: 1, label: "Eliminate 2", cost: 25 },
+  { tier: 2, label: "First letter", cost: 75 },
+  { tier: 3, label: "Reveal answer", cost: 150 },
 ] as const;
 
 interface HintButtonProps {
