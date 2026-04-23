@@ -61,7 +61,6 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
 
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
-      <style>{PULSE_STYLE}</style>
       <div className="grid grid-cols-8 border-2 border-amber-900/30 rounded-lg overflow-hidden shadow-card">
         {board.map((row, ri) =>
           row.map((piece, ci) => {
