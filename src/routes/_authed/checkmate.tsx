@@ -311,6 +311,8 @@ function CheckMatePage() {
             fen={puzzle.fen}
             selectedSquare={selectedSquare}
             onSquareClick={handleSquareClick}
+            lastMove={lastMove}
+            legalMoves={legalMoves}
             hintFrom={session.hintData?.from}
             hintTo={session.hintData?.to ?? session.hintData?.destination}
             disabled={session.loading || session.gameOver || !!session.feedback}
