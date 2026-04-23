@@ -286,6 +286,6 @@
   }
 
   .animate-chess-piece-slide {
-    animation: chess-piece-slide 400ms ease-out forwards;
+    animation: chess-piece-slide 700ms ease-out forwards;
   }
 }

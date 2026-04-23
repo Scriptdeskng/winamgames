@@ -92,7 +92,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
       toSquare: lastMove.to,
     });
 
-    const timer = setTimeout(() => setAnimatingMove(null), 450);
+    const timer = setTimeout(() => setAnimatingMove(null), 800);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulseKey]);
