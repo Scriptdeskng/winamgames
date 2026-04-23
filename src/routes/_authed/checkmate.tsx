@@ -404,6 +404,7 @@ function CheckMatePage() {
                 </button>
               );
             })}
+            </div>
           </div>
         )}
       </div>
