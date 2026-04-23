@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Loader2, Save, Plus } from "lucide-react";
+import { AlertTriangle, Loader2, Save, Plus, Info } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
 import { getPlatformConfig, updatePlatformConfig } from "@/utils/admin.functions";
 
