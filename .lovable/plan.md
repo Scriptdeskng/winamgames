@@ -1,72 +1,56 @@
 
 
-## Force the server bundle to actually pick up the new RANK_TIERS
+## Add hover tooltips to dashboard stat cards
 
-### Problem
+### Change
 
-CaptArice row right now: `xp_total = 660`, `rank_tier = recruit`. Audit log shows a `player_adjust_xp` at **17:48:23 UTC** (after the previous backfill + comment-touch) with `tier: recruit` written into details. That proves the running server bundle is still executing the **old** `RANK_TIERS` thresholds even though the source file has been correct for some time. Touching the file with a trailing comment was not enough to swap the live bundle.
+In `src/routes/admin.index.tsx`, mirror the `KeyLabel` tooltip pattern from `admin.config.tsx`: a small `Info` icon (lucide) sits next to the existing icon on each card; on hover, a positioned `<span role="tooltip">` fades in via Tailwind `group`/`group-hover` classes. No new dependency, no new component file, no other files touched.
 
-### Why the comment touch failed
+### Implementation in `admin.index.tsx`
 
-TanStack Start server functions are bundled by Vite into a server bundle. In the Lovable preview, a content-only change (whitespace/comment) to a server-only file does not always invalidate the server bundle — only the module graph for the client. The bundle that handles `adjustPlayerXP` kept serving the old code.
+1. Extend the `Info` import: change the existing lucide import line to add `Info`:
+   ```ts
+   import { Users, CreditCard, Ticket, Gamepad2, Info } from "lucide-react";
+   ```
 
-### Fix — make a real semantic change to the module so the bundle MUST rebuild
+2. Add a `tooltip` field to each entry in the `cards` array:
+   ```ts
+   const cards = [
+     { label: "Total players", value: stats.totalPlayers, icon: Users,
+       tooltip: "Total registered player accounts across all time" },
+     { label: "Active subscriptions", value: stats.activeSubscriptions, icon: CreditCard,
+       tooltip: "Players with a currently active subscription (note: prototype auto-renews on login, so this may be inflated)" },
+     { label: "Current week tickets", value: stats.currentWeekEntries, icon: Ticket,
+       tooltip: "Total draw tickets earned by all players in the current open draw week" },
+     { label: "Sessions today", value: stats.sessionsToday, icon: Gamepad2,
+       tooltip: "Number of completed game sessions today (WAT timezone)" },
+   ];
+   ```
 
-Two changes in `src/utils/admin.functions.ts`:
+3. In the card render, replace the single `<Icon />` in the top-right with a flex group containing the `Info` trigger + tooltip span, then the existing `Icon`. Reuse the exact tooltip classes from `KeyLabel` in `admin.config.tsx` so styling stays consistent:
+   ```tsx
+   <div className="flex items-center gap-1.5">
+     <span className="group relative inline-flex">
+       <Info className="h-3 w-3 cursor-help text-muted-foreground/70 hover:text-muted-foreground" />
+       <span
+         role="tooltip"
+         className="pointer-events-none absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-border bg-popover px-2 py-1.5 text-xs leading-snug text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+       >
+         {c.tooltip}
+       </span>
+     </span>
+     <Icon className="h-4 w-4 text-primary" />
+   </div>
+   ```
 
-1. **Move `RANK_TIERS` and `tierFor` out of the closure** into a separately exported named constant + function (changes the module's exported surface, forcing a true server-bundle rebuild). Specifically:
-   - Rename internal `tierFor` to `computeRankTier` and `export` it.
-   - `export const RANK_TIERS = [...]` (already correct values).
-   - Replace the existing `tierFor(xp)` call site inside `adjustPlayerXP` with `computeRankTier(xp)`.
-   - Remove the no-op `// rank thresholds verified` trailing comment.
-
-2. This is a **real** code change to the public module shape, which guarantees the Vite server bundle is invalidated and rebuilt on next request. No behavior change — same thresholds, same logic, same call site semantics.
-
-### Then re-run the backfill
-
-After the code change, re-run the same idempotent UPDATE to fix CaptArice (660 → `sergeant`):
-
-```sql
-UPDATE winam_players
-SET rank_tier = CASE
-  WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
-  WHEN xp_total >=  7000 THEN 'legend'::rank_tier
-  WHEN xp_total >=  4500 THEN 'icon'::rank_tier
-  WHEN xp_total >=  2500 THEN 'champion'::rank_tier
-  WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
-  WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
-  WHEN xp_total >=   150 THEN 'recruit'::rank_tier
-  ELSE 'starter'::rank_tier
-END
-WHERE rank_tier IS DISTINCT FROM (
-  CASE
-    WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
-    WHEN xp_total >=  7000 THEN 'legend'::rank_tier
-    WHEN xp_total >=  4500 THEN 'icon'::rank_tier
-    WHEN xp_total >=  2500 THEN 'champion'::rank_tier
-    WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
-    WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
-    WHEN xp_total >=   150 THEN 'recruit'::rank_tier
-    ELSE 'starter'::rank_tier
-  END
-);
-```
-
-Expected: 1 row affected (CaptArice `recruit` → `sergeant`).
-
-### Verify the bundle actually swapped
-
-After the backfill, do a tiny test XP adjust on CaptArice (e.g. +1 then -1) and re-query. If the new audit entry's `details.tier` reads `sergeant` and the row stays `sergeant`, the new bundle is live. If it flips back to `recruit`, the bundle still didn't swap and the user will need to hit "Update" in the publish dialog (or restart the preview from the project settings) to force a hard redeploy.
+   Note: tooltip is anchored `right-0` (not centered) so the rightmost card's tooltip doesn't overflow the viewport edge. Width `w-56` keeps the longer "Active subscriptions" copy on ~3 lines.
 
 ### Files changed
 
-- `src/utils/admin.functions.ts` — export `RANK_TIERS`, rename `tierFor` → `computeRankTier` and export it, update the one call site inside `adjustPlayerXP`, remove the trailing no-op comment.
-
-### Database operations
-
-- One `UPDATE` on `winam_players.rank_tier` (1 row affected: CaptArice).
+- `src/routes/admin.index.tsx` — add `Info` import, add `tooltip` field on each card, swap the icon slot for the tooltip+icon group.
 
 ### Out of scope
 
-- No changes to `RankBadge.tsx`, `tierFor`'s logic, audit log shape, or any other call paths.
+- No shared `<Tooltip>` component extracted (config page also inlines it; matching that convention).
+- No changes to `admin.config.tsx`, no Radix tooltip, no new files.
 
