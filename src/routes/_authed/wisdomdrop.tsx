@@ -308,12 +308,43 @@ function WisdomDropPage() {
         />
 
         {!session.feedback && (
-          <HintButton
-            currentTier={session.currentHintTier}
-            coinBalance={session.coinBalance}
-            onUseHint={session.requestHint}
-            disabled={session.loading || session.gameOver}
-          />
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-semibold px-1">
+              Need a hint?
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {WISDOM_HINT_TIERS.map(({ tier, label, cost }) => {
+                const purchased = session.currentHintTier >= tier;
+                const locked = tier > session.currentHintTier + 1;
+                const canAfford = session.coinBalance >= cost;
+                const isDisabled = purchased || locked || !canAfford || session.loading || session.gameOver;
+
+                return (
+                  <button
+                    key={tier}
+                    onClick={() => !isDisabled && session.requestHint(tier as 1 | 2 | 3)}
+                    disabled={isDisabled}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-all border min-h-[72px]",
+                      purchased
+                        ? "bg-success/10 border-success/30 text-success"
+                        : locked
+                          ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-50"
+                          : !canAfford
+                            ? "bg-surface-1/50 border-border/50 text-muted-foreground cursor-not-allowed opacity-40"
+                            : "bg-surface-1 border-border text-foreground hover:border-primary/30 active:scale-95"
+                    )}
+                  >
+                    {purchased ? <Check className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
+                    <span className="font-semibold">{label}</span>
+                    <span className="text-[10px] opacity-70">
+                      {purchased ? "Used" : `${cost} coins`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>
