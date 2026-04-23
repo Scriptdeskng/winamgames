@@ -316,7 +316,7 @@ function WisdomDropPage() {
               <div className="flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-coin" />
                 <span className="text-xs font-semibold text-coin tabular-nums">
-                  {session.coinBalance} coins
+                  Coins: {session.coinBalance}
                 </span>
               </div>
             </div>
