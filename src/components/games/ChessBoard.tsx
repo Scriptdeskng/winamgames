@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+import { Check, X } from "lucide-react";
 
 const PIECE_URL: Record<string, string> = {
   K: "https://lichess1.org/assets/piece/staunty/wK.svg",
@@ -44,6 +45,12 @@ function getSquareOffset(from: string, to: string): { dx: number; dy: number } {
   };
 }
 
+function squareCenter(sq: string, size: number): { x: number; y: number } {
+  const file = FILES.indexOf(sq[0] as (typeof FILES)[number]);
+  const rank = 8 - parseInt(sq[1]);
+  return { x: (file + 0.5) * size, y: (rank + 0.5) * size };
+}
+
 interface ChessBoardProps {
   fen: string;
   selectedSquare: string | null;
@@ -53,9 +60,24 @@ interface ChessBoardProps {
   hintTo?: string | null;
   disabled?: boolean;
   legalMoves?: Set<string>;
+  committedMove?: { from: string; to: string } | null;
+  arrowMove?: { from: string; to: string } | null;
+  feedback?: "correct" | "incorrect" | null;
 }
 
-export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintFrom, hintTo, disabled, legalMoves }: ChessBoardProps) {
+export function ChessBoard({
+  fen,
+  selectedSquare,
+  onSquareClick,
+  lastMove,
+  hintFrom,
+  hintTo,
+  disabled,
+  legalMoves,
+  committedMove,
+  arrowMove,
+  feedback,
+}: ChessBoardProps) {
   const board = parseFen(fen);
 
   const lastMoveKey = lastMove ? `${lastMove.from}-${lastMove.to}` : null;
@@ -97,14 +119,27 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulseKey]);
 
-  const displayBoard = animatingMove
+  // Apply animation source clearing first, then committed move overlay
+  let displayBoard = animatingMove
     ? board.map((row, ri) =>
         row.map((piece, ci) => {
           const sq = `${FILES[ci]}${8 - ri}`;
           return sq === animatingMove.fromSquare ? null : piece;
         })
       )
-    : board;
+    : board.map((row) => row.slice());
+
+  if (committedMove) {
+    const fromFile = FILES.indexOf(committedMove.from[0] as (typeof FILES)[number]);
+    const fromRank = 8 - parseInt(committedMove.from[1]);
+    const toFile = FILES.indexOf(committedMove.to[0] as (typeof FILES)[number]);
+    const toRank = 8 - parseInt(committedMove.to[1]);
+    const movedPiece = board[fromRank]?.[fromFile];
+    if (movedPiece) {
+      displayBoard[fromRank][fromFile] = null;
+      displayBoard[toRank][toFile] = movedPiece;
+    }
+  }
 
   const squareSize = gridRef.current ? gridRef.current.offsetWidth / 8 : 0;
   let overlay: React.ReactNode = null;
@@ -131,6 +166,65 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
     );
   }
 
+  // Tier-2 hint arrow overlay
+  let arrowOverlay: React.ReactNode = null;
+  if (arrowMove && squareSize > 0) {
+    const from = squareCenter(arrowMove.from, squareSize);
+    const to = squareCenter(arrowMove.to, squareSize);
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const headSize = squareSize * 0.4;
+    // Shorten line so it doesn't poke through the arrowhead
+    const lineEndX = to.x - ux * headSize * 0.55;
+    const lineEndY = to.y - uy * headSize * 0.55;
+    // Polygon points for arrowhead at to
+    const tipX = to.x;
+    const tipY = to.y;
+    const baseCenterX = to.x - ux * headSize;
+    const baseCenterY = to.y - uy * headSize;
+    // perpendicular
+    const px = -uy;
+    const py = ux;
+    const halfBase = headSize * 0.55;
+    const b1x = baseCenterX + px * halfBase;
+    const b1y = baseCenterY + py * halfBase;
+    const b2x = baseCenterX - px * halfBase;
+    const b2y = baseCenterY - py * halfBase;
+    const totalSize = squareSize * 8;
+    arrowOverlay = (
+      <svg
+        className="pointer-events-none absolute inset-0 z-20"
+        width={totalSize}
+        height={totalSize}
+        viewBox={`0 0 ${totalSize} ${totalSize}`}
+      >
+        <defs>
+          <filter id="arrow-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.45" />
+          </filter>
+        </defs>
+        <g filter="url(#arrow-shadow)">
+          <line
+            x1={from.x}
+            y1={from.y}
+            x2={lineEndX}
+            y2={lineEndY}
+            stroke="rgba(0,200,100,0.85)"
+            strokeWidth={12}
+            strokeLinecap="round"
+          />
+          <polygon
+            points={`${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`}
+            fill="rgba(0,200,100,0.85)"
+          />
+        </g>
+      </svg>
+    );
+  }
+
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
       <div className="relative">
@@ -141,8 +235,9 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
               const isLight = (ri + ci) % 2 === 0;
               const isSelected = selectedSquare === square;
               const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
-              const isHint = square === hintFrom || square === hintTo;
+              const isHint = square === hintFrom;
               const isLegal = legalMoves?.has(square) ?? false;
+              const showBadge = !!feedback && committedMove?.to === square;
 
               let bg: string;
               if (isSelected) bg = "rgba(255, 255, 0, 0.7)";
@@ -199,12 +294,27 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                       {FILES[ci]}
                     </span>
                   )}
+                  {showBadge && (
+                    <span
+                      className={cn(
+                        "absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center z-20 shadow-md ring-2 ring-white/80",
+                        feedback === "correct" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                      )}
+                    >
+                      {feedback === "correct" ? (
+                        <Check className="w-3 h-3" strokeWidth={3} />
+                      ) : (
+                        <X className="w-3 h-3" strokeWidth={3} />
+                      )}
+                    </span>
+                  )}
                 </button>
               );
             })
           )}
         </div>
         {overlay}
+        {arrowOverlay}
       </div>
     </div>
   );

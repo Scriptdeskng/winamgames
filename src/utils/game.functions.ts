@@ -592,6 +592,12 @@ export const useHint = createServerFn({ method: "POST" })
     const costs = { 1: 25, 2: 75, 3: 150 } as const;
     const cost = costs[data.tier as 1 | 2 | 3];
 
+    // CheckMate-only: tier 3 not available
+    const isCheckmatePuzzle = data.puzzleId.startsWith("lc_") || data.puzzleId.startsWith("cm-");
+    if (isCheckmatePuzzle && data.tier > 2) {
+      return { success: false as const, error: "Tier 3 hint not available for CheckMate" };
+    }
+
     // Check balance
     const { data: player } = await supabaseAdmin
       .from("winam_players")
@@ -622,10 +628,7 @@ export const useHint = createServerFn({ method: "POST" })
       if (puzzle) {
         if (data.tier >= 1) hintData.piece = puzzle.hint_piece ?? "";
         if (data.tier >= 2) hintData.destination = puzzle.hint_destination ?? "";
-        if (data.tier >= 3) {
-          hintData.from = puzzle.solution_move.slice(0, 2);
-          hintData.to = puzzle.solution_move.slice(2, 4);
-        }
+        // Tier 3 removed for CheckMate — arrow at tier 2 communicates the full move
       }
     } else {
       const { data: puzzle } = await supabaseAdmin
