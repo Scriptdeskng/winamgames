@@ -203,7 +203,7 @@ function DrawHeroCard({
     );
   }
 
-  // ─── State: locked ── entries frozen, draw imminent
+  // ─── State: locked ── tickets frozen, draw imminent
   if (drawState === "locked") {
     return (
       <div className={cardChrome}>
@@ -212,11 +212,11 @@ function DrawHeroCard({
         </p>
         <h3 className="text-2xl font-bold text-foreground">Draw closing soon</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Entries locked — draw executes at 20:00 WAT
+          Tickets locked — draw executes at 20:00 WAT
         </p>
         <p className="text-sm text-muted-foreground mt-4 tabular-nums">
           <span className="font-bold">{weekTotal}</span>
-          <span> / {weekCap} entries this week</span>
+          <span> / {weekCap} tickets this week</span>
         </p>
         <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
           <div
@@ -226,7 +226,7 @@ function DrawHeroCard({
         </div>
         <div className="mt-3 flex items-center justify-end">
           <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
-            View my entries <ChevronRight className="h-3 w-3" />
+            View my tickets <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
       </div>
@@ -254,7 +254,7 @@ function DrawHeroCard({
       </div>
       <p className="text-sm text-foreground mt-3 tabular-nums">
         <span className="font-bold text-primary">{weekTotal}</span>
-        <span className="text-muted-foreground"> / {weekCap} entries this week</span>
+        <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
       </p>
       <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
         <div
@@ -265,7 +265,7 @@ function DrawHeroCard({
       <div className="mt-3 flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
         <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
-          View my entries <ChevronRight className="h-3 w-3" />
+          View my tickets <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
@@ -311,8 +311,8 @@ const MISSION_META: Record<string, { icon: LucideIcon; tint: string }> = {
   game_type_mix:  { icon: Shuffle,  tint: "bg-primary/15 text-primary" },
 };
 
-function pluralizeEntries(n: number) {
-  return `${n} ${n === 1 ? "entry" : "entries"}`;
+function pluralizeTickets(n: number) {
+  return `${n} ${n === 1 ? "ticket" : "tickets"}`;
 }
 
 function MissionsSection({

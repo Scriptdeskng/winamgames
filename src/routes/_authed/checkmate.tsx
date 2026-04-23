@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authed/checkmate")({
   head: () => ({
     meta: [
       { title: "CheckMate — WinamGames" },
-      { name: "description", content: "Solve chess puzzles and earn draw entries." },
+      { name: "description", content: "Solve chess puzzles and earn draw tickets." },
     ],
   }),
 });
@@ -236,7 +236,7 @@ function CheckMatePage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  Earn up to <span className="text-coin tabular-nums">5 entries</span> per round
+                  Earn up to <span className="text-coin tabular-nums">5 tickets</span> per round
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Plus XP, streak bonuses & weekly draws
@@ -287,7 +287,7 @@ function CheckMatePage() {
           <div className="rounded-xl bg-surface-1 border border-emerald/30 p-4 space-y-3">
             <p className="text-sm text-foreground leading-relaxed">
               Tap a piece to select it, then tap where you want it to move.
-              Find the winning move to earn your entry.
+              Find the winning move to earn your ticket.
             </p>
             <button
               onClick={dismissOnboarding}
