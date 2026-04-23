@@ -136,6 +136,7 @@ function WisdomDropPage() {
   const isCorrect = session.feedback === "correct";
   const correctAnswer = session.lastReveal?.blank;
   const selectedAnswer = session.selectedAnswer;
+  const revealedAnswer = session.hintData?.answer ?? null;
   const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
   return (
