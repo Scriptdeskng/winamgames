@@ -27,13 +27,14 @@ async function audit(
 ) {
   try {
     const supabaseAdmin = await getAdmin();
-    await supabaseAdmin.from("winam_admin_audit_log").insert({
+    const payload = {
       admin_id: adminId,
       action,
       target_type,
       target_id,
-      details,
-    });
+      details: details as never,
+    };
+    await supabaseAdmin.from("winam_admin_audit_log").insert(payload);
   } catch (e) {
     console.error("[audit] failed to log", action, e);
   }
