@@ -1,66 +1,72 @@
 
 
-## Re-run rank_tier backfill + force fresh server bundle
+## Force the server bundle to actually pick up the new RANK_TIERS
 
-### Current state
+### Problem
 
-- 1 row mismatched: **CaptArice** — `xp_total = 650`, `rank_tier = recruit` (should be `sergeant`).
-- All other players are already on the correct tier.
-- `RANK_TIERS` source in `src/utils/admin.functions.ts` is already correct — no code change needed for the threshold fix itself.
+CaptArice row right now: `xp_total = 660`, `rank_tier = recruit`. Audit log shows a `player_adjust_xp` at **17:48:23 UTC** (after the previous backfill + comment-touch) with `tier: recruit` written into details. That proves the running server bundle is still executing the **old** `RANK_TIERS` thresholds even though the source file has been correct for some time. Touching the file with a trailing comment was not enough to swap the live bundle.
 
-### Actions (in order)
+### Why the comment touch failed
 
-1. **Run the backfill UPDATE** on `winam_players` via the data tool:
+TanStack Start server functions are bundled by Vite into a server bundle. In the Lovable preview, a content-only change (whitespace/comment) to a server-only file does not always invalidate the server bundle — only the module graph for the client. The bundle that handles `adjustPlayerXP` kept serving the old code.
 
-   ```sql
-   UPDATE winam_players
-   SET rank_tier = CASE
-     WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
-     WHEN xp_total >=  7000 THEN 'legend'::rank_tier
-     WHEN xp_total >=  4500 THEN 'icon'::rank_tier
-     WHEN xp_total >=  2500 THEN 'champion'::rank_tier
-     WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
-     WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
-     WHEN xp_total >=   150 THEN 'recruit'::rank_tier
-     ELSE 'starter'::rank_tier
-   END
-   WHERE rank_tier IS DISTINCT FROM (
-     CASE
-       WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
-       WHEN xp_total >=  7000 THEN 'legend'::rank_tier
-       WHEN xp_total >=  4500 THEN 'icon'::rank_tier
-       WHEN xp_total >=  2500 THEN 'champion'::rank_tier
-       WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
-       WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
-       WHEN xp_total >=   150 THEN 'recruit'::rank_tier
-       ELSE 'starter'::rank_tier
-     END
-   );
-   ```
+### Fix — make a real semantic change to the module so the bundle MUST rebuild
 
-   Expected: 1 row affected (CaptArice `recruit` → `sergeant`).
+Two changes in `src/utils/admin.functions.ts`:
 
-2. **Force a fresh server bundle** so the running preview server uses the corrected `RANK_TIERS`. Server functions in TanStack Start are bundled — a source save doesn't always swap the live bundle. To guarantee freshness, touch `src/utils/admin.functions.ts` with a no-op change (add/adjust a trailing comment line) and save it. This causes the Vite server to rebuild the server bundle so the next `adjustPlayerXP` call uses the new thresholds.
+1. **Move `RANK_TIERS` and `tierFor` out of the closure** into a separately exported named constant + function (changes the module's exported surface, forcing a true server-bundle rebuild). Specifically:
+   - Rename internal `tierFor` to `computeRankTier` and `export` it.
+   - `export const RANK_TIERS = [...]` (already correct values).
+   - Replace the existing `tierFor(xp)` call site inside `adjustPlayerXP` with `computeRankTier(xp)`.
+   - Remove the no-op `// rank thresholds verified` trailing comment.
 
-   - The edit is a single trailing comment line at the end of the file (e.g. `// rank thresholds verified`). No logic change.
-   - After the edit, the preview server picks up the new bundle on the next request.
+2. This is a **real** code change to the public module shape, which guarantees the Vite server bundle is invalidated and rebuilt on next request. No behavior change — same thresholds, same logic, same call site semantics.
 
-3. **Verify**: re-query `winam_players` to confirm 0 rows mismatch the expected tier.
+### Then re-run the backfill
 
-### Why not a full preview restart
+After the code change, re-run the same idempotent UPDATE to fix CaptArice (660 → `sergeant`):
 
-The Lovable preview environment doesn't expose a manual "restart server" control to me — the way to guarantee a fresh server bundle from this side is to trigger a rebuild by modifying a file the bundler watches. A trailing comment in `admin.functions.ts` is the smallest, safest trigger that targets exactly the bundle in question. The user can additionally hit "Update" in the publish dialog if they want to force the published deployment to refresh, but the preview will already be on the new bundle.
+```sql
+UPDATE winam_players
+SET rank_tier = CASE
+  WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
+  WHEN xp_total >=  7000 THEN 'legend'::rank_tier
+  WHEN xp_total >=  4500 THEN 'icon'::rank_tier
+  WHEN xp_total >=  2500 THEN 'champion'::rank_tier
+  WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
+  WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
+  WHEN xp_total >=   150 THEN 'recruit'::rank_tier
+  ELSE 'starter'::rank_tier
+END
+WHERE rank_tier IS DISTINCT FROM (
+  CASE
+    WHEN xp_total >= 10000 THEN 'immortal'::rank_tier
+    WHEN xp_total >=  7000 THEN 'legend'::rank_tier
+    WHEN xp_total >=  4500 THEN 'icon'::rank_tier
+    WHEN xp_total >=  2500 THEN 'champion'::rank_tier
+    WHEN xp_total >=  1200 THEN 'veteran'::rank_tier
+    WHEN xp_total >=   500 THEN 'sergeant'::rank_tier
+    WHEN xp_total >=   150 THEN 'recruit'::rank_tier
+    ELSE 'starter'::rank_tier
+  END
+);
+```
+
+Expected: 1 row affected (CaptArice `recruit` → `sergeant`).
+
+### Verify the bundle actually swapped
+
+After the backfill, do a tiny test XP adjust on CaptArice (e.g. +1 then -1) and re-query. If the new audit entry's `details.tier` reads `sergeant` and the row stays `sergeant`, the new bundle is live. If it flips back to `recruit`, the bundle still didn't swap and the user will need to hit "Update" in the publish dialog (or restart the preview from the project settings) to force a hard redeploy.
 
 ### Files changed
 
-- `src/utils/admin.functions.ts` — append a single trailing comment line to force bundle rebuild. No logic change.
+- `src/utils/admin.functions.ts` — export `RANK_TIERS`, rename `tierFor` → `computeRankTier` and export it, update the one call site inside `adjustPlayerXP`, remove the trailing no-op comment.
 
 ### Database operations
 
 - One `UPDATE` on `winam_players.rank_tier` (1 row affected: CaptArice).
 
-### Verification step
+### Out of scope
 
-- Post-backfill SELECT showing 0 mismatched rows.
-- Note to user: next admin XP adjust on any player will run on the new bundle and write the correct tier.
+- No changes to `RankBadge.tsx`, `tierFor`'s logic, audit log shape, or any other call paths.
 
