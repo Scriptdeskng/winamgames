@@ -294,21 +294,22 @@ function CheckMatePage() {
             lastMove={lastMove}
             legalMoves={legalMoves}
             hintFrom={session.hintData?.from}
-            hintTo={session.hintData?.to ?? session.hintData?.destination}
+            hintTo={undefined}
+            committedMove={committedMove}
+            feedback={session.feedback}
+            arrowMove={
+              session.currentHintTier >= 2 && session.hintData?.from && session.hintData?.destination
+                ? { from: session.hintData.from, to: session.hintData.destination }
+                : null
+            }
             disabled={session.loading || session.gameOver || !!session.feedback}
           />
         )}
 
-        {session.currentHintTier > 0 && !session.feedback && session.hintData && (
+        {session.currentHintTier >= 1 && !session.feedback && session.hintData?.piece && (
           <div className="rounded-xl bg-coin/10 border border-coin/20 p-3 text-center">
             <p className="text-sm text-coin">
               Move the <strong className="font-semibold">{session.hintData.piece}</strong>
-              {session.currentHintTier === 2 && session.hintData.destination && (
-                <> to <strong className="font-semibold">{session.hintData.destination}</strong></>
-              )}
-              {session.currentHintTier >= 3 && session.hintData.from && session.hintData.to && (
-                <> from <strong className="font-semibold">{session.hintData.from}</strong> to <strong className="font-semibold">{session.hintData.to}</strong></>
-              )}
             </p>
           </div>
         )}
@@ -322,7 +323,7 @@ function CheckMatePage() {
         />
 
         {!session.feedback && (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {HINT_TIERS.map(({ tier, label, cost }) => {
               const purchased = session.currentHintTier >= tier;
               const locked = tier > session.currentHintTier + 1;
