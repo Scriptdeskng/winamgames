@@ -1,68 +1,54 @@
 
 
-## Ghost-style start-screen previews
+## Compact ghost-card preview on WisdomDrop start screen
 
-Both previews become decorative watermarks — neutral, low-opacity, no card chrome.
+The previous turn produced a plan but no code change — re-presenting it for approval so it can ship.
 
-### 1. CheckMate — `src/routes/_authed/checkmate.tsx`
+### Change
 
-In the start-screen preview block:
-
-- Board wrapper: `w-[160px]` → `w-[180px]`; remove `border border-border/30` (keep `rounded-lg overflow-hidden grid grid-cols-4 grid-rows-4`).
-- Square colours switch to neutral white-alpha tones:
-
-```tsx
-style={{
-  backgroundColor: isHint
-    ? "rgba(255,255,255,0.15)"
-    : (row + col) % 2 === 0
-      ? "rgba(255,255,255,0.08)"
-      : "rgba(255,255,255,0.04)"
-}}
-```
-
-- Both piece `<img>` tags get `opacity-40`:
-
-```tsx
-<img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8 opacity-40" />
-<img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8 opacity-40" />
-```
-
-- Caption (`Tap a piece · tap its destination`) stays unchanged.
-
-### 2. WisdomDrop — `src/routes/_authed/wisdomdrop.tsx`
-
-Replace the entire `flex-1 flex items-center justify-center w-full py-6` wrapper containing the card with a bare faded layout:
+In `src/routes/_authed/wisdomdrop.tsx`, inside the `if (!session.sessionId)` start-screen branch, locate the current bare ghost preview wrapper:
 
 ```tsx
 <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4 px-6">
-  <p className="text-xs text-muted-foreground/40 uppercase tracking-wide font-semibold text-center">Example</p>
-  <p className="text-sm text-muted-foreground/40 leading-relaxed text-center">
-    "A child who is not taught at home will teach the village a ____"
-  </p>
+  <p className="text-xs text-muted-foreground/40 …">Example</p>
+  <p className="text-sm text-muted-foreground/40 …">"A child who is not taught …"</p>
   <div className="grid grid-cols-2 gap-2 w-full max-w-[240px]">
-    {["lesson", "song", "dance", "game"].map((opt) => (
-      <div
-        key={opt}
-        className="h-8 flex items-center justify-center text-xs text-muted-foreground/30"
-      >
-        {opt}
-      </div>
-    ))}
+    {["lesson", "song", "dance", "game"].map(...)}
   </div>
 </div>
 ```
 
-No card, no border, no background. Plain faded text.
+Replace the entire block with the compact ghost card:
 
-### Layout invariant
+```tsx
+<div className="flex-1 flex items-center justify-center w-full py-4">
+  <div className="w-full max-w-[280px] rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-2 mx-4">
+    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/40 font-semibold">Example</p>
+    <p className="text-xs text-muted-foreground/40 leading-relaxed">
+      "A child who is not taught at home will teach the village a ____"
+    </p>
+    <div className="grid grid-cols-2 gap-1.5">
+      {["lesson", "song", "dance", "game"].map((opt) => (
+        <div
+          key={opt}
+          className="h-7 rounded-lg border border-white/[0.05] bg-white/[0.02] flex items-center justify-center text-[11px] text-muted-foreground/30"
+        >
+          {opt}
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+```
 
-`flex-1` wrapper preserved on both screens — the entry card and Start Game button stay anchored at the bottom; nothing else moves.
+### Notes
+
+- Reintroduces a subtle card frame (`bg-white/[0.03]` + `border-white/[0.06]`) but keeps the watermark feel — no shadow, no surface token.
+- Smaller max width (280px), tighter padding (`p-3 space-y-2`), shorter chips (`h-7`) — more compact than the original card.
+- Option chips get faint borders/backgrounds so they read as button shapes without inviting taps.
+- `flex-1` wrapper preserved — entry card and Start Game button stay anchored at the bottom.
 
 ### Files touched
 
-- `src/routes/_authed/checkmate.tsx` — preview board only
-- `src/routes/_authed/wisdomdrop.tsx` — preview block only
-
-No logic, state, or other UI changes.
+- `src/routes/_authed/wisdomdrop.tsx` — preview block only. No logic, no other UI, no CheckMate changes.
 
