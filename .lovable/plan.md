@@ -1,70 +1,68 @@
 
 
-## Strip the CheckMate example preview card
+## Ghost-style start-screen previews
 
-Single change in `src/routes/_authed/checkmate.tsx`. Replace the existing wrapped preview (lines ~177–207 in the start-screen branch) with a bare mini board sitting directly in the middle flex space — no card chrome.
+Both previews become decorative watermarks — neutral, low-opacity, no card chrome.
 
-### Change
+### 1. CheckMate — `src/routes/_authed/checkmate.tsx`
 
-In the `if (!session.sessionId)` block, locate the preview wrapper:
+In the start-screen preview block:
+
+- Board wrapper: `w-[160px]` → `w-[180px]`; remove `border border-border/30` (keep `rounded-lg overflow-hidden grid grid-cols-4 grid-rows-4`).
+- Square colours switch to neutral white-alpha tones:
 
 ```tsx
-<div className="flex-1 flex items-center justify-center w-full py-6">
-  <div className="w-full max-w-[320px] rounded-xl bg-surface-1 border border-border p-4 space-y-3">
-    <p className="text-[11px] uppercase tracking-wide …">Example</p>
-    <div className="mx-auto w-[176px] grid grid-cols-4 grid-rows-4 …">
-      …
-    </div>
-    <p className="text-sm font-semibold …">Find the winning move</p>
-    <p className="text-[10px] …">Tap a piece, then tap its destination</p>
+style={{
+  backgroundColor: isHint
+    ? "rgba(255,255,255,0.15)"
+    : (row + col) % 2 === 0
+      ? "rgba(255,255,255,0.08)"
+      : "rgba(255,255,255,0.04)"
+}}
+```
+
+- Both piece `<img>` tags get `opacity-40`:
+
+```tsx
+<img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8 opacity-40" />
+<img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8 opacity-40" />
+```
+
+- Caption (`Tap a piece · tap its destination`) stays unchanged.
+
+### 2. WisdomDrop — `src/routes/_authed/wisdomdrop.tsx`
+
+Replace the entire `flex-1 flex items-center justify-center w-full py-6` wrapper containing the card with a bare faded layout:
+
+```tsx
+<div className="flex-1 flex flex-col items-center justify-center gap-3 py-4 px-6">
+  <p className="text-xs text-muted-foreground/40 uppercase tracking-wide font-semibold text-center">Example</p>
+  <p className="text-sm text-muted-foreground/40 leading-relaxed text-center">
+    "A child who is not taught at home will teach the village a ____"
+  </p>
+  <div className="grid grid-cols-2 gap-2 w-full max-w-[240px]">
+    {["lesson", "song", "dance", "game"].map((opt) => (
+      <div
+        key={opt}
+        className="h-8 flex items-center justify-center text-xs text-muted-foreground/30"
+      >
+        {opt}
+      </div>
+    ))}
   </div>
 </div>
 ```
 
-Replace the entire block with the bare version:
+No card, no border, no background. Plain faded text.
 
-```tsx
-<div className="flex-1 flex flex-col items-center justify-center gap-3 py-4">
-  <div className="w-[160px] grid grid-cols-4 grid-rows-4 rounded-lg overflow-hidden border border-border/30">
-    {Array.from({ length: 16 }).map((_, i) => {
-      const row = Math.floor(i / 4);
-      const col = i % 4;
-      const isQueen = row === 2 && col === 2;
-      const isKing = row === 0 && col === 0;
-      const isHint = row === 0 && col === 2;
-      return (
-        <div
-          key={i}
-          className="relative aspect-square flex items-center justify-center"
-          style={{
-            backgroundColor: isHint
-              ? "rgba(255,255,0,0.5)"
-              : (row + col) % 2 === 0
-                ? "#F0D9B5"
-                : "#B58863"
-          }}
-        >
-          {isQueen && (
-            <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8" />
-          )}
-          {isKing && (
-            <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8" />
-          )}
-        </div>
-      );
-    })}
-  </div>
-  <p className="text-xs text-muted-foreground/60 text-center">Tap a piece · tap its destination</p>
-</div>
-```
+### Layout invariant
 
-### Notes
-
-- `cn` import no longer needed for this block (uses inline `style` for the yellow hint + warm wood tones); the existing `cn` import elsewhere in the file stays.
-- `flex-1` keeps the entry card + Start Game button anchored at the bottom — same layout invariant as before.
-- No changes to logic, state, or any other section.
+`flex-1` wrapper preserved on both screens — the entry card and Start Game button stay anchored at the bottom; nothing else moves.
 
 ### Files touched
 
-- `src/routes/_authed/checkmate.tsx` — start-screen preview block only.
+- `src/routes/_authed/checkmate.tsx` — preview board only
+- `src/routes/_authed/wisdomdrop.tsx` — preview block only
+
+No logic, state, or other UI changes.
 
