@@ -84,7 +84,7 @@ function WisdomDropPage() {
             </span>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4 px-6">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-4 px-6 mx-4 rounded-xl border border-white/5">
             <p className="text-xs text-muted-foreground/40 uppercase tracking-wide font-semibold text-center">Example</p>
             <p className="text-sm text-muted-foreground/40 leading-relaxed text-center">
               "A child who is not taught at home will teach the village a ____"
