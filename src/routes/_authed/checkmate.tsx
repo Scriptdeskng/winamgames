@@ -12,6 +12,7 @@ import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { Swords, Check, X, ArrowLeft, Heart, Puzzle, Crown, ArrowRight, Coins, Lightbulb } from "lucide-react";
 import { playMove, playCapture, playCorrect, playIncorrect } from "@/utils/sound";
+import { motion, AnimatePresence } from "framer-motion";
 
 const HINT_TIERS = [
   { tier: 1 as const, label: "Piece", cost: 25 },
@@ -326,13 +327,28 @@ function CheckMatePage() {
           />
         )}
 
-        {session.currentHintTier >= 1 && !session.feedback && session.hintData?.piece && (
-          <div className="rounded-xl bg-coin/10 border border-coin/20 p-3 text-center">
-            <p className="text-sm text-coin">
-              Move the <strong className="font-semibold">{session.hintData.piece}</strong>
-            </p>
-          </div>
-        )}
+        <AnimatePresence>
+          {session.currentHintTier >= 1 && !session.feedback && session.hintData?.piece && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-xl bg-gradient-to-br from-coin/15 to-coin/5 border border-coin/30 p-3 flex items-center gap-3"
+            >
+              <div className="h-10 w-10 rounded-lg bg-coin/20 border border-coin/30 flex items-center justify-center shrink-0">
+                <Lightbulb className="h-5 w-5 text-coin" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-wide text-coin/80 font-semibold">
+                  {session.currentHintTier >= 2 ? "Move hint" : "Piece hint"}
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  Move the highlighted <span className="text-coin">{session.hintData.piece}</span>
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnswerFooter
           feedback={session.feedback}
@@ -343,7 +359,14 @@ function CheckMatePage() {
         />
 
         {!session.feedback && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <div className="flex items-center justify-end gap-1.5 px-1">
+              <Coins className="w-3.5 h-3.5 text-coin" />
+              <span className="text-xs font-semibold text-coin tabular-nums">
+                {session.coinBalance} coins
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
             {HINT_TIERS.map(({ tier, label, cost }) => {
               const purchased = session.currentHintTier >= tier;
               const locked = tier > session.currentHintTier + 1;
@@ -381,6 +404,7 @@ function CheckMatePage() {
                 </button>
               );
             })}
+            </div>
           </div>
         )}
       </div>
