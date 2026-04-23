@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      winam_admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winam_admin_audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "winam_admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winam_admin_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          password_hash: string
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          password_hash: string
+          role?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          password_hash?: string
+          role?: string
+        }
+        Relationships: []
+      }
       winam_banners: {
         Row: {
           created_at: string
@@ -379,6 +441,7 @@ export type Database = {
           created_at: string
           current_streak: number
           device_fingerprint: string | null
+          flag_reason: string | null
           id: string
           is_flagged: boolean
           last_session_date: string | null
@@ -394,6 +457,7 @@ export type Database = {
           created_at?: string
           current_streak?: number
           device_fingerprint?: string | null
+          flag_reason?: string | null
           id?: string
           is_flagged?: boolean
           last_session_date?: string | null
@@ -409,6 +473,7 @@ export type Database = {
           created_at?: string
           current_streak?: number
           device_fingerprint?: string | null
+          flag_reason?: string | null
           id?: string
           is_flagged?: boolean
           last_session_date?: string | null
@@ -524,6 +589,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "winam_subscriptions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "winam_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      winam_winners: {
+        Row: {
+          created_at: string | null
+          draw_week_id: string | null
+          id: string
+          is_flagged: boolean | null
+          player_id: string | null
+          position: number
+          prize_amount: number
+          prize_type: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          draw_week_id?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          player_id?: string | null
+          position: number
+          prize_amount: number
+          prize_type: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string | null
+          draw_week_id?: string | null
+          id?: string
+          is_flagged?: boolean | null
+          player_id?: string | null
+          position?: number
+          prize_amount?: number
+          prize_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winam_winners_draw_week_id_fkey"
+            columns: ["draw_week_id"]
+            isOneToOne: false
+            referencedRelation: "winam_draw_weeks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_winners_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "winam_players"
