@@ -72,6 +72,20 @@ function CheckMatePage() {
     setShowOnboarding(false);
   };
 
+  const puzzleFen = (session.currentPuzzle as { fen?: string } | null)?.fen ?? null;
+
+  const legalMoves = useMemo(() => {
+    if (!selectedSquare || !puzzleFen) return new Set<string>();
+    try {
+      const chess = new Chess(puzzleFen);
+      return new Set(
+        chess.moves({ square: selectedSquare as Square, verbose: true }).map((m) => m.to as string)
+      );
+    } catch {
+      return new Set<string>();
+    }
+  }, [selectedSquare, puzzleFen]);
+
   const handleSquareClick = useCallback((square: string) => {
     if (!session.currentPuzzle || session.loading || session.gameOver) return;
 
