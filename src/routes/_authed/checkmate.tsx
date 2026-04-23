@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import React from "react";
+import { Chess, type Square } from "chess.js";
 import { ChessBoard } from "@/components/games/ChessBoard";
 import { GameHeader } from "@/components/games/GameHeader";
 import { AnswerFooter } from "@/components/games/AnswerFooter";
