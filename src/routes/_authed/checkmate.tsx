@@ -361,7 +361,7 @@ function CheckMatePage() {
             <div className="flex items-center justify-end gap-1.5 px-1">
               <Coins className="w-3.5 h-3.5 text-coin" />
               <span className="text-xs font-semibold text-coin tabular-nums">
-                {session.coinBalance} coins
+                Coins: {session.coinBalance}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
