@@ -241,7 +241,7 @@ function ConfigPage() {
         className="grid grid-cols-[minmax(180px,220px)_1fr_auto] items-start gap-3 border-b border-border/30 py-2"
       >
         <div className="min-w-0 pt-1">
-          <p className="truncate font-mono text-sm font-semibold">{row.key}</p>
+          <KeyLabel name={row.key} />
           <p className="text-[10px] text-muted-foreground">
             {new Date(row.updated_at).toLocaleString()}
           </p>
