@@ -208,6 +208,7 @@ function WisdomDropPage() {
                 const isChecking = session.loading && isThisSelected && !showState;
                 const isWrongSelected = showState && isThisSelected && !isThisCorrect;
                 const isOtherWrong = showState && !isThisSelected && !isThisCorrect;
+                const isRevealed = !showState && !!revealedAnswer && normalize(option) === normalize(revealedAnswer);
 
                 return (
                   <button
@@ -221,7 +222,8 @@ function WisdomDropPage() {
                       isOtherWrong && "bg-surface-1/40 border-border/40 text-muted-foreground/50",
                       isChecking && "bg-surface-1 border-primary/60 text-foreground shadow-glow",
                       !showState && !isChecking && isEliminated && "bg-surface-1/30 border-border/30 text-muted-foreground/30 line-through cursor-not-allowed",
-                      !showState && !isChecking && !isEliminated && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
+                      !showState && !isChecking && !isEliminated && isRevealed && "bg-success/10 border-success/40 text-success ring-1 ring-success/30 shadow-glow",
+                      !showState && !isChecking && !isEliminated && !isRevealed && "bg-surface-1 border-border text-foreground hover:border-primary/40 hover:shadow-glow active:scale-[0.98]"
                     )}
                   >
                     {showState && isThisCorrect && <Check className="h-4 w-4" />}
