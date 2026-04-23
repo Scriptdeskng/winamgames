@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
 const PIECE_URL: Record<string, string> = {
   K: "https://lichess1.org/assets/piece/staunty/wK.svg",
@@ -38,14 +39,40 @@ interface ChessBoardProps {
   hintFrom?: string | null;
   hintTo?: string | null;
   disabled?: boolean;
+  legalMoves?: Set<string>;
 }
 
-export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintFrom, hintTo, disabled }: ChessBoardProps) {
+const PULSE_STYLE = `
+@keyframes checkmate-lastmove-pulse {
+  0%   { background-color: rgba(255, 235, 59, 0.0); }
+  30%  { background-color: rgba(255, 235, 59, 0.75); }
+  100% { background-color: rgba(155, 199, 100, 0.6); }
+}
+.animate-checkmate-lastmove-pulse {
+  animation: checkmate-lastmove-pulse 600ms ease-out 1;
+}
+`;
+
+export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintFrom, hintTo, disabled, legalMoves }: ChessBoardProps) {
   const board = parseFen(fen);
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
+  const lastMoveKey = lastMove ? `${lastMove.from}-${lastMove.to}` : null;
+  const prevKeyRef = useRef<string | null>(null);
+  const [pulseKey, setPulseKey] = useState(0);
+
+  useEffect(() => {
+    if (lastMoveKey && lastMoveKey !== prevKeyRef.current) {
+      prevKeyRef.current = lastMoveKey;
+      setPulseKey((k) => k + 1);
+    } else if (!lastMoveKey) {
+      prevKeyRef.current = null;
+    }
+  }, [lastMoveKey]);
+
   return (
     <div className="w-full aspect-square max-w-[360px] mx-auto">
+      <style>{PULSE_STYLE}</style>
       <div className="grid grid-cols-8 border-2 border-amber-900/30 rounded-lg overflow-hidden shadow-card">
         {board.map((row, ri) =>
           row.map((piece, ci) => {
@@ -54,6 +81,7 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
             const isSelected = selectedSquare === square;
             const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
             const isHint = square === hintFrom || square === hintTo;
+            const isLegal = legalMoves?.has(square) ?? false;
 
             let bg: string;
             if (isSelected) bg = "rgba(255, 255, 0, 0.7)";
@@ -74,13 +102,25 @@ export function ChessBoard({ fen, selectedSquare, onSquareClick, lastMove, hintF
                 )}
                 style={{ backgroundColor: bg }}
               >
+                {isLastMove && (
+                  <span
+                    key={`pulse-${pulseKey}-${square}`}
+                    className="absolute inset-0 pointer-events-none animate-checkmate-lastmove-pulse"
+                  />
+                )}
                 {piece && (
                   <img
                     src={PIECE_URL[piece]}
                     alt={piece}
                     draggable={false}
-                    className="w-[90%] h-[90%] pointer-events-none select-none"
+                    className="relative w-[90%] h-[90%] pointer-events-none select-none"
                   />
+                )}
+                {isLegal && !piece && (
+                  <span className="pointer-events-none absolute w-[28%] h-[28%] rounded-full bg-black/30" />
+                )}
+                {isLegal && piece && (
+                  <span className="pointer-events-none absolute inset-[6%] rounded-full border-[3px] border-black/30" />
                 )}
                 {ci === 0 && (
                   <span
