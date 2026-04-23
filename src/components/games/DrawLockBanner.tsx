@@ -34,7 +34,7 @@ export function DrawLockBanner() {
     <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-200">
       <AlertTriangle className="h-4 w-4 shrink-0" />
       <p className="flex-1 text-xs font-medium leading-snug">
-        Draw entries locked · Coins only this session
+        Draw tickets locked · Coins only this session
       </p>
       <button
         type="button"

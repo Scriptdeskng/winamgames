@@ -341,7 +341,7 @@ function WisdomDropPreviewCard() {
         </span>
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">
-        Fill the blank in proverbs from across Africa. Every right answer earns you a draw entry.
+        Fill the blank in proverbs from across Africa. Every right answer earns you a draw ticket.
       </p>
     </div>
   );
@@ -358,12 +358,12 @@ function HowItWorks() {
     {
       icon: Gamepad2,
       title: "Play daily",
-      body: "Solve puzzles to earn draw entries. The more you play, the more chances you stack.",
+      body: "Solve puzzles to earn draw tickets. The more you play, the more chances you stack.",
     },
     {
       icon: Trophy,
       title: "Win every Sunday",
-      body: "Cash and airtime drop to 50+ winners every Sunday. More entries = better odds.",
+      body: "Cash and airtime drop to 50+ winners every Sunday. More tickets = better odds.",
     },
   ];
 

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authed/entries")({
   head: () => ({
     meta: [
       { title: "My Entries — WinamGames" },
-      { name: "description", content: "View your weekly draw entries." },
+      { name: "description", content: "View your weekly draw tickets." },
     ],
   }),
 });
@@ -102,7 +102,7 @@ function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap:
       <div>
         <div className="flex items-baseline gap-2">
           <p className="text-4xl font-bold tabular-nums text-primary">{week.totalTickets}</p>
-          <p className="text-sm text-muted-foreground tabular-nums">/ {weekCap} entries</p>
+          <p className="text-sm text-muted-foreground tabular-nums">/ {weekCap} tickets</p>
         </div>
         <div className="mt-2 h-1.5 rounded-full bg-surface-2 overflow-hidden">
           <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
@@ -113,7 +113,7 @@ function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap:
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg bg-surface-2/60 px-3 py-2 hover:bg-surface-2 transition-colors">
             <span className="text-xs font-medium text-foreground">
-              View entries <span className="text-muted-foreground tabular-nums">· {week.totalTickets}</span>
+              View tickets <span className="text-muted-foreground tabular-nums">· {week.totalTickets}</span>
             </span>
             <ChevronDown
               className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
@@ -129,7 +129,7 @@ function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap:
         <div className="rounded-xl border border-dashed border-border/60 px-3 py-4 text-center">
           <Ticket className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
           <p className="text-xs text-muted-foreground">
-            No entries yet — play a game to earn your first one.
+            No tickets yet — play a game to earn your first one.
           </p>
         </div>
       )}
@@ -158,7 +158,7 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
             <div>
               <p className="text-sm font-medium">{formatWeekRange(week.weekStartWat, week.weekEndWat)}</p>
               <p className="text-[10px] text-muted-foreground tabular-nums">
-                {week.totalTickets} {week.totalTickets === 1 ? "entry" : "entries"}
+                {week.totalTickets} {week.totalTickets === 1 ? "ticket" : "tickets"}
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
         <CollapsibleContent>
           <div className="px-4 pb-4">
             {week.tickets.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">No entries earned this week.</p>
+              <p className="text-xs text-muted-foreground py-2">No tickets earned this week.</p>
             ) : (
               <FlatTicketList tickets={week.tickets} />
             )}

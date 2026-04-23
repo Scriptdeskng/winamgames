@@ -122,7 +122,7 @@ function ProfilePage() {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
-                  <span className="font-semibold text-foreground">Coins</span> are earned from sessions and from overflow when you've already hit the 50-entry weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
+                  <span className="font-semibold text-foreground">Coins</span> are earned from sessions and from overflow when you've already hit the 50-ticket weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
                 </PopoverContent>
               </Popover>
             </div>
@@ -148,7 +148,7 @@ function ProfilePage() {
                 <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Ticket className="h-4.5 w-4.5 text-primary" />
                 </div>
-                <span className="text-sm font-medium">My Entries</span>
+                <span className="text-sm font-medium">My Tickets</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold tabular-nums text-foreground">{weekTotal}</span>
@@ -170,25 +170,25 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* ── Entries & the weekly draw (collapsible) ──────────── */}
+        {/* ── Tickets & the weekly draw (collapsible) ──────────── */}
         <Accordion type="single" collapsible className="rounded-2xl bg-surface-1 border border-border px-5">
           <AccordionItem value="how-tickets" className="border-0">
             <AccordionTrigger className="text-sm font-semibold hover:no-underline py-4 text-left">
               <div>
-                <p>Entries &amp; the weekly draw</p>
-                <p className="text-xs font-normal text-muted-foreground mt-0.5">How to earn entries and win cash</p>
+                <p>Tickets &amp; the weekly draw</p>
+                <p className="text-xs font-normal text-muted-foreground mt-0.5">How to earn tickets and win cash</p>
               </div>
             </AccordionTrigger>
             <AccordionContent className="pb-5 pt-1">
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Entries are your shot at the draw</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; once the draw runs, your entry count resets and a new week begins.
+                Every Sunday at 20:00 WAT we run a cash draw. <span className="font-semibold text-foreground">Tickets are your shot at the draw</span> — the more you collect during the week, the better your odds of winning. Earn them by playing; once the draw runs, your ticket count resets and a new week begins.
               </p>
               <ol className="space-y-3.5">
                 {[
-                  { lead: "Solve puzzles to earn entries", body: "Every 5 puzzles you solve in a session earns 1 entry for Sunday's draw." },
-                  { lead: "Daily streaks earn extra entries", body: "Play every day to build a streak. Each session earns bonus draw entries: +1 from day 3, +2 from day 7, +3 from day 14." },
-                  { lead: "Missions add bonus entries", body: "Completing daily missions awards extra entries on top of what you earn from play." },
-                  { lead: "Weekly cap & reset", body: "You can collect up to 50 entries per week. Anything beyond that converts to coins. The draw runs every Sunday at 20:00 WAT — right after, entries reset and the next week begins." },
+                  { lead: "Solve puzzles to earn tickets", body: "Every 5 puzzles you solve in a session earns 1 ticket for Sunday's draw." },
+                  { lead: "Daily streaks earn extra tickets", body: "Play every day to build a streak. Each session earns bonus draw tickets: +1 from day 3, +2 from day 7, +3 from day 14." },
+                  { lead: "Missions add bonus tickets", body: "Completing daily missions awards extra tickets on top of what you earn from play." },
+                  { lead: "Weekly cap & reset", body: "You can collect up to 50 tickets per week. Anything beyond that converts to coins. The draw runs every Sunday at 20:00 WAT — right after, tickets reset and the next week begins." },
                 ].map((rule, i) => (
                   <li key={i} className="flex gap-3">
                     <span className="flex-shrink-0 h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center tabular-nums">
@@ -415,7 +415,7 @@ function WeeklyEntriesCard({
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">This week</p>
           <p className="text-3xl font-bold tabular-nums mt-1">
-            {weekTotal} <span className="text-lg text-muted-foreground font-medium">/ {weekCap} entries</span>
+            {weekTotal} <span className="text-lg text-muted-foreground font-medium">/ {weekCap} tickets</span>
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2 px-2.5 py-1.5 rounded-lg">
@@ -461,7 +461,7 @@ function StreakTile({ streak }: { streak: number }) {
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
-            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus entry per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
+            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus ticket per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
           </PopoverContent>
         </Popover>
       </div>
