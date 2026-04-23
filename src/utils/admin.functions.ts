@@ -288,13 +288,13 @@ export const adjustPlayerCoins = createServerFn({ method: "POST" })
 
 const RANK_TIERS = [
   { tier: "starter", min: 0 },
-  { tier: "recruit", min: 500 },
-  { tier: "sergeant", min: 1500 },
-  { tier: "veteran", min: 4000 },
-  { tier: "champion", min: 10000 },
-  { tier: "icon", min: 25000 },
-  { tier: "legend", min: 60000 },
-  { tier: "immortal", min: 150000 },
+  { tier: "recruit", min: 150 },
+  { tier: "sergeant", min: 500 },
+  { tier: "veteran", min: 1200 },
+  { tier: "champion", min: 2500 },
+  { tier: "icon", min: 4500 },
+  { tier: "legend", min: 7000 },
+  { tier: "immortal", min: 10000 },
 ] as const;
 function tierFor(xp: number) {
   let t: (typeof RANK_TIERS)[number]["tier"] = "starter";
