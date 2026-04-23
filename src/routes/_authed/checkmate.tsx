@@ -42,6 +42,21 @@ export const Route = createFileRoute("/_authed/checkmate")({
   }),
 });
 
+function parseFenLocal(fen: string): (string | null)[][] {
+  const rows = fen.split(" ")[0].split("/");
+  return rows.map((row) => {
+    const squares: (string | null)[] = [];
+    for (const ch of row) {
+      if (/\d/.test(ch)) {
+        for (let i = 0; i < parseInt(ch); i++) squares.push(null);
+      } else {
+        squares.push(ch);
+      }
+    }
+    return squares;
+  });
+}
+
 function CheckMatePage() {
   const sessionData = getSession();
   const playerId = sessionData?.playerId ?? "";
