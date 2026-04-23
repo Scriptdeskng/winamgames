@@ -535,15 +535,21 @@ export const submitMove = createServerFn({ method: "POST" })
     });
 
     // Get next puzzle data if requested
-    let nextPuzzle: Record<string, string | string[]> | null = null;
+    let nextPuzzle: Record<string, string | string[] | null> | null = null;
     if (data.nextPuzzleId) {
       if (isCheckmate) {
         const { data: p } = await supabaseAdmin
           .from("winam_checkmate_puzzles")
-          .select("id, fen, theme")
+          .select("id, fen, theme, opponent_from, opponent_to")
           .eq("id", data.nextPuzzleId)
           .maybeSingle();
-        if (p) nextPuzzle = { puzzleId: p.id, fen: p.fen, theme: p.theme };
+        if (p) nextPuzzle = {
+          puzzleId: p.id,
+          fen: p.fen,
+          theme: p.theme,
+          opponentFrom: p.opponent_from,
+          opponentTo: p.opponent_to,
+        };
       } else {
         const { data: p } = await supabaseAdmin
           .from("winam_wisdom_puzzles")
