@@ -115,8 +115,8 @@ export const updateNickname = createServerFn({ method: "POST" })
   });
 
 // ── getActiveMissions ─────────────────────────────────────────────────
-// Persistent missions: player always has up to 3 pending. Completed ones
-// are replaced lazily on next fetch (with a variety guard).
+// Daily-rollover missions: player has a 3-slot slate per WAT day. Completed
+// missions stay visible for the day and missing slots are replenished lazily.
 export const getActiveMissions = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({
@@ -128,6 +128,7 @@ export const getActiveMissions = createServerFn({ method: "POST" })
 
     const TARGET_PENDING = 3;
     const RECENT_EXCLUDE = 3;
+    const todayWat = todayWatString();
 
     // Need a draw week id to insert new player_mission rows (FK requires it).
     const { data: drawWeek } = await supabaseAdmin
@@ -137,38 +138,52 @@ export const getActiveMissions = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    // Helper to fetch full active set (pending + recent completed for display)
-    const loadActive = async () => {
-      const { data: pending } = await supabaseAdmin
-        .from("winam_player_missions")
-        .select(`
-          id,
-          mission_id,
-          status,
-          progress_current,
-          entries_awarded,
-          completed_at,
-          winam_missions (
-            title,
-            condition_type,
-            condition_value,
-            reward_amount
-          )
-        `)
-        .eq("player_id", data.playerId)
-        .eq("status", "pending")
-        .order("id", { ascending: true });
-
-      return pending ?? [];
+    type PlayerMissionRow = {
+      id: string;
+      mission_id: string;
+      status: string;
+      progress_current: number;
+      entries_awarded: number;
+      completed_at: string | null;
+      assigned_date_wat: string | null;
+      winam_missions: unknown;
     };
 
-    let pending = await loadActive();
+    const missionSelect = `
+      id,
+      mission_id,
+      status,
+      progress_current,
+      entries_awarded,
+      completed_at,
+      assigned_date_wat,
+      winam_missions (
+        title,
+        condition_type,
+        condition_value,
+        reward_amount
+      )
+    `;
 
-    // Replenish if below target and we have a draw week to anchor new rows
-    if (pending.length < TARGET_PENDING && drawWeek) {
-      const pendingIds = pending.map((p) => p.mission_id);
+    const loadTodaysMissions = async (): Promise<PlayerMissionRow[]> => {
+      const { data: todaysMissions } = await (supabaseAdmin
+        .from("winam_player_missions") as any)
+        .select(missionSelect)
+        .eq("player_id", data.playerId)
+        .or(`status.eq.pending,and(status.eq.completed,assigned_date_wat.eq.${todayWat})`)
+        .order("assigned_date_wat", { ascending: false })
+        .order("completed_at", { ascending: true, nullsFirst: true })
+        .order("id", { ascending: true });
 
-      // Recent completions to avoid immediate repeats
+      return (todaysMissions ?? []) as PlayerMissionRow[];
+    };
+
+    let todaysMissions = await loadTodaysMissions();
+    const slotsAvailable = Math.max(0, TARGET_PENDING - todaysMissions.length);
+
+    if (slotsAvailable > 0 && drawWeek) {
+      const pendingIds = todaysMissions.map((p) => p.mission_id);
+
       const { data: recentCompleted } = await supabaseAdmin
         .from("winam_player_missions")
         .select("mission_id")
@@ -178,23 +193,38 @@ export const getActiveMissions = createServerFn({ method: "POST" })
         .limit(RECENT_EXCLUDE);
       const recentIds = (recentCompleted ?? []).map((r) => r.mission_id);
 
-      const exclude = new Set<string>([...pendingIds, ...recentIds]);
+      const { data: everCompleted } = await supabaseAdmin
+        .from("winam_player_missions")
+        .select("mission_id, winam_missions(condition_type)")
+        .eq("player_id", data.playerId)
+        .eq("status", "completed");
 
-      let pool: Array<{ id: string }> = [];
+      const streakMissionsEverDone = new Set(
+        (everCompleted ?? [])
+          .filter((r) => {
+            const m = r.winam_missions as unknown as { condition_type: string } | null;
+            return m?.condition_type === "streak_day";
+          })
+          .map((r) => r.mission_id)
+      );
+
+      const exclude = new Set<string>([...pendingIds, ...recentIds]);
+      for (const id of streakMissionsEverDone) exclude.add(id);
+
       const { data: candidates } = await supabaseAdmin
         .from("winam_missions")
         .select("id")
         .eq("is_active", true);
-      pool = (candidates ?? []).filter((m) => !exclude.has(m.id));
+
+      let pool = (candidates ?? []).filter((m) => !exclude.has(m.id));
 
       // If exclude pool is too aggressive (player has done everything recently),
-      // relax to just exclude currently pending.
+      // relax to just exclude currently loaded slots.
       if (pool.length === 0) {
         pool = (candidates ?? []).filter((m) => !pendingIds.includes(m.id));
       }
 
-      const needed = TARGET_PENDING - pending.length;
-      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, needed);
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, slotsAvailable);
 
       if (shuffled.length > 0) {
         const inserts = shuffled.map((m) => ({
@@ -202,15 +232,16 @@ export const getActiveMissions = createServerFn({ method: "POST" })
           mission_id: m.id,
           draw_week_id: drawWeek.id,
           progress_current: 0,
+          assigned_date_wat: todayWat,
         }));
-        await supabaseAdmin.from("winam_player_missions").insert(inserts);
-        pending = await loadActive();
+        await (supabaseAdmin.from("winam_player_missions") as any).insert(inserts);
+        todaysMissions = await loadTodaysMissions();
       }
     }
 
     return {
       success: true as const,
-      missions: pending.map((pm) => {
+      missions: todaysMissions.map((pm) => {
         const m = pm.winam_missions as unknown as {
           title: string;
           condition_type: string;
