@@ -173,7 +173,8 @@ export const getActiveMissions = createServerFn({ method: "POST" })
         .or(`status.eq.pending,and(status.eq.completed,assigned_date_wat.eq.${todayWat})`)
         .order("assigned_date_wat", { ascending: false })
         .order("completed_at", { ascending: true, nullsFirst: true })
-        .order("id", { ascending: true });
+        .order("id", { ascending: true })
+        .limit(TARGET_PENDING);
 
       return (todaysMissions ?? []) as PlayerMissionRow[];
     };

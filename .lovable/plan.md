@@ -1,56 +1,27 @@
+Plan to apply the mission slate fixes exactly as requested:
 
+1. Update `src/utils/mission.functions.ts`
+   - Add a hard `.limit(3)` to `loadTodaysMissions`.
+   - Keep ordering as:
+     - `assigned_date_wat DESC`
+     - `completed_at ASC NULLS FIRST`
+     - existing stable `id ASC` tie-breaker, unless it conflicts with the requested order.
+   - This ensures the server only returns the current 3-slot slate instead of all historical pending/today-completed rows.
 
-## Add hover tooltips to dashboard stat cards
+2. Update `src/routes/_authed/app.tsx`
+   - Cap the rendered mission list with `missions.slice(0, 3)`.
+   - Use that capped list for the displayed rows and the header count, so the UI cannot show more than 3 cards even if extra rows are returned.
 
-### Change
+3. Clean stale historical mission data
+   - Run the requested data cleanup SQL:
 
-In `src/routes/admin.index.tsx`, mirror the `KeyLabel` tooltip pattern from `admin.config.tsx`: a small `Info` icon (lucide) sits next to the existing icon on each card; on hover, a positioned `<span role="tooltip">` fades in via Tailwind `group`/`group-hover` classes. No new dependency, no new component file, no other files touched.
+```sql
+UPDATE winam_player_missions
+SET assigned_date_wat = '2000-01-01'
+WHERE status = 'completed'
+AND assigned_date_wat = CURRENT_DATE;
+```
 
-### Implementation in `admin.index.tsx`
-
-1. Extend the `Info` import: change the existing lucide import line to add `Info`:
-   ```ts
-   import { Users, CreditCard, Ticket, Gamepad2, Info } from "lucide-react";
-   ```
-
-2. Add a `tooltip` field to each entry in the `cards` array:
-   ```ts
-   const cards = [
-     { label: "Total players", value: stats.totalPlayers, icon: Users,
-       tooltip: "Total registered player accounts across all time" },
-     { label: "Active subscriptions", value: stats.activeSubscriptions, icon: CreditCard,
-       tooltip: "Players with a currently active subscription (note: prototype auto-renews on login, so this may be inflated)" },
-     { label: "Current week tickets", value: stats.currentWeekEntries, icon: Ticket,
-       tooltip: "Total draw tickets earned by all players in the current open draw week" },
-     { label: "Sessions today", value: stats.sessionsToday, icon: Gamepad2,
-       tooltip: "Number of completed game sessions today (WAT timezone)" },
-   ];
-   ```
-
-3. In the card render, replace the single `<Icon />` in the top-right with a flex group containing the `Info` trigger + tooltip span, then the existing `Icon`. Reuse the exact tooltip classes from `KeyLabel` in `admin.config.tsx` so styling stays consistent:
-   ```tsx
-   <div className="flex items-center gap-1.5">
-     <span className="group relative inline-flex">
-       <Info className="h-3 w-3 cursor-help text-muted-foreground/70 hover:text-muted-foreground" />
-       <span
-         role="tooltip"
-         className="pointer-events-none absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-border bg-popover px-2 py-1.5 text-xs leading-snug text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-       >
-         {c.tooltip}
-       </span>
-     </span>
-     <Icon className="h-4 w-4 text-primary" />
-   </div>
-   ```
-
-   Note: tooltip is anchored `right-0` (not centered) so the rightmost card's tooltip doesn't overflow the viewport edge. Width `w-56` keeps the longer "Active subscriptions" copy on ~3 lines.
-
-### Files changed
-
-- `src/routes/admin.index.tsx` — add `Info` import, add `tooltip` field on each card, swap the icon slot for the tooltip+icon group.
-
-### Out of scope
-
-- No shared `<Tooltip>` component extracted (config page also inlines it; matching that convention).
-- No changes to `admin.config.tsx`, no Radix tooltip, no new files.
-
+4. Validation
+   - Run TypeScript/build checks after the code changes.
+   - No changes to `mission.server.ts`, `game.functions.ts`, or other files.
