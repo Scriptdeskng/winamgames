@@ -323,47 +323,12 @@ function MissionsSection({
   initialMissions: Mission[];
 }) {
   const [missions, setMissions] = React.useState<Mission[]>(initialMissions);
-  const [exitingIds, setExitingIds] = React.useState<Set<string>>(new Set());
-  const replacedRef = React.useRef<Set<string>>(new Set());
 
-  // Keep state in sync if parent reloads (e.g. on first mount completion)
+  // Keep state in sync if parent reloads. Completed missions stay visible in
+  // today's slate until the next WAT day instead of being instantly replaced.
   React.useEffect(() => {
     setMissions(initialMissions);
   }, [initialMissions]);
-
-  // After 3s, fade out completed missions and refetch for replacements.
-  React.useEffect(() => {
-    if (!playerId) return;
-    const completedToReplace = missions.filter(
-      (m) => m.status === "completed" && !replacedRef.current.has(m.id)
-    );
-    if (completedToReplace.length === 0) return;
-
-    completedToReplace.forEach((m) => replacedRef.current.add(m.id));
-
-    const holdMs = 3000;
-    const exitMs = 350;
-    const t1 = setTimeout(() => {
-      setExitingIds((prev) => {
-        const next = new Set(prev);
-        completedToReplace.forEach((m) => next.add(m.id));
-        return next;
-      });
-    }, holdMs);
-
-    const t2 = setTimeout(async () => {
-      const res = await getActiveMissions({ data: { playerId } });
-      if (res.success) {
-        setMissions(res.missions);
-        setExitingIds(new Set());
-      }
-    }, holdMs + exitMs);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [missions, playerId]);
 
   const completedCount = missions.filter((m) => m.status === "completed").length;
 
@@ -388,7 +353,7 @@ function MissionsSection({
       ) : (
         <div className="space-y-2">
           {missions.map((m) => (
-            <MissionRow key={m.id} mission={m} exiting={exitingIds.has(m.id)} />
+            <MissionRow key={m.id} mission={m} />
           ))}
         </div>
       )}
@@ -396,36 +361,62 @@ function MissionsSection({
   );
 }
 
-function MissionRow({ mission, exiting }: { mission: Mission; exiting: boolean }) {
+function MissionRow({ mission }: { mission: Mission }) {
   const meta = MISSION_META[mission.conditionType] ?? MISSION_META.puzzles_solved;
   const Icon = meta.icon;
   const isCompleted = mission.status === "completed";
-  const progress = Math.min(mission.progressCurrent, mission.conditionValue);
+  const progress = isCompleted
+    ? mission.conditionValue
+    : Math.min(mission.progressCurrent, mission.conditionValue);
+  const progressPct = Math.min(100, Math.round((progress / mission.conditionValue) * 100));
 
   return (
     <div
-      className={`rounded-xl border p-3 flex items-center gap-3 transition-all duration-300 ${
+      className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
         isCompleted
-          ? "bg-success/5 border-success/30"
+          ? "bg-surface-1/45 border-success/25 opacity-75"
           : "bg-surface-1 border-border"
-      } ${exiting ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"}`}
+      }`}
     >
-      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${meta.tint}`}>
-        <Icon className="h-5 w-5" />
+      <div
+        className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+          isCompleted ? "bg-success/10 text-success" : meta.tint
+        }`}
+      >
+        {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium line-clamp-1">{mission.title}</p>
+        <div className="flex items-center gap-2">
+          <p
+            className={`text-sm font-medium line-clamp-1 ${
+              isCompleted ? "text-muted-foreground line-through decoration-success/70" : "text-foreground"
+            }`}
+          >
+            {mission.title}
+          </p>
+          {isCompleted && <Check className="h-3.5 w-3.5 text-success shrink-0" />}
+        </div>
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/60">
+          <div
+            className={`h-full rounded-full ${isCompleted ? "bg-success" : "bg-primary"}`}
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
         {isCompleted ? (
-          <p className="text-xs text-success flex items-center gap-1 mt-0.5">
+          <p className="text-xs text-success flex items-center gap-1 mt-1">
             <Check className="h-3 w-3" /> Reward claimed
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground tabular-nums mt-0.5">
+          <p className="text-xs text-muted-foreground tabular-nums mt-1">
             {progress}/{mission.conditionValue}
           </p>
         )}
       </div>
-      <div className="shrink-0 inline-flex items-center gap-1 rounded-full bg-coin/10 text-coin px-2.5 py-1 text-xs font-semibold">
+      <div
+        className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+          isCompleted ? "bg-muted/50 text-muted-foreground" : "bg-coin/10 text-coin"
+        }`}
+      >
         <Ticket className="h-3 w-3" />
         {pluralizeTickets(mission.rewardAmount)}
       </div>
