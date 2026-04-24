@@ -138,6 +138,17 @@ export const getActiveMissions = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
+    type PlayerMissionRow = {
+      id: string;
+      mission_id: string;
+      status: string;
+      progress_current: number;
+      entries_awarded: number;
+      completed_at: string | null;
+      assigned_date_wat: string | null;
+      winam_missions: unknown;
+    };
+
     const missionSelect = `
       id,
       mission_id,
@@ -154,9 +165,9 @@ export const getActiveMissions = createServerFn({ method: "POST" })
       )
     `;
 
-    const loadTodaysMissions = async () => {
-      const { data: todaysMissions } = await supabaseAdmin
-        .from("winam_player_missions")
+    const loadTodaysMissions = async (): Promise<PlayerMissionRow[]> => {
+      const { data: todaysMissions } = await (supabaseAdmin
+        .from("winam_player_missions") as any)
         .select(missionSelect)
         .eq("player_id", data.playerId)
         .or(`status.eq.pending,and(status.eq.completed,assigned_date_wat.eq.${todayWat})`)
@@ -164,7 +175,7 @@ export const getActiveMissions = createServerFn({ method: "POST" })
         .order("completed_at", { ascending: true, nullsFirst: true })
         .order("id", { ascending: true });
 
-      return todaysMissions ?? [];
+      return (todaysMissions ?? []) as PlayerMissionRow[];
     };
 
     let todaysMissions = await loadTodaysMissions();
@@ -223,7 +234,7 @@ export const getActiveMissions = createServerFn({ method: "POST" })
           progress_current: 0,
           assigned_date_wat: todayWat,
         }));
-        await supabaseAdmin.from("winam_player_missions").insert(inserts);
+        await (supabaseAdmin.from("winam_player_missions") as any).insert(inserts);
         todaysMissions = await loadTodaysMissions();
       }
     }
