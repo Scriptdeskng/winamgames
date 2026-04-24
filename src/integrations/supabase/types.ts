@@ -381,6 +381,7 @@ export type Database = {
       }
       winam_player_missions: {
         Row: {
+          assigned_date_wat: string | null
           completed_at: string | null
           draw_week_id: string
           entries_awarded: number
@@ -391,6 +392,7 @@ export type Database = {
           status: Database["public"]["Enums"]["mission_status"]
         }
         Insert: {
+          assigned_date_wat?: string | null
           completed_at?: string | null
           draw_week_id: string
           entries_awarded?: number
@@ -401,6 +403,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["mission_status"]
         }
         Update: {
+          assigned_date_wat?: string | null
           completed_at?: string | null
           draw_week_id?: string
           entries_awarded?: number
