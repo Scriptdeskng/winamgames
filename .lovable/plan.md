@@ -1,27 +1,17 @@
-Plan to apply the mission slate fixes exactly as requested:
+Plan:
 
-1. Update `src/utils/mission.functions.ts`
-   - Add a hard `.limit(3)` to `loadTodaysMissions`.
-   - Keep ordering as:
-     - `assigned_date_wat DESC`
-     - `completed_at ASC NULLS FIRST`
-     - existing stable `id ASC` tie-breaker, unless it conflicts with the requested order.
-   - This ensures the server only returns the current 3-slot slate instead of all historical pending/today-completed rows.
+1. Update `src/routes/_authed/results.tsx` only.
+2. Replace the existing ticket nudge copy block with the requested wording:
 
-2. Update `src/routes/_authed/app.tsx`
-   - Cap the rendered mission list with `missions.slice(0, 3)`.
-   - Use that capped list for the displayed rows and the header count, so the UI cannot show more than 3 cards even if extra rows are returned.
-
-3. Clean stale historical mission data
-   - Run the requested data cleanup SQL:
-
-```sql
-UPDATE winam_player_missions
-SET assigned_date_wat = '2000-01-01'
-WHERE status = 'completed'
-AND assigned_date_wat = CURRENT_DATE;
+```ts
+if (puzzlesSolved === 0) {
+  nudge = "Solve at least 5 puzzles in a session to earn tickets";
+} else if (remainder === 0) {
+  nudge = "Every 5 puzzles solved earns 1 ticket";
+} else {
+  const need = 5 - remainder;
+  nudge = `${need} more puzzle${need === 1 ? '' : 's'} would have earned you another ticket`;
+}
 ```
 
-4. Validation
-   - Run TypeScript/build checks after the code changes.
-   - No changes to `mission.server.ts`, `game.functions.ts`, or other files.
+3. Make no other file or behavior changes.

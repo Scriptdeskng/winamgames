@@ -77,12 +77,12 @@ function ResultsPage() {
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve 5 puzzles in a session to earn your first ticket";
+    nudge = "Solve at least 5 puzzles in a session to earn tickets";
   } else if (remainder === 0) {
-    nudge = "Nice rhythm — every 5 puzzles earns 1 ticket";
+    nudge = "Every 5 puzzles solved earns 1 ticket";
   } else {
     const need = 5 - remainder;
-    nudge = `Solve ${need} more puzzle${need === 1 ? "" : "s"} for your next ticket`;
+    nudge = `${need} more puzzle${need === 1 ? "" : "s"} would have earned you another ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
