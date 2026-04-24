@@ -330,7 +330,8 @@ function MissionsSection({
     setMissions(initialMissions);
   }, [initialMissions]);
 
-  const completedCount = missions.filter((m) => m.status === "completed").length;
+  const visibleMissions = missions.slice(0, 3);
+  const completedCount = visibleMissions.filter((m) => m.status === "completed").length;
 
   return (
     <div>
@@ -339,20 +340,20 @@ function MissionsSection({
           Missions
           {completedCount > 0 && (
             <span className="ml-2 text-muted-foreground/70 normal-case font-normal tracking-normal">
-              · {completedCount} of {missions.length} done
+              · {completedCount} of {visibleMissions.length} done
             </span>
           )}
         </h2>
       </div>
 
-      {missions.length === 0 ? (
+      {visibleMissions.length === 0 ? (
         <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-center gap-3">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">New missions coming soon</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {missions.map((m) => (
+          {visibleMissions.map((m) => (
             <MissionRow key={m.id} mission={m} />
           ))}
         </div>
