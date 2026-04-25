@@ -1,22 +1,33 @@
-I’ll make the requested string-only copy updates with no logic changes and no other files touched.
+Plan to redesign `src/routes/_authed/results.tsx` only:
 
-Files to update:
+1. Update the hero/header area
+   - Keep the `Round Complete` label.
+   - Keep the trophy icon, but remove its background card/glow wrapper so it appears cleaner.
+   - Make the first major headline the puzzles-solved stat:
+     - `No puzzles solved` when `puzzlesSolved === 0`
+     - `1 puzzle solved` when `puzzlesSolved === 1`
+     - `${puzzlesSolved} puzzles solved` otherwise
 
-1. `src/routes/_authed/entries.tsx`
-   - Change page title text from `My Entries` to `My Tickets`.
+2. Adjust ticket earning display
+   - Remove the current zero-ticket headline/subtext.
+   - Show a single ticket line only when `entries > 0`, e.g. `+2 tickets earned` / `+1 ticket earned`.
+   - Keep existing breakdown chips/text if present, but place them beneath the ticket-earned line.
 
-2. `src/routes/_authed/results.tsx`
-   - Change `Session Complete` to `Round Complete`.
-   - Change `No entries this time` to `No tickets this time`.
-   - Change the zero-puzzle nudge to use `round` instead of `session`.
-   - Change all four streak bonus strings from `per session` to `per round`.
+3. Rework weekly progress as the motivating anchor
+   - Replace the current label layout with a stronger line like: `39 of 50 tickets this week`.
+   - Make the number/label larger and bolder than the current small uppercase treatment.
+   - Keep the same progress calculation and `Progress` component.
+   - Show the nudge only when `remainder > 0`, with copy: `${need} more puzzle(s) next round would earn another ticket`.
+   - Omit the nudge entirely when `remainder === 0`.
 
-3. `src/routes/_authed/profile.tsx`
-   - Change explanatory copy to use `round`/`rounds` instead of `session`/`sessions` in the specified ticket, coin, streak, and bonus text.
-   - Change the streak tile bonus text from `/ session` to `/ round`.
+4. Keep streak pill but reposition it
+   - Leave streak pill logic/copy unchanged.
+   - Place it directly under the weekly progress bar/nudge area.
 
-4. `src/components/games/DrawLockBanner.tsx`
-   - Change `Draw tickets locked · Coins only this session` to `Draw tickets locked · Coins only this round`.
+5. Reduce secondary CTA weight
+   - Keep `Play again` as the full green primary button.
+   - Change `Back to Home` from bordered/background button styling to a plain text link.
 
-Validation:
-- After applying, I’ll run a targeted search for `entries`, `session`, and `sessions` in the same folders to confirm the requested strings were replaced and no unintended files were changed.
+Technical scope:
+- Only edit JSX layout and player-facing copy in `src/routes/_authed/results.tsx`.
+- No server function, data fetching, routing, search params, calculations, or game logic changes.
