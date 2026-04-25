@@ -49,10 +49,10 @@ function ResultsPage() {
 
   // Streak pill copy
   let streakPill: string | null = null;
-  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus tickets per session`;
-  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus tickets per session`;
-  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus ticket per session`;
-  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus ticket per session`;
+  if (streak >= 14) streakPill = `Day ${streak} streak — +3 bonus tickets per round`;
+  else if (streak >= 7) streakPill = `Day ${streak} streak — +2 bonus tickets per round`;
+  else if (streak >= 3) streakPill = `Day ${streak} streak — +1 bonus ticket per round`;
+  else if (streak >= 1) streakPill = `Day ${streak} streak — reach day 3 for +1 bonus ticket per round`;
 
   const rankedUp = rankTier !== previousRank;
 
@@ -77,7 +77,7 @@ function ResultsPage() {
   let nudge = "";
   const remainder = puzzlesSolved % 5;
   if (puzzlesSolved === 0) {
-    nudge = "Solve at least 5 puzzles in a session to earn tickets";
+    nudge = "Solve at least 5 puzzles in a round to earn tickets";
   } else if (remainder === 0) {
     nudge = "Every 5 puzzles solved earns 1 ticket";
   } else {
@@ -120,7 +120,7 @@ function ResultsPage() {
           </div>
 
           <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-            Session Complete
+            Round Complete
           </p>
 
           {entries > 0 ? (
@@ -143,7 +143,7 @@ function ResultsPage() {
             </>
           ) : (
             <>
-              <p className="mt-3 text-3xl font-bold">No entries this time</p>
+              <p className="mt-3 text-3xl font-bold">No tickets this time</p>
               <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
                 Every 5 puzzles solved earns 1 ticket toward the weekly draw
               </p>
