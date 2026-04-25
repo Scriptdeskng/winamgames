@@ -44,6 +44,7 @@ interface FormState {
 const EMPTY: FormState = { title: "", subtitle: "", icon_url: "", is_active: true, display_order: 0 };
 const TITLE_MAX = 60;
 const SUBTITLE_MAX = 120;
+const MAX_ACTIVE_BANNERS = 3;
 
 function BannersPage() {
   const session = getAdminSession();
@@ -92,9 +93,15 @@ function BannersPage() {
 
   const toggleActive = async (b: Banner) => {
     if (!adminId) return;
+    const nextActive = !b.is_active;
+    if (nextActive && banners.filter((banner) => banner.is_active).length >= MAX_ACTIVE_BANNERS) {
+      setErr("Maximum 3 banners can be active at once. Deactivate one first.");
+      return;
+    }
+    setErr(null);
     setBanners((bs) => bs.map((x) => (x.id === b.id ? { ...x, is_active: !x.is_active } : x)));
     try {
-      await updateBanner({ data: { adminId, bannerId: b.id, is_active: !b.is_active } });
+      await updateBanner({ data: { adminId, bannerId: b.id, is_active: nextActive } });
     } catch (e) {
       setErr((e as Error).message);
       refresh();
