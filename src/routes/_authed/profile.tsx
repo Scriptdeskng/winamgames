@@ -122,7 +122,7 @@ function ProfilePage() {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
-                  <span className="font-semibold text-foreground">Coins</span> are earned from sessions and from overflow when you've already hit the 50-ticket weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
+                  <span className="font-semibold text-foreground">Coins</span> are earned from rounds and from overflow when you've already hit the 50-ticket weekly draw limit. Spend them on hints during gameplay — different hint types cost different amounts.
                 </PopoverContent>
               </Popover>
             </div>
@@ -185,8 +185,8 @@ function ProfilePage() {
               </p>
               <ol className="space-y-3.5">
                 {[
-                  { lead: "Solve puzzles to earn tickets", body: "Every 5 puzzles you solve in a session earns 1 ticket for Sunday's draw." },
-                  { lead: "Daily streaks earn extra tickets", body: "Play every day to build a streak. Each session earns bonus draw tickets: +1 from day 3, +2 from day 7, +3 from day 14." },
+                  { lead: "Solve puzzles to earn tickets", body: "Every 5 puzzles you solve in a round earns 1 ticket for Sunday's draw." },
+                  { lead: "Daily streaks earn extra tickets", body: "Play every day to build a streak. Each round earns bonus draw tickets: +1 from day 3, +2 from day 7, +3 from day 14." },
                   { lead: "Missions add bonus tickets", body: "Completing daily missions awards extra tickets on top of what you earn from play." },
                   { lead: "Weekly cap & reset", body: "You can collect up to 50 tickets per week. Anything beyond that converts to coins. The draw runs every Sunday at 20:00 WAT — right after, tickets reset and the next week begins." },
                 ].map((rule, i) => (
@@ -461,7 +461,7 @@ function StreakTile({ streak }: { streak: number }) {
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="end" className="w-64 text-xs leading-relaxed">
-            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus ticket per session, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
+            Your <span className="font-semibold text-foreground">streak</span> counts consecutive days you've played. Reach Day 3 for +1 bonus ticket per round, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero.
           </PopoverContent>
         </Popover>
       </div>
@@ -470,7 +470,7 @@ function StreakTile({ streak }: { streak: number }) {
       </p>
       <p className="text-xs text-muted-foreground mt-1">
         {bonus > 0
-          ? `+${bonus} bonus / session`
+          ? `+${bonus} bonus / round`
           : nextMilestone
             ? `${nextMilestone - streak}d to bonus`
             : "Play daily to earn bonuses"}
