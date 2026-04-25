@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2, ShieldCheck,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2, ShieldCheck, ChevronDown,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
@@ -235,48 +235,69 @@ function VerificationSection({ kyc }: { kyc: any }) {
 
   const hasBank = !!kyc.bank_details_submitted_at;
   const last4 = kyc.account_number ? String(kyc.account_number).slice(-4) : "";
-  let label = "Identity verified — bank details needed";
-  let hrefStep: 1 | 2 | null = 2;
+  const fullName = [kyc.first_name, kyc.last_name].filter(Boolean).join(" ").trim() || "Verified player";
+  const dob = kyc.dob
+    ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${kyc.dob}T00:00:00`))
+    : "—";
+  const idType = kyc.id_type ? String(kyc.id_type).toUpperCase() : "—";
+  let label = hasBank ? "Identity verified" : "Identity verified — bank details needed";
 
-  if (hasBank) {
-    label = "Claim submitted — under review";
-    hrefStep = null;
-  }
-  if (kyc.verified) label = "Verified winner";
-  if (kyc.payment_processed) label = "Prize paid";
+  if (kyc.verified || kyc.payment_processed) label = "✓ Verified";
 
   return (
     <div className="space-y-2">
       <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Verification
       </h3>
-      <div className="rounded-2xl border border-border bg-surface-1 p-4">
-        <div className="flex items-start gap-3">
+      <details className="group rounded-2xl border border-border bg-surface-1 p-4">
+        <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <ShieldCheck className="h-4.5 w-4.5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">🛡 {label}</p>
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold">{fullName}</p>
+              {kyc.verified && (
+                <span className="shrink-0 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                  Verified
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>
             {hasBank && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 truncate text-xs text-muted-foreground">
                 {kyc.bank_name} ••••{last4}
               </p>
             )}
-            <div className="mt-3 flex flex-wrap gap-2">
-              {hrefStep && (
-                <Link to="/kyc" search={{ step: hrefStep }} className="text-xs font-semibold text-primary hover:underline">
-                  Add bank details
-                </Link>
-              )}
-              {hasBank && !kyc.payment_processed && (
-                <Link to="/kyc" search={{ step: 2 }} className="text-xs font-semibold text-primary hover:underline">
-                  Update bank details
-                </Link>
-              )}
-            </div>
           </div>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+
+        <div className="mt-4 border-t border-border pt-4 text-sm">
+          <div className="grid gap-3">
+            <VerificationRow label="ID type" value={idType} />
+            <VerificationRow label="Date of birth" value={dob} />
+            {hasBank && (
+              <>
+                <VerificationRow label="Bank" value={kyc.bank_name ?? "—"} />
+                <VerificationRow label="Account number" value={last4 ? `••••${last4}` : "—"} />
+              </>
+            )}
+          </div>
+          <Link to="/kyc" search={{ step: 2 }} className="mt-4 inline-flex text-xs font-semibold text-primary hover:underline">
+            {hasBank ? "Update bank details" : "Add bank details"}
+          </Link>
         </div>
-      </div>
+      </details>
+    </div>
+  );
+}
+
+function VerificationRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="truncate text-right text-xs font-semibold text-foreground">{value}</span>
     </div>
   );
 }
