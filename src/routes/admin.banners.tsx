@@ -42,8 +42,8 @@ interface FormState {
 }
 
 const EMPTY: FormState = { title: "", subtitle: "", icon_url: "", is_active: true, display_order: 0 };
-const TITLE_MAX = 60;
-const SUBTITLE_MAX = 120;
+const TITLE_MAX = 30;
+const SUBTITLE_MAX = 80;
 const MAX_ACTIVE_BANNERS = 3;
 
 function BannersPage() {
