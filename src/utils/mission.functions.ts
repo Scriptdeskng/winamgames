@@ -371,7 +371,7 @@ export const submitKycBankDetails = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin.from("winam_kyc") as any)
+    const { data: updated, error } = await (supabaseAdmin.from("winam_kyc") as any)
       .update({
         bank_code: data.bankCode.trim(),
         bank_name: data.bankName.trim(),
@@ -379,8 +379,11 @@ export const submitKycBankDetails = createServerFn({ method: "POST" })
         account_name: data.accountName?.trim() || null,
         bank_details_submitted_at: new Date().toISOString(),
       })
-      .eq("player_id", data.playerId);
+      .eq("player_id", data.playerId)
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Complete identity verification first.");
     return { success: true as const };
   });
 
