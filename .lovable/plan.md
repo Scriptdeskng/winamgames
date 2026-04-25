@@ -1,32 +1,55 @@
-Approved code-only implementation plan:
+Plan to apply the payment tracking restructure with no database changes.
 
-1. Update `src/utils/game.functions.ts`
-   - Leave schema/migrations untouched because `streak` has already been added to `entry_source_type` manually.
-   - Keep the existing combined cap calculation:
-     - `rawEntries = baseEntries + streakBonus`
-     - `entriesToAdd = min(rawEntries, weekCap - weekSoFar)`
-     - `overflow = rawEntries - entriesToAdd`
-   - Split the capped award across two ledger rows:
-     - `awardedBaseEntries = min(baseEntries, entriesToAdd)`
-     - `awardedStreakBonus = min(streakBonus, entriesToAdd - awardedBaseEntries)`
-   - Insert `game_session` row only if `awardedBaseEntries > 0`:
-     - `entries_delta = awardedBaseEntries`
-     - `cap_overflow = 0`
-     - `week_total_after = weekSoFar + awardedBaseEntries`
-   - Insert `streak` row only if `awardedStreakBonus > 0`:
-     - `entries_delta = awardedStreakBonus`
-     - `cap_overflow = overflow`
-     - `week_total_after = weekSoFar + awardedBaseEntries + awardedStreakBonus`
-   - If only base tickets are awarded and overflow exists, keep overflow on the base row so cap overflow handling remains recorded.
-   - Keep session `entries_awarded`, response totals, coins, XP, streak, and mission evaluation behavior unchanged.
+Scope
+- Update only these files:
+  - `src/utils/mission.functions.ts`
+  - `src/utils/admin.functions.ts`
+  - `src/routes/admin.players.$playerId.tsx`
+  - `src/routes/admin.winners.tsx`
+  - `src/routes/_authed/profile.tsx`
+- No SQL, migrations, game logic, or KYC form changes.
 
-2. Update `src/routes/_authed/entries.tsx`
-   - Change `TicketSource` support to include `streak`.
-   - Add `streak` metadata using the Flame icon and orange/fire styling.
-   - Keep `streak_bonus` metadata as a legacy fallback so older ledger rows still render correctly.
+Implementation
+1. Player-facing KYC and winner status
+   - Remove `payment_processed` from all `winam_kyc` selects in `mission.functions.ts`.
+   - In `getMyWinnerStatus`, fetch the matching `winam_payments` row by `winner_id` after the winner row is found.
+   - Return `kyc.paymentProcessed` based on `payment?.status === 'paid'`, not KYC fields.
+   - Keep `getKycStatus` focused on identity/bank/verification fields only.
 
-3. Verify
-   - Run the build/typecheck after editing.
-   - Confirm only these two files are changed:
-     - `src/utils/game.functions.ts`
-     - `src/routes/_authed/entries.tsx`
+2. Admin payment server functions
+   - Remove the old `markKycPaid` server function that updates deleted KYC columns.
+   - Add:
+     - `createPaymentRecord`
+     - `markPaymentPaid`
+     - `getPaymentsForPlayer`
+   - Audit actions as requested: `payment_create` and `payment_mark_paid`.
+   - Update `getWinners` so each winner includes `payment: { id, status, paid_at } | null` from `winam_payments`.
+
+3. Admin player detail page
+   - Replace the KYC card’s payment fields and old “Mark paid” action.
+   - KYC section will show identity submission, bank/masked account, verified status/date/admin ID, and a hidden-when-verified “Verify KYC” button.
+   - Add a separate “Payment history” section below KYC.
+   - Load payments with `getPaymentsForPlayer` on mount/refresh.
+   - Show a table: Prize, Amount, Status, Date, Action.
+   - Show “Mark paid” only for pending payment rows, confirm via modal, then call `markPaymentPaid` for that payment ID.
+   - Empty state: “No payment records yet”.
+
+4. Admin winners page
+   - Replace `markKycPaid` usage with `createPaymentRecord` and `markPaymentPaid`.
+   - For cash winners:
+     - If `winner.payment.status === 'pending'`, mark that payment as paid.
+     - If no payment exists, create a pending record, then mark it paid.
+     - Hide the paid action when `winner.payment.status === 'paid'`.
+   - Remove “Paid” from KYC status and display payment status separately beside the KYC pill for cash winners.
+
+5. Profile page verification card
+   - Remove all `payment_processed` references.
+   - Use simplified labels:
+     - Identity submitted, no bank: “Identity verified — bank details needed”
+     - Identity and bank submitted, not verified: “Identity verified”
+     - Verified: “✓ Verified”
+   - Show no payment status on profile.
+
+Validation
+- Run the project build/typecheck after changes.
+- Fix any TypeScript errors caused by the changed payment types or removed KYC payment fields.

@@ -311,9 +311,6 @@ export type Database = {
           id_number: string
           id_type: string
           last_name: string
-          payment_processed: boolean | null
-          payment_processed_at: string | null
-          payment_processed_by: string | null
           player_id: string
           submitted_at: string | null
           verified: boolean | null
@@ -332,9 +329,6 @@ export type Database = {
           id_number: string
           id_type: string
           last_name: string
-          payment_processed?: boolean | null
-          payment_processed_at?: string | null
-          payment_processed_by?: string | null
           player_id: string
           submitted_at?: string | null
           verified?: boolean | null
@@ -353,9 +347,6 @@ export type Database = {
           id_number?: string
           id_type?: string
           last_name?: string
-          payment_processed?: boolean | null
-          payment_processed_at?: string | null
-          payment_processed_by?: string | null
           player_id?: string
           submitted_at?: string | null
           verified?: boolean | null
@@ -363,13 +354,6 @@ export type Database = {
           verified_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "winam_kyc_payment_processed_by_fkey"
-            columns: ["payment_processed_by"]
-            isOneToOne: false
-            referencedRelation: "winam_admin_users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "winam_kyc_player_id_fkey"
             columns: ["player_id"]
@@ -445,6 +429,74 @@ export type Database = {
           used?: boolean
         }
         Relationships: []
+      }
+      winam_payments: {
+        Row: {
+          amount_naira: number
+          created_at: string | null
+          draw_week_id: string
+          id: string
+          paid_at: string | null
+          paid_by: string | null
+          player_id: string
+          prize_type: string
+          status: string | null
+          winner_id: string
+        }
+        Insert: {
+          amount_naira: number
+          created_at?: string | null
+          draw_week_id: string
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          player_id: string
+          prize_type: string
+          status?: string | null
+          winner_id: string
+        }
+        Update: {
+          amount_naira?: number
+          created_at?: string | null
+          draw_week_id?: string
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          player_id?: string
+          prize_type?: string
+          status?: string | null
+          winner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winam_payments_draw_week_id_fkey"
+            columns: ["draw_week_id"]
+            isOneToOne: false
+            referencedRelation: "winam_draw_weeks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_payments_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "winam_admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_payments_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "winam_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_payments_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "winam_winners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       winam_platform_config: {
         Row: {
