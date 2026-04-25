@@ -26,9 +26,12 @@ function formatWeekRange(startWat: string, endWat: string): string {
   return `${fmt(start)} – ${fmt(end)}, ${end.getFullYear()}`;
 }
 
-const SOURCE_META: Record<TicketSource, { label: string; Icon: typeof Swords; color: string }> = {
+type DisplayTicketSource = TicketSource | "streak";
+
+const SOURCE_META: Record<DisplayTicketSource, { label: string; Icon: typeof Swords; color: string }> = {
   game_session: { label: "Puzzle", Icon: Swords, color: "text-primary" },
   mission: { label: "Mission", Icon: BookOpen, color: "text-[oklch(0.75_0.15_85)]" },
+  streak: { label: "Streak", Icon: Flame, color: "text-[oklch(0.72_0.18_45)]" },
   streak_bonus: { label: "Streak", Icon: Flame, color: "text-[oklch(0.7_0.18_30)]" },
 };
 
@@ -212,7 +215,7 @@ function WinnerBadge({ week, winnerStatus }: { week: PlayerEntryWeek; winnerStat
   );
 }
 
-function FlatTicketList({ tickets }: { tickets: { ticketId: string; source: TicketSource; earnedAt: string }[] }) {
+function FlatTicketList({ tickets }: { tickets: { ticketId: string; source: DisplayTicketSource; earnedAt: string }[] }) {
   return (
     <div className="rounded-lg bg-surface-2/60 divide-y divide-border/40">
       {tickets.map((t) => {

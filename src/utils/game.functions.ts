@@ -875,6 +875,8 @@ export const closeSession = createServerFn({ method: "POST" })
     const rawEntries = baseEntries + streakBonus;
     const entriesToAdd = Math.min(rawEntries, weekCap - weekSoFar);
     const overflow = rawEntries - entriesToAdd;
+    const awardedBaseEntries = Math.min(baseEntries, entriesToAdd);
+    const awardedStreakBonus = Math.min(streakBonus, entriesToAdd - awardedBaseEntries);
 
     // XP: 10 per correct answer
     const xpGained = data.puzzlesSolved * 10;
@@ -896,16 +898,28 @@ export const closeSession = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
 
-    // Append to entry ledger
-    if (entriesToAdd > 0) {
+    // Append to entry ledger — split base puzzle tickets from streak bonus tickets
+    if (awardedBaseEntries > 0) {
       await supabaseAdmin.from("winam_entry_ledger").insert({
         player_id: data.playerId,
         draw_week_id: session.draw_week_id,
         source_type: "game_session",
         source_id: data.sessionId,
-        entries_delta: entriesToAdd,
+        entries_delta: awardedBaseEntries,
+        cap_overflow: awardedStreakBonus > 0 ? 0 : overflow,
+        week_total_after: weekSoFar + awardedBaseEntries,
+      });
+    }
+
+    if (awardedStreakBonus > 0) {
+      await supabaseAdmin.from("winam_entry_ledger").insert({
+        player_id: data.playerId,
+        draw_week_id: session.draw_week_id,
+        source_type: "streak" as any,
+        source_id: data.sessionId,
+        entries_delta: awardedStreakBonus,
         cap_overflow: overflow,
-        week_total_after: weekSoFar + entriesToAdd,
+        week_total_after: weekSoFar + awardedBaseEntries + awardedStreakBonus,
       });
     }
 

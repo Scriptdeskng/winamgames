@@ -786,7 +786,7 @@ export type Database = {
     }
     Enums: {
       draw_week_status: "open" | "locked" | "drawn" | "settled"
-      entry_source_type: "game_session" | "mission" | "streak_bonus"
+      entry_source_type: "game_session" | "mission" | "streak_bonus" | "streak"
       game_type: "checkmate" | "wisdomdrop"
       mission_condition_type:
         | "puzzles_solved"
@@ -940,7 +940,7 @@ export const Constants = {
   public: {
     Enums: {
       draw_week_status: ["open", "locked", "drawn", "settled"],
-      entry_source_type: ["game_session", "mission", "streak_bonus"],
+      entry_source_type: ["game_session", "mission", "streak_bonus", "streak"],
       game_type: ["checkmate", "wisdomdrop"],
       mission_condition_type: [
         "puzzles_solved",
