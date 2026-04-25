@@ -31,6 +31,9 @@ function PlayerDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<Action | null>(null);
+  const [kyc, setKyc] = useState<any>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentToMark, setPaymentToMark] = useState<Payment | null>(null);
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState("");
   const [days, setDays] = useState("7");
@@ -39,9 +42,15 @@ function PlayerDetailPage() {
   const refresh = () => {
     if (!adminId) return;
     setLoading(true);
-    getPlayerDetail({ data: { adminId, playerId } })
-      .then((r) => {
+    Promise.all([
+      getPlayerDetail({ data: { adminId, playerId } }),
+      getKycForPlayer({ data: { adminId, playerId } }),
+      getPaymentsForPlayer({ data: { adminId, playerId } }),
+    ])
+      .then(([r, kycRes, paymentRes]) => {
         setDetail(r as Detail);
+        setKyc(kycRes.kyc);
+        setPayments(paymentRes.payments as Payment[]);
         setErr(null);
       })
       .catch((e: Error) => setErr(e.message))
@@ -58,6 +67,7 @@ function PlayerDetailPage() {
     setReason("");
     setAmount("");
     setDays("7");
+    setPaymentToMark(null);
   };
 
   const submit = async () => {
@@ -84,8 +94,8 @@ function PlayerDetailPage() {
         });
       } else if (action === "verifyKyc") {
         await verifyKyc({ data: { adminId, playerId } });
-      } else if (action === "markPaid") {
-        await markKycPaid({ data: { adminId, playerId } });
+      } else if (action === "markPaymentPaid" && paymentToMark) {
+        await markPaymentPaid({ data: { adminId, playerId, paymentId: paymentToMark.id } });
       }
       closeModal();
       refresh();
