@@ -1,16 +1,24 @@
-Plan:
+Plan to update `src/routes/_authed/wisdomdrop.tsx` only:
 
-1. Update only `src/routes/_authed/results.tsx`.
-2. Wrap the existing weekly progress block in a subtle card using:
-   - `bg-card`
-   - `border border-border`
-   - `rounded-2xl`
-   - `p-4`
-3. Keep these existing elements inside the new card:
-   - Weekly tickets line, e.g. `39 of 50 tickets this week`
-   - Progress bar
-   - Nudge line, when present
-   - Streak pill, when present
-4. Keep the hero section and CTA buttons outside the card.
-5. Add modest vertical margin above and below the card so the page has breathing room without reintroducing the large dead gap.
-6. Do not change logic, route data, calculations, navigation, or any files besides `results.tsx`.
+1. Make the active WisdomDrop game layout scroll correctly
+   - Change the active game page shell to a vertical flex container with viewport-height bounds and hidden outer overflow.
+   - Update the main content wrapper that contains the puzzle card, `AnswerFooter`, and hints to:
+     - `min-h-0`
+     - `flex-1`
+     - `overflow-y-auto`
+     - touch momentum scrolling via Tailwind arbitrary property: `[-webkit-overflow-scrolling:touch]`
+   - Keep existing padding and spacing classes intact.
+
+2. Auto-scroll to the Next/Continue button after the reveal animation
+   - Add a `nextButtonRef` in `WisdomDropPage`.
+   - Add a `React.useEffect` watching `session.feedback`.
+   - When feedback becomes truthy, wait `350ms`, then call:
+     ```ts
+     nextButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+     ```
+   - Clear the timeout on cleanup.
+
+3. Attach the ref without changing shared components
+   - Because the request limits changes to `src/routes/_authed/wisdomdrop.tsx`, wrap `AnswerFooter` in a `<div ref={nextButtonRef}>` rather than modifying `AnswerFooter.tsx`.
+
+No game state, scoring, answer logic, or other files will be changed.

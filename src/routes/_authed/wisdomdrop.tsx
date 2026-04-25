@@ -30,14 +30,22 @@ function WisdomDropPage() {
   const sessionData = getSession();
   const playerId = sessionData?.playerId ?? "";
   const [playerData, setPlayerData] = React.useState<any>(null);
+  const nextButtonRef = React.useRef<HTMLDivElement>(null);
+  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
+  const session = useGameSession("wisdomdrop", playerId);
 
   React.useEffect(() => {
     if (!playerId) return;
     getPlayerData({ data: { playerId } }).then(setPlayerData);
   }, [playerId]);
 
-  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
-  const session = useGameSession("wisdomdrop", playerId);
+  React.useEffect(() => {
+    if (!session.feedback) return;
+    const t = setTimeout(() => {
+      nextButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [session.feedback]);
 
   if (!session.sessionId) {
     return (
@@ -157,7 +165,7 @@ function WisdomDropPage() {
   const normalize = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
 
   return (
-    <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
+    <div className="mx-auto flex h-[100dvh] max-w-[430px] flex-col overflow-hidden bg-background">
       <GameHeader
         title="WisdomDrop"
         lives={session.lives}
@@ -168,7 +176,7 @@ function WisdomDropPage() {
         onExit={session.exitEarly}
       />
 
-      <div className="px-4 pt-6 pb-8 space-y-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-6 pb-8 space-y-4 [-webkit-overflow-scrolling:touch]">
         <DrawLockBanner />
 
         {puzzle && (
@@ -312,13 +320,15 @@ function WisdomDropPage() {
           </div>
         )}
 
-        <AnswerFooter
-          feedback={session.feedback}
-          isLastPuzzle={session.isLastPuzzle}
-          isGameOver={session.gameOver}
-          autoAdvanceMs={session.autoAdvanceMs}
-          onAdvance={session.advance}
-        />
+        <div ref={nextButtonRef}>
+          <AnswerFooter
+            feedback={session.feedback}
+            isLastPuzzle={session.isLastPuzzle}
+            isGameOver={session.gameOver}
+            autoAdvanceMs={session.autoAdvanceMs}
+            onAdvance={session.advance}
+          />
+        </div>
 
         {!session.feedback && (
           <div className="space-y-2">
