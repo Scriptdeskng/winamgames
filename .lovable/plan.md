@@ -1,16 +1,16 @@
-Plan for `src/routes/_authed/results.tsx` only:
+Plan:
 
-1. Update nudge copy
-   - Change the generated nudge text to:
-     `${need} more puzzle${need === 1 ? "" : "s"} this round would have earned another ticket`
-   - Keep the existing `remainder > 0` condition and calculation unchanged.
-
-2. Reduce empty vertical gap before CTAs
-   - Adjust the results page flex layout so the hero, weekly progress/streak area, and CTA section are distributed more evenly vertically.
-   - Keep “Play again” as the full green button and “Back to Home” as a plain text link.
-   - Avoid changing any data fetching, ticket logic, route behavior, or other files.
-
-Technical scope:
-- One file only: `src/routes/_authed/results.tsx`
-- JSX/classes/copy only
-- No server functions, backend changes, or logic changes beyond the text string.
+1. Update only `src/routes/_authed/results.tsx`.
+2. Wrap the existing weekly progress block in a subtle card using:
+   - `bg-card`
+   - `border border-border`
+   - `rounded-2xl`
+   - `p-4`
+3. Keep these existing elements inside the new card:
+   - Weekly tickets line, e.g. `39 of 50 tickets this week`
+   - Progress bar
+   - Nudge line, when present
+   - Streak pill, when present
+4. Keep the hero section and CTA buttons outside the card.
+5. Add modest vertical margin above and below the card so the page has breathing room without reintroducing the large dead gap.
+6. Do not change logic, route data, calculations, navigation, or any files besides `results.tsx`.

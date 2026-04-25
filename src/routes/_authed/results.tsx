@@ -141,8 +141,8 @@ function ResultsPage() {
         {/* Hairline divider */}
         <div className="mt-8 h-px w-full bg-border/40" />
 
-        {/* Weekly progress — flat block, no card chrome */}
-        <div className="mt-6">
+        {/* Weekly progress */}
+        <div className="my-6 rounded-2xl border border-border bg-card p-4">
           <div className="mb-3 flex items-baseline justify-center">
             <p className="text-lg font-semibold text-foreground">
               <span className="text-2xl font-bold tabular-nums text-primary">{weekTotal}</span>
