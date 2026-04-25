@@ -279,6 +279,122 @@ export const getActiveBanners = createServerFn({ method: "POST" }).handler(
   }
 );
 
+
+// ── Winner + KYC claim status ──────────────────────────────────────────
+export const getMyWinnerStatus = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ playerId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: cfg } = await supabaseAdmin
+      .from("winam_platform_config")
+      .select("value")
+      .eq("key", "winners_published_week_id")
+      .maybeSingle();
+
+    const rawWeekId = cfg?.value as unknown;
+    const weekId = typeof rawWeekId === "string" && rawWeekId.length > 10 ? rawWeekId : null;
+    if (!weekId) return { won: false as const };
+
+    const { data: winner } = await supabaseAdmin
+      .from("winam_winners")
+      .select("id, draw_week_id, position, prize_type, prize_amount")
+      .eq("draw_week_id", weekId)
+      .eq("player_id", data.playerId)
+      .eq("is_flagged", false)
+      .maybeSingle();
+
+    if (!winner) return { won: false as const };
+
+    const { data: kyc } = await (supabaseAdmin.from("winam_kyc") as any)
+      .select("id, submitted_at, bank_details_submitted_at, verified, payment_processed")
+      .eq("player_id", data.playerId)
+      .maybeSingle();
+
+    return {
+      won: true as const,
+      winnerId: winner.id,
+      drawWeekId: winner.draw_week_id,
+      position: winner.position,
+      prizeType: winner.prize_type,
+      prizeAmount: winner.prize_amount,
+      kyc: kyc
+        ? {
+            identitySubmitted: !!kyc.submitted_at,
+            bankSubmitted: !!kyc.bank_details_submitted_at,
+            verified: !!kyc.verified,
+            paymentProcessed: !!kyc.payment_processed,
+          }
+        : null,
+    };
+  });
+
+export const submitKycIdentity = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      playerId: z.string().uuid(),
+      firstName: z.string().trim().min(1).max(100),
+      lastName: z.string().trim().min(1).max(100),
+      dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      idType: z.enum(["nin", "bvn"]),
+      idNumber: z.string().length(11).regex(/^\d{11}$/),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const payload = {
+      player_id: data.playerId,
+      first_name: data.firstName.trim(),
+      last_name: data.lastName.trim(),
+      dob: data.dob,
+      id_type: data.idType,
+      // TODO pre-launch: encrypt NIN/BVN before storage
+      id_number: data.idNumber,
+      submitted_at: new Date().toISOString(),
+    };
+    const { error } = await (supabaseAdmin.from("winam_kyc") as any).upsert(payload, {
+      onConflict: "player_id",
+    });
+    if (error) throw new Error(error.message);
+    return { success: true as const };
+  });
+
+export const submitKycBankDetails = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      playerId: z.string().uuid(),
+      bankCode: z.string().trim().min(1).max(20),
+      bankName: z.string().trim().min(1).max(100),
+      accountNumber: z.string().length(10).regex(/^\d{10}$/),
+      accountName: z.string().trim().max(120).optional(),
+    })
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin.from("winam_kyc") as any)
+      .update({
+        bank_code: data.bankCode.trim(),
+        bank_name: data.bankName.trim(),
+        account_number: data.accountNumber,
+        account_name: data.accountName?.trim() || null,
+        bank_details_submitted_at: new Date().toISOString(),
+      })
+      .eq("player_id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { success: true as const };
+  });
+
+export const getKycStatus = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ playerId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: kyc } = await (supabaseAdmin.from("winam_kyc") as any)
+      .select("submitted_at, bank_details_submitted_at, bank_name, account_number, verified, payment_processed")
+      .eq("player_id", data.playerId)
+      .maybeSingle();
+    return { kyc };
+  });
+
 // ── Helpers ───────────────────────────────────────────────────────────
 function todayWatString(): string {
   // WAT = UTC+1 (no DST). Shift "now" by +1h, then take the UTC date parts.
