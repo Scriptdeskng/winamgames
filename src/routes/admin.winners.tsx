@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CheckCircle, ChevronDown, CreditCard, Download, Flag, Loader2 } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
-import { getDrawWeeks, getWinners, flagWinner, markKycPaid, verifyKyc } from "@/utils/admin.functions";
+import { createPaymentRecord, getDrawWeeks, getWinners, flagWinner, markPaymentPaid, verifyKyc } from "@/utils/admin.functions";
 import { ConfirmModal } from "./-admin/ConfirmModal";
 
 export const Route = createFileRoute("/admin/winners")({
@@ -11,15 +11,19 @@ export const Route = createFileRoute("/admin/winners")({
 
 type Week = Awaited<ReturnType<typeof getDrawWeeks>>["weeks"][number];
 type Winner = Awaited<ReturnType<typeof getWinners>>["winners"][number] & { kyc?: any };
-type KycAction = { type: "verify" | "paid"; playerId: string; weekId: string } | null;
+type KycAction = { type: "verify" | "paid"; playerId: string; weekId: string; winner?: Winner } | null;
 
 function kycStatus(kyc: any) {
   if (!kyc) return "None";
-  if (kyc.payment_processed) return "Paid";
   if (kyc.verified) return "Verified";
   if (kyc.bank_details_submitted_at) return "Complete";
   if (kyc.submitted_at) return "Identity only";
   return "None";
+}
+
+function paymentStatus(payment: any) {
+  if (payment?.status === "paid") return "Paid";
+  return "Pending";
 }
 
 function maskAccount(account?: string | null) {
@@ -81,7 +85,23 @@ function WinnersAdminPage() {
     setBusy(true);
     try {
       if (action.type === "verify") await verifyKyc({ data: { adminId, playerId: action.playerId } });
-      if (action.type === "paid") await markKycPaid({ data: { adminId, playerId: action.playerId } });
+      if (action.type === "paid" && action.winner) {
+        let paymentId = action.winner.payment?.id;
+        if (!paymentId) {
+          const created = await createPaymentRecord({
+            data: {
+              adminId,
+              playerId: action.playerId,
+              winnerId: action.winner.id,
+              drawWeekId: action.winner.draw_week_id!,
+              amountNaira: action.winner.prize_amount,
+              prizeType: action.winner.prize_type,
+            },
+          });
+          paymentId = created.paymentId;
+        }
+        await markPaymentPaid({ data: { adminId, playerId: action.playerId, paymentId } });
+      }
       await loadWinners(action.weekId, true);
       setAction(null);
     } catch (e) {
@@ -205,7 +225,12 @@ function WinnersAdminPage() {
                                   {wn.prize_type} ₦{wn.prize_amount.toLocaleString()}
                                 </td>
                                 <td className="px-2 py-1">
-                                  {wn.prize_type === "cash" ? <KycPill status={kycStatus(wn.kyc)} /> : "—"}
+                                  {wn.prize_type === "cash" ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      <KycPill status={kycStatus(wn.kyc)} />
+                                      <PaymentPill status={paymentStatus(wn.payment)} />
+                                    </div>
+                                  ) : "—"}
                                 </td>
                                 <td className="px-2 py-1 text-muted-foreground">
                                   {wn.prize_type === "cash" && wn.kyc?.bank_details_submitted_at ? (
@@ -222,8 +247,8 @@ function WinnersAdminPage() {
                                         <CheckCircle className="h-3.5 w-3.5" />
                                       </button>
                                     )}
-                                    {wn.prize_type === "cash" && wn.player_id && wn.kyc?.verified && !wn.kyc?.payment_processed && (
-                                      <button onClick={() => setAction({ type: "paid", playerId: wn.player_id!, weekId: w.id })} className="rounded-md p-1 text-gold hover:bg-gold/10" title="Mark paid">
+                                    {wn.prize_type === "cash" && wn.player_id && wn.kyc?.verified && wn.payment?.status !== "paid" && (
+                                      <button onClick={() => setAction({ type: "paid", playerId: wn.player_id!, weekId: w.id, winner: wn })} className="rounded-md p-1 text-gold hover:bg-gold/10" title="Mark paid">
                                         <CreditCard className="h-3.5 w-3.5" />
                                       </button>
                                     )}
@@ -264,12 +289,17 @@ function WinnersAdminPage() {
 }
 
 function KycPill({ status }: { status: string }) {
-  const style = status === "Paid"
-    ? "border-success/30 bg-success/10 text-success"
-    : status === "Verified"
+  const style = status === "Verified"
       ? "border-primary/30 bg-primary/10 text-primary"
       : status === "Complete"
         ? "border-gold/30 bg-gold/10 text-gold"
         : "border-border bg-surface-2 text-muted-foreground";
+  return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style}`}>{status}</span>;
+}
+
+function PaymentPill({ status }: { status: string }) {
+  const style = status === "Paid"
+    ? "border-success/30 bg-success/10 text-success"
+    : "border-gold/30 bg-gold/10 text-gold";
   return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style}`}>{status}</span>;
 }

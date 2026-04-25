@@ -242,7 +242,7 @@ function VerificationSection({ kyc }: { kyc: any }) {
   const idType = kyc.id_type ? String(kyc.id_type).toUpperCase() : "—";
   let label = hasBank ? "Identity verified" : "Identity verified — bank details needed";
 
-  if (kyc.verified || kyc.payment_processed) label = "✓ Verified";
+  if (kyc.verified) label = "✓ Verified";
 
   return (
     <div className="space-y-2">

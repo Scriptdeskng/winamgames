@@ -621,21 +621,73 @@ export const verifyKyc = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-export const markKycPaid = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ adminId: z.string().uuid(), playerId: z.string().uuid() }))
+export const createPaymentRecord = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    adminId: z.string().uuid(),
+    playerId: z.string().uuid(),
+    winnerId: z.string().uuid(),
+    drawWeekId: z.string().uuid(),
+    amountNaira: z.number().int(),
+    prizeType: z.string(),
+  }))
   .handler(async ({ data }) => {
     await assertAdmin(data.adminId);
     const supabaseAdmin = await getAdmin();
-    const { error } = await (supabaseAdmin.from("winam_kyc") as any)
-      .update({
-        payment_processed: true,
-        payment_processed_at: new Date().toISOString(),
-        payment_processed_by: data.adminId,
+    const { data: payment, error } = await (supabaseAdmin.from("winam_payments") as any)
+      .insert({
+        player_id: data.playerId,
+        winner_id: data.winnerId,
+        draw_week_id: data.drawWeekId,
+        amount_naira: data.amountNaira,
+        prize_type: data.prizeType,
+        status: "pending",
       })
-      .eq("player_id", data.playerId);
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
-    await audit(data.adminId, "kyc_mark_paid", "player", data.playerId, {});
+    await audit(data.adminId, "payment_create", "player", data.playerId, {
+      winnerId: data.winnerId,
+      amountNaira: data.amountNaira,
+    });
+    return { success: true, paymentId: payment.id };
+  });
+
+export const markPaymentPaid = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    adminId: z.string().uuid(),
+    paymentId: z.string().uuid(),
+    playerId: z.string().uuid(),
+  }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.adminId);
+    const supabaseAdmin = await getAdmin();
+    const { error } = await (supabaseAdmin.from("winam_payments") as any)
+      .update({
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        paid_by: data.adminId,
+      })
+      .eq("id", data.paymentId);
+    if (error) throw new Error(error.message);
+    await audit(data.adminId, "payment_mark_paid", "player", data.playerId, {
+      paymentId: data.paymentId,
+    });
     return { success: true };
+  });
+
+export const getPaymentsForPlayer = createServerFn({ method: "POST" })
+  .inputValidator(z.object({
+    adminId: z.string().uuid(),
+    playerId: z.string().uuid(),
+  }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.adminId);
+    const supabaseAdmin = await getAdmin();
+    const { data: payments } = await (supabaseAdmin.from("winam_payments") as any)
+      .select("*")
+      .eq("player_id", data.playerId)
+      .order("created_at", { ascending: false });
+    return { payments: payments ?? [] };
   });
 
 // ============================================================
@@ -850,8 +902,9 @@ export const getWinners = createServerFn({ method: "POST" })
     const playerIds = Array.from(new Set((rows ?? []).map((r) => r.player_id).filter(Boolean) as string[]));
     let playerMap: Record<string, { nickname: string | null; msisdn_last4: string }> = {};
     let kycMap: Record<string, any> = {};
+    let paymentMap: Record<string, any> = {};
     if (playerIds.length > 0) {
-      const [{ data: players }, { data: kycRows }] = await Promise.all([
+      const [{ data: players }, { data: kycRows }, { data: payments }] = await Promise.all([
         supabaseAdmin
           .from("winam_players")
           .select("id, nickname, msisdn_last4")
@@ -859,17 +912,22 @@ export const getWinners = createServerFn({ method: "POST" })
         (supabaseAdmin.from("winam_kyc") as any)
           .select("*")
           .in("player_id", playerIds),
+        (supabaseAdmin.from("winam_payments") as any)
+          .select("winner_id, id, status, paid_at")
+          .in("winner_id", (rows ?? []).map((r) => r.id)),
       ]);
       playerMap = Object.fromEntries(
         (players ?? []).map((p) => [p.id, { nickname: p.nickname, msisdn_last4: p.msisdn_last4 }])
       );
       kycMap = Object.fromEntries((kycRows ?? []).map((k: any) => [k.player_id, k]));
+      paymentMap = Object.fromEntries((payments ?? []).map((p: any) => [p.winner_id, p]));
     }
     return {
       winners: (rows ?? []).map((r) => ({
         ...r,
         player: r.player_id ? playerMap[r.player_id] ?? null : null,
         kyc: r.player_id ? kycMap[r.player_id] ?? null : null,
+        payment: r.id ? paymentMap[r.id] ?? null : null,
       })),
     };
   });

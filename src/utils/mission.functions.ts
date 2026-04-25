@@ -307,8 +307,13 @@ export const getMyWinnerStatus = createServerFn({ method: "POST" })
     if (!winner) return { won: false as const };
 
     const { data: kyc } = await (supabaseAdmin.from("winam_kyc") as any)
-      .select("id, submitted_at, bank_details_submitted_at, verified, payment_processed")
+      .select("id, submitted_at, bank_details_submitted_at, verified")
       .eq("player_id", data.playerId)
+      .maybeSingle();
+
+    const { data: payment } = await (supabaseAdmin.from("winam_payments") as any)
+      .select("id, status, paid_at")
+      .eq("winner_id", winner.id)
       .maybeSingle();
 
     return {
@@ -323,7 +328,7 @@ export const getMyWinnerStatus = createServerFn({ method: "POST" })
             identitySubmitted: !!kyc.submitted_at,
             bankSubmitted: !!kyc.bank_details_submitted_at,
             verified: !!kyc.verified,
-            paymentProcessed: !!kyc.payment_processed,
+            paymentProcessed: payment?.status === "paid",
           }
         : null,
     };
@@ -392,7 +397,7 @@ export const getKycStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: kyc } = await (supabaseAdmin.from("winam_kyc") as any)
-      .select("submitted_at, bank_details_submitted_at, bank_name, bank_code, account_number, account_name, first_name, last_name, dob, id_type, verified, payment_processed")
+      .select("submitted_at, bank_details_submitted_at, bank_name, bank_code, account_number, account_name, first_name, last_name, dob, id_type, verified")
       .eq("player_id", data.playerId)
       .maybeSingle();
     return { kyc };

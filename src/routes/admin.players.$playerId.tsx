@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2, ShieldCheck, CreditCard } from "lucide-react";
+import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2, ShieldCheck } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
 import {
   getPlayerDetail,
@@ -9,7 +9,9 @@ import {
   adjustPlayerXP,
   updateSubscription,
   verifyKyc,
-  markKycPaid,
+  getKycForPlayer,
+  getPaymentsForPlayer,
+  markPaymentPaid,
 } from "@/utils/admin.functions";
 import { ConfirmModal } from "./-admin/ConfirmModal";
 
@@ -18,7 +20,8 @@ export const Route = createFileRoute("/admin/players/$playerId")({
 });
 
 type Detail = Awaited<ReturnType<typeof getPlayerDetail>>;
-type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub" | "verifyKyc" | "markPaid";
+type Payment = Awaited<ReturnType<typeof getPaymentsForPlayer>>["payments"][number];
+type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub" | "verifyKyc" | "markPaymentPaid";
 
 function PlayerDetailPage() {
   const { playerId } = Route.useParams();
@@ -28,6 +31,9 @@ function PlayerDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<Action | null>(null);
+  const [kyc, setKyc] = useState<any>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentToMark, setPaymentToMark] = useState<Payment | null>(null);
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState("");
   const [days, setDays] = useState("7");
@@ -36,9 +42,15 @@ function PlayerDetailPage() {
   const refresh = () => {
     if (!adminId) return;
     setLoading(true);
-    getPlayerDetail({ data: { adminId, playerId } })
-      .then((r) => {
+    Promise.all([
+      getPlayerDetail({ data: { adminId, playerId } }),
+      getKycForPlayer({ data: { adminId, playerId } }),
+      getPaymentsForPlayer({ data: { adminId, playerId } }),
+    ])
+      .then(([r, kycRes, paymentRes]) => {
         setDetail(r as Detail);
+        setKyc(kycRes.kyc);
+        setPayments(paymentRes.payments as Payment[]);
         setErr(null);
       })
       .catch((e: Error) => setErr(e.message))
@@ -55,6 +67,7 @@ function PlayerDetailPage() {
     setReason("");
     setAmount("");
     setDays("7");
+    setPaymentToMark(null);
   };
 
   const submit = async () => {
@@ -81,8 +94,8 @@ function PlayerDetailPage() {
         });
       } else if (action === "verifyKyc") {
         await verifyKyc({ data: { adminId, playerId } });
-      } else if (action === "markPaid") {
-        await markKycPaid({ data: { adminId, playerId } });
+      } else if (action === "markPaymentPaid" && paymentToMark) {
+        await markPaymentPaid({ data: { adminId, playerId, paymentId: paymentToMark.id } });
       }
       closeModal();
       refresh();
@@ -155,7 +168,15 @@ function PlayerDetailPage() {
         />
       </Section>
 
-      <KycSection kyc={(detail as any).kyc} onVerify={() => setAction("verifyKyc")} onMarkPaid={() => setAction("markPaid")} />
+      <KycSection kyc={kyc} onVerify={() => setAction("verifyKyc")} />
+
+      <PaymentHistorySection
+        payments={payments}
+        onMarkPaid={(payment) => {
+          setPaymentToMark(payment);
+          setAction("markPaymentPaid");
+        }}
+      />
 
       <Section title="Recent sessions (last 20)">
         <SimpleTable
@@ -218,7 +239,7 @@ function PlayerDetailPage() {
         loading={busy}
         destructive={action === "flag" ? !p.is_flagged : action === "cancelSub"}
         disableConfirm={
-          ((action !== "verifyKyc" && action !== "markPaid") && reason.trim().length === 0) ||
+          ((action !== "verifyKyc" && action !== "markPaymentPaid") && reason.trim().length === 0) ||
           ((action === "coins" || action === "xp") && !amount) ||
           (action === "extendSub" && !days)
         }
@@ -248,7 +269,7 @@ function PlayerDetailPage() {
             />
           </div>
         )}
-        {action !== "verifyKyc" && action !== "markPaid" && (
+        {action !== "verifyKyc" && action !== "markPaymentPaid" && (
           <>
             <label className="text-xs text-muted-foreground">Reason (required)</label>
             <textarea
@@ -273,11 +294,9 @@ function maskAccount(account?: string | null) {
 function KycSection({
   kyc,
   onVerify,
-  onMarkPaid,
 }: {
   kyc: any;
   onVerify: () => void;
-  onMarkPaid: () => void;
 }) {
   if (!kyc) {
     return (
@@ -291,12 +310,11 @@ function KycSection({
 
   return (
     <Section title="KYC">
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3 text-sm">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3 text-sm">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Stat label="Identity" value={kyc.submitted_at ? `Submitted ${new Date(kyc.submitted_at).toLocaleDateString()}` : "Not submitted"} />
           <Stat label="Bank" value={kyc.bank_details_submitted_at ? `${kyc.bank_name ?? "—"} ${maskAccount(kyc.account_number)}` : "Not submitted"} />
           <Stat label="Verified" value={kyc.verified ? `Yes${kyc.verified_at ? ` · ${new Date(kyc.verified_at).toLocaleDateString()}` : ""}` : "No"} />
-          <Stat label="Payment" value={kyc.payment_processed ? `Paid${kyc.payment_processed_at ? ` · ${new Date(kyc.payment_processed_at).toLocaleDateString()}` : ""}` : "Pending"} />
         </div>
         <div className="text-xs text-muted-foreground">
           <p>Name: <span className="text-foreground">{kyc.first_name} {kyc.last_name}</span></p>
@@ -304,14 +322,50 @@ function KycSection({
           {kyc.account_name && <p>Account name: <span className="text-foreground">{kyc.account_name}</span></p>}
           {kyc.verified_by && <p>Verified by: <span className="font-mono text-foreground">{String(kyc.verified_by).slice(0, 8)}</span></p>}
         </div>
-        <div className="flex flex-wrap gap-2">
+        {!kyc.verified && <div className="flex flex-wrap gap-2">
           <Btn onClick={onVerify} icon={ShieldCheck}>
             Verify KYC
           </Btn>
-          <Btn onClick={onMarkPaid} icon={CreditCard}>
-            Mark paid
-          </Btn>
-        </div>
+        </div>}
+      </div>
+    </Section>
+  );
+}
+
+function PaymentHistorySection({ payments, onMarkPaid }: { payments: Payment[]; onMarkPaid: (payment: Payment) => void }) {
+  return (
+    <Section title="Payment history">
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-xs">
+          <thead className="bg-surface-2 uppercase text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-left">Prize</th>
+              <th className="px-3 py-2 text-left">Amount</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2 text-left">Date</th>
+              <th className="px-3 py-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">No payment records yet</td>
+              </tr>
+            ) : payments.map((payment) => (
+              <tr key={payment.id} className="border-t border-border">
+                <td className="px-3 py-1.5 capitalize">{payment.prize_type}</td>
+                <td className="px-3 py-1.5">₦{payment.amount_naira.toLocaleString()}</td>
+                <td className="px-3 py-1.5 capitalize">{payment.status}</td>
+                <td className="px-3 py-1.5">{payment.created_at ? new Date(payment.created_at).toLocaleString() : "—"}</td>
+                <td className="px-3 py-1.5 text-right">
+                  {payment.status === "pending" ? (
+                    <button onClick={() => onMarkPaid(payment)} className="rounded-md border border-border px-2 py-1 hover:bg-surface-2">Mark paid</button>
+                  ) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Section>
   );
