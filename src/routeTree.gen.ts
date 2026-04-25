@@ -31,6 +31,7 @@ import { Route as AuthedWinnersRouteImport } from './routes/_authed/winners'
 import { Route as AuthedResultsRouteImport } from './routes/_authed/results'
 import { Route as AuthedProfileRouteImport } from './routes/_authed/profile'
 import { Route as AuthedLeaderboardRouteImport } from './routes/_authed/leaderboard'
+import { Route as AuthedKycRouteImport } from './routes/_authed/kyc'
 import { Route as AuthedEntriesRouteImport } from './routes/_authed/entries'
 import { Route as AuthedCheckmateRouteImport } from './routes/_authed/checkmate'
 import { Route as AuthedAppRouteImport } from './routes/_authed/app'
@@ -145,6 +146,11 @@ const AuthedLeaderboardRoute = AuthedLeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedKycRoute = AuthedKycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedEntriesRoute = AuthedEntriesRouteImport.update({
   id: '/entries',
   path: '/entries',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
   '/entries': typeof AuthedEntriesRoute
+  '/kyc': typeof AuthedKycRoute
   '/leaderboard': typeof AuthedLeaderboardRoute
   '/profile': typeof AuthedProfileRoute
   '/results': typeof AuthedResultsRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthedAppRoute
   '/checkmate': typeof AuthedCheckmateRoute
   '/entries': typeof AuthedEntriesRoute
+  '/kyc': typeof AuthedKycRoute
   '/leaderboard': typeof AuthedLeaderboardRoute
   '/profile': typeof AuthedProfileRoute
   '/results': typeof AuthedResultsRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/_authed/app': typeof AuthedAppRoute
   '/_authed/checkmate': typeof AuthedCheckmateRoute
   '/_authed/entries': typeof AuthedEntriesRoute
+  '/_authed/kyc': typeof AuthedKycRoute
   '/_authed/leaderboard': typeof AuthedLeaderboardRoute
   '/_authed/profile': typeof AuthedProfileRoute
   '/_authed/results': typeof AuthedResultsRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/checkmate'
     | '/entries'
+    | '/kyc'
     | '/leaderboard'
     | '/profile'
     | '/results'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/checkmate'
     | '/entries'
+    | '/kyc'
     | '/leaderboard'
     | '/profile'
     | '/results'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/_authed/app'
     | '/_authed/checkmate'
     | '/_authed/entries'
+    | '/_authed/kyc'
     | '/_authed/leaderboard'
     | '/_authed/profile'
     | '/_authed/results'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLeaderboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/kyc': {
+      id: '/_authed/kyc'
+      path: '/kyc'
+      fullPath: '/kyc'
+      preLoaderRoute: typeof AuthedKycRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/entries': {
       id: '/_authed/entries'
       path: '/entries'
@@ -535,6 +554,7 @@ interface AuthedRouteChildren {
   AuthedAppRoute: typeof AuthedAppRoute
   AuthedCheckmateRoute: typeof AuthedCheckmateRoute
   AuthedEntriesRoute: typeof AuthedEntriesRoute
+  AuthedKycRoute: typeof AuthedKycRoute
   AuthedLeaderboardRoute: typeof AuthedLeaderboardRoute
   AuthedProfileRoute: typeof AuthedProfileRoute
   AuthedResultsRoute: typeof AuthedResultsRoute
@@ -546,6 +566,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAppRoute: AuthedAppRoute,
   AuthedCheckmateRoute: AuthedCheckmateRoute,
   AuthedEntriesRoute: AuthedEntriesRoute,
+  AuthedKycRoute: AuthedKycRoute,
   AuthedLeaderboardRoute: AuthedLeaderboardRoute,
   AuthedProfileRoute: AuthedProfileRoute,
   AuthedResultsRoute: AuthedResultsRoute,

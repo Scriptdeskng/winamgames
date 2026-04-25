@@ -208,6 +208,24 @@
     font-family: var(--font-family-display);
   }
 
+  .field-input {
+    height: 2.75rem;
+    width: 100%;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-foreground);
+    outline: none;
+  }
+
+  .field-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px oklch(0.696 0.17 162.48 / 20%);
+  }
+
+
   /* Landing page motion — subtle, GPU-friendly */
   @keyframes landing-float {
     0%, 100% { transform: translateY(0); }
