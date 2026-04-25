@@ -1,14 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2, ShieldCheck,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
-import { getPlayerData, updateNickname } from "@/utils/mission.functions";
+import { getPlayerData, updateNickname, getKycStatus } from "@/utils/mission.functions";
 import { getSession, clearSession, updateSessionNickname } from "@/lib/session";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { toast } from "sonner";
@@ -60,10 +60,17 @@ function ProfilePage() {
   const navigate = useNavigate();
   const session = getSession();
   const [data, setData] = React.useState<any>(null);
+  const [kycData, setKycData] = React.useState<any>(null);
 
   React.useEffect(() => {
     if (!session) return;
-    getPlayerData({ data: { playerId: session.playerId } }).then(setData);
+    Promise.all([
+      getPlayerData({ data: { playerId: session.playerId } }),
+      getKycStatus({ data: { playerId: session.playerId } }),
+    ]).then(([playerRes, kycRes]) => {
+      setData(playerRes);
+      setKycData(kycRes.kyc);
+    });
   }, []);
 
   const player = data?.success ? data.player : null;
@@ -133,6 +140,8 @@ function ProfilePage() {
           </div>
           <StreakTile streak={player?.currentStreak ?? 0} />
         </div>
+
+        <VerificationSection kyc={kycData} />
 
         {/* ── My activity ─────────────────────────────────────── */}
         <div className="space-y-2">
@@ -214,6 +223,58 @@ function ProfilePage() {
             <LogOut className="h-4 w-4" />
             Log out
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function VerificationSection({ kyc }: { kyc: any }) {
+  if (!kyc?.submitted_at) return null;
+
+  const hasBank = !!kyc.bank_details_submitted_at;
+  const last4 = kyc.account_number ? String(kyc.account_number).slice(-4) : "";
+  let label = "Identity verified — bank details needed";
+  let hrefStep: 1 | 2 | null = 2;
+
+  if (hasBank) {
+    label = "Claim submitted — under review";
+    hrefStep = null;
+  }
+  if (kyc.verified) label = "Verified winner";
+  if (kyc.payment_processed) label = "Prize paid";
+
+  return (
+    <div className="space-y-2">
+      <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Verification
+      </h3>
+      <div className="rounded-2xl border border-border bg-surface-1 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <ShieldCheck className="h-4.5 w-4.5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">🛡 {label}</p>
+            {hasBank && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {kyc.bank_name} ••••{last4}
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {hrefStep && (
+                <Link to="/kyc" search={{ step: hrefStep }} className="text-xs font-semibold text-primary hover:underline">
+                  Add bank details
+                </Link>
+              )}
+              {hasBank && !kyc.payment_processed && (
+                <Link to="/kyc" search={{ step: 2 }} className="text-xs font-semibold text-primary hover:underline">
+                  Update bank details
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
