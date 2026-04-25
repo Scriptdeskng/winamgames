@@ -153,7 +153,7 @@ function ResultsPage() {
           {nudge && <p className="mt-3 text-xs text-muted-foreground text-center">{nudge}</p>}
 
           {streakPill && (
-            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
+            <div className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
               <Flame className="h-3.5 w-3.5 text-streak" />
               <span className="text-xs font-medium text-streak">{streakPill}</span>
             </div>
