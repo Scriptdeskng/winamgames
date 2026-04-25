@@ -105,10 +105,10 @@ function KycPage() {
             <IdentityStep
               playerId={session.playerId}
               onDone={() => {
-                setKyc((prev) => ({
-                  ...(prev ?? {}),
+                setKyc({
+                  ...(kyc ?? {}),
                   submitted_at: new Date().toISOString(),
-                } as KycStatus));
+                } as KycStatus);
                 navigate({ search: { ...search, step: 2 } });
               }}
             />
