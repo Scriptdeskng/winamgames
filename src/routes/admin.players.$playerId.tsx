@@ -294,11 +294,9 @@ function maskAccount(account?: string | null) {
 function KycSection({
   kyc,
   onVerify,
-  onMarkPaid,
 }: {
   kyc: any;
   onVerify: () => void;
-  onMarkPaid: () => void;
 }) {
   if (!kyc) {
     return (
@@ -312,12 +310,11 @@ function KycSection({
 
   return (
     <Section title="KYC">
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3 text-sm">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3 text-sm">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Stat label="Identity" value={kyc.submitted_at ? `Submitted ${new Date(kyc.submitted_at).toLocaleDateString()}` : "Not submitted"} />
           <Stat label="Bank" value={kyc.bank_details_submitted_at ? `${kyc.bank_name ?? "—"} ${maskAccount(kyc.account_number)}` : "Not submitted"} />
           <Stat label="Verified" value={kyc.verified ? `Yes${kyc.verified_at ? ` · ${new Date(kyc.verified_at).toLocaleDateString()}` : ""}` : "No"} />
-          <Stat label="Payment" value={kyc.payment_processed ? `Paid${kyc.payment_processed_at ? ` · ${new Date(kyc.payment_processed_at).toLocaleDateString()}` : ""}` : "Pending"} />
         </div>
         <div className="text-xs text-muted-foreground">
           <p>Name: <span className="text-foreground">{kyc.first_name} {kyc.last_name}</span></p>
@@ -325,14 +322,50 @@ function KycSection({
           {kyc.account_name && <p>Account name: <span className="text-foreground">{kyc.account_name}</span></p>}
           {kyc.verified_by && <p>Verified by: <span className="font-mono text-foreground">{String(kyc.verified_by).slice(0, 8)}</span></p>}
         </div>
-        <div className="flex flex-wrap gap-2">
+        {!kyc.verified && <div className="flex flex-wrap gap-2">
           <Btn onClick={onVerify} icon={ShieldCheck}>
             Verify KYC
           </Btn>
-          <Btn onClick={onMarkPaid} icon={CreditCard}>
-            Mark paid
-          </Btn>
-        </div>
+        </div>}
+      </div>
+    </Section>
+  );
+}
+
+function PaymentHistorySection({ payments, onMarkPaid }: { payments: Payment[]; onMarkPaid: (payment: Payment) => void }) {
+  return (
+    <Section title="Payment history">
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-xs">
+          <thead className="bg-surface-2 uppercase text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-left">Prize</th>
+              <th className="px-3 py-2 text-left">Amount</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2 text-left">Date</th>
+              <th className="px-3 py-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payments.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">No payment records yet</td>
+              </tr>
+            ) : payments.map((payment) => (
+              <tr key={payment.id} className="border-t border-border">
+                <td className="px-3 py-1.5 capitalize">{payment.prize_type}</td>
+                <td className="px-3 py-1.5">₦{payment.amount_naira.toLocaleString()}</td>
+                <td className="px-3 py-1.5 capitalize">{payment.status}</td>
+                <td className="px-3 py-1.5">{payment.created_at ? new Date(payment.created_at).toLocaleString() : "—"}</td>
+                <td className="px-3 py-1.5 text-right">
+                  {payment.status === "pending" ? (
+                    <button onClick={() => onMarkPaid(payment)} className="rounded-md border border-border px-2 py-1 hover:bg-surface-2">Mark paid</button>
+                  ) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Section>
   );
