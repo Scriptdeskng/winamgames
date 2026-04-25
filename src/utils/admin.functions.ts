@@ -410,8 +410,8 @@ export const getBanners = createServerFn({ method: "POST" })
   });
 
 const bannerFields = z.object({
-  title: z.string().min(1).max(120),
-  subtitle: z.string().min(1).max(240),
+  title: z.string().min(1).max(60),
+  subtitle: z.string().min(1).max(120),
   icon_url: z.string().max(500).nullable().optional(),
   is_active: z.boolean(),
   display_order: z.number().int().min(0).max(9999),

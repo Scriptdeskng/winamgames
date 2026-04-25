@@ -42,6 +42,8 @@ interface FormState {
 }
 
 const EMPTY: FormState = { title: "", subtitle: "", icon_url: "", is_active: true, display_order: 0 };
+const TITLE_MAX = 60;
+const SUBTITLE_MAX = 120;
 
 function BannersPage() {
   const session = getAdminSession();
@@ -138,6 +140,11 @@ function BannersPage() {
     }
   };
 
+  const titleOverLimit = editing ? editing.title.length > TITLE_MAX : false;
+  const subtitleOverLimit = editing ? editing.subtitle.length > SUBTITLE_MAX : false;
+  const saveDisabled =
+    busy || !editing?.title || !editing?.subtitle || titleOverLimit || subtitleOverLimit;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -206,6 +213,9 @@ function BannersPage() {
                   onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                   className="h-9 w-full rounded-md border border-border bg-transparent px-3 text-sm"
                 />
+                <p className={`mt-1 text-xs ${titleOverLimit ? "text-destructive" : "text-muted-foreground"}`}>
+                  {editing.title.length} / {TITLE_MAX}
+                </p>
               </Field>
               <Field label="Subtitle">
                 <input
@@ -213,6 +223,9 @@ function BannersPage() {
                   onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })}
                   className="h-9 w-full rounded-md border border-border bg-transparent px-3 text-sm"
                 />
+                <p className={`mt-1 text-xs ${subtitleOverLimit ? "text-destructive" : "text-muted-foreground"}`}>
+                  {editing.subtitle.length} / {SUBTITLE_MAX}
+                </p>
               </Field>
               <Field label="Icon URL (optional)">
                 <input
@@ -256,7 +269,7 @@ function BannersPage() {
               </button>
               <button
                 onClick={save}
-                disabled={busy || !editing.title || !editing.subtitle}
+                disabled={saveDisabled}
                 className="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50"
               >
                 {busy ? "Saving…" : "Save"}
