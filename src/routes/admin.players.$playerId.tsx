@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2, ShieldCheck, CreditCard } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
 import {
   getPlayerDetail,
@@ -8,6 +8,8 @@ import {
   adjustPlayerCoins,
   adjustPlayerXP,
   updateSubscription,
+  verifyKyc,
+  markKycPaid,
 } from "@/utils/admin.functions";
 import { ConfirmModal } from "./-admin/ConfirmModal";
 
@@ -16,7 +18,7 @@ export const Route = createFileRoute("/admin/players/$playerId")({
 });
 
 type Detail = Awaited<ReturnType<typeof getPlayerDetail>>;
-type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub";
+type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub" | "verifyKyc" | "markPaid";
 
 function PlayerDetailPage() {
   const { playerId } = Route.useParams();
@@ -77,6 +79,10 @@ function PlayerDetailPage() {
         await updateSubscription({
           data: { adminId, playerId, action: "extend", days: parseInt(days, 10), reason },
         });
+      } else if (action === "verifyKyc") {
+        await verifyKyc({ data: { adminId, playerId } });
+      } else if (action === "markPaid") {
+        await markKycPaid({ data: { adminId, playerId } });
       }
       closeModal();
       refresh();
@@ -149,6 +155,8 @@ function PlayerDetailPage() {
         />
       </Section>
 
+      <KycSection kyc={(detail as any).kyc} onVerify={() => setAction("verifyKyc")} onMarkPaid={() => setAction("markPaid")} />
+
       <Section title="Recent sessions (last 20)">
         <SimpleTable
           headers={["Date", "Game", "Solved", "Tickets", "Coins", "Hints"]}
@@ -200,13 +208,17 @@ function PlayerDetailPage() {
                 ? "Adjust XP"
                 : action === "cancelSub"
                   ? "Cancel subscription?"
-                  : "Extend subscription"
+                  : action === "extendSub"
+                    ? "Extend subscription"
+                    : action === "verifyKyc"
+                      ? "Verify KYC?"
+                      : "Mark prize as paid?"
         }
         confirmLabel="Confirm"
         loading={busy}
         destructive={action === "flag" ? !p.is_flagged : action === "cancelSub"}
         disableConfirm={
-          reason.trim().length === 0 ||
+          ((action !== "verifyKyc" && action !== "markPaid") && reason.trim().length === 0) ||
           ((action === "coins" || action === "xp") && !amount) ||
           (action === "extendSub" && !days)
         }
@@ -236,16 +248,72 @@ function PlayerDetailPage() {
             />
           </div>
         )}
-        <label className="text-xs text-muted-foreground">Reason (required)</label>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          rows={3}
-          className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
-          placeholder="Enter reason for audit log…"
-        />
+        {action !== "verifyKyc" && action !== "markPaid" && (
+          <>
+            <label className="text-xs text-muted-foreground">Reason (required)</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm"
+              placeholder="Enter reason for audit log…"
+            />
+          </>
+        )}
       </ConfirmModal>
     </div>
+  );
+}
+
+
+function maskAccount(account?: string | null) {
+  return account ? `••••${account.slice(-4)}` : "—";
+}
+
+function KycSection({
+  kyc,
+  onVerify,
+  onMarkPaid,
+}: {
+  kyc: any;
+  onVerify: () => void;
+  onMarkPaid: () => void;
+}) {
+  if (!kyc) {
+    return (
+      <Section title="KYC">
+        <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+          No KYC submitted.
+        </div>
+      </Section>
+    );
+  }
+
+  return (
+    <Section title="KYC">
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3 text-sm">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat label="Identity" value={kyc.submitted_at ? `Submitted ${new Date(kyc.submitted_at).toLocaleDateString()}` : "Not submitted"} />
+          <Stat label="Bank" value={kyc.bank_details_submitted_at ? `${kyc.bank_name ?? "—"} ${maskAccount(kyc.account_number)}` : "Not submitted"} />
+          <Stat label="Verified" value={kyc.verified ? `Yes${kyc.verified_at ? ` · ${new Date(kyc.verified_at).toLocaleDateString()}` : ""}` : "No"} />
+          <Stat label="Payment" value={kyc.payment_processed ? `Paid${kyc.payment_processed_at ? ` · ${new Date(kyc.payment_processed_at).toLocaleDateString()}` : ""}` : "Pending"} />
+        </div>
+        <div className="text-xs text-muted-foreground">
+          <p>Name: <span className="text-foreground">{kyc.first_name} {kyc.last_name}</span></p>
+          <p>ID type: <span className="uppercase text-foreground">{kyc.id_type}</span></p>
+          {kyc.account_name && <p>Account name: <span className="text-foreground">{kyc.account_name}</span></p>}
+          {kyc.verified_by && <p>Verified by: <span className="font-mono text-foreground">{String(kyc.verified_by).slice(0, 8)}</span></p>}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Btn onClick={onVerify} icon={ShieldCheck}>
+            Verify KYC
+          </Btn>
+          <Btn onClick={onMarkPaid} icon={CreditCard}>
+            Mark paid
+          </Btn>
+        </div>
+      </div>
+    </Section>
   );
 }
 
