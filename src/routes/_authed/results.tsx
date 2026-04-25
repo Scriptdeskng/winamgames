@@ -83,7 +83,7 @@ function ResultsPage() {
   const remainder = puzzlesSolved % 5;
   if (remainder > 0) {
     const need = 5 - remainder;
-    nudge = `${need} more puzzle${need === 1 ? "" : "s"} next round would earn another ticket`;
+    nudge = `${need} more puzzle${need === 1 ? "" : "s"} this round would have earned another ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
@@ -95,7 +95,7 @@ function ResultsPage() {
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background flex flex-col">
       <TopBar backTo="/app" title="Results" />
-      <div className="flex-1 flex flex-col px-6 pb-8 pt-8">
+      <div className="flex-1 flex flex-col justify-center px-6 pb-8 pt-8">
         {/* Rank up notification — discrete event, kept as bordered chip above hero */}
         {rankedUp && (
           <div className="w-full mb-6 rounded-xl bg-xp/10 border border-xp/20 p-3 flex items-center gap-3">
@@ -161,7 +161,7 @@ function ResultsPage() {
         </div>
 
         {/* CTAs anchored to bottom */}
-        <div className="mt-auto pt-8">
+        <div className="mt-8">
           <button
             onClick={handlePlayAgain}
             className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center hover:bg-primary/90 transition-all shadow-glow"
