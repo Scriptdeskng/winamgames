@@ -289,12 +289,17 @@ function WinnersAdminPage() {
 }
 
 function KycPill({ status }: { status: string }) {
-  const style = status === "Paid"
-    ? "border-success/30 bg-success/10 text-success"
-    : status === "Verified"
+  const style = status === "Verified"
       ? "border-primary/30 bg-primary/10 text-primary"
       : status === "Complete"
         ? "border-gold/30 bg-gold/10 text-gold"
         : "border-border bg-surface-2 text-muted-foreground";
+  return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style}`}>{status}</span>;
+}
+
+function PaymentPill({ status }: { status: string }) {
+  const style = status === "Paid"
+    ? "border-success/30 bg-success/10 text-success"
+    : "border-gold/30 bg-gold/10 text-gold";
   return <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${style}`}>{status}</span>;
 }
