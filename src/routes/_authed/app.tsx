@@ -145,14 +145,29 @@ function formatNaira(amount: number) {
 
 function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
   const [dismissed, setDismissed] = React.useState(false);
+  const kyc = winnerStatus?.kyc;
+  const claimComplete = !!(kyc?.identitySubmitted && kyc?.bankSubmitted && !kyc?.paymentProcessed);
 
   React.useEffect(() => {
-    if (!winnerStatus?.won || winnerStatus.prizeType !== "airtime") return;
-    const key = `winner-airtime-dismissed-${winnerStatus.winnerId}`;
-    setDismissed(localStorage.getItem(key) === "1");
-  }, [winnerStatus]);
+    if (!winnerStatus?.won) {
+      setDismissed(false);
+      return;
+    }
+    if (winnerStatus.prizeType === "airtime") {
+      const key = `winner-airtime-dismissed-${winnerStatus.winnerId}`;
+      setDismissed(localStorage.getItem(key) === "1");
+      return;
+    }
+    if (claimComplete) {
+      const key = `winner-claim-dismissed-${winnerStatus.winnerId}`;
+      setDismissed(localStorage.getItem(key) === "1");
+      return;
+    }
+    setDismissed(false);
+  }, [winnerStatus?.won, winnerStatus?.prizeType, winnerStatus?.winnerId, claimComplete]);
 
   if (!winnerStatus?.won) return null;
+  if (kyc?.paymentProcessed) return null;
 
   if (winnerStatus.prizeType === "airtime") {
     if (dismissed) return null;
@@ -177,7 +192,8 @@ function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
     );
   }
 
-  const kyc = winnerStatus.kyc;
+  if (claimComplete && dismissed) return null;
+
   let title = `🏆 You won ${formatNaira(winnerStatus.prizeAmount)}!`;
   let body = "Complete verification to claim your prize.";
   let action: { label: string; step: 1 | 2 } | null = { label: "Claim my prize", step: 1 };
@@ -190,14 +206,22 @@ function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
     title = "🏆 Prize claim complete.";
     body = "Your payment will be processed within 3 business days.";
     action = null;
-  } else if (kyc?.paymentProcessed) {
-    title = "🏆 Prize paid!";
-    body = "Your winnings have been sent to your account.";
-    action = null;
   }
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/20 via-surface-1 to-surface-1 p-4 shadow-card">
+      {claimComplete && (
+        <button
+          onClick={() => {
+            localStorage.setItem(`winner-claim-dismissed-${winnerStatus.winnerId}`, "1");
+            setDismissed(true);
+          }}
+          className="absolute right-3 top-3 z-10 rounded-full p-1 text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          aria-label="Dismiss completed prize claim notice"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/20 blur-2xl" />
       <div className="relative flex gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
