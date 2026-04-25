@@ -192,7 +192,7 @@ export const getPlayerDetail = createServerFn({ method: "POST" })
     await assertAdmin(data.adminId);
     const supabaseAdmin = await getAdmin();
 
-    const [playerRes, subsRes, sessionsRes, ledgerRes, missionsRes] = await Promise.all([
+    const [playerRes, subsRes, sessionsRes, ledgerRes, missionsRes, kycRes] = await Promise.all([
       supabaseAdmin.from("winam_players").select("*").eq("id", data.playerId).maybeSingle(),
       supabaseAdmin
         .from("winam_subscriptions")
@@ -216,6 +216,10 @@ export const getPlayerDetail = createServerFn({ method: "POST" })
         .eq("player_id", data.playerId)
         .order("completed_at", { ascending: false, nullsFirst: false })
         .limit(20),
+      (supabaseAdmin.from("winam_kyc") as any)
+        .select("*")
+        .eq("player_id", data.playerId)
+        .maybeSingle(),
     ]);
 
     return {
@@ -224,6 +228,7 @@ export const getPlayerDetail = createServerFn({ method: "POST" })
       sessions: sessionsRes.data ?? [],
       ledger: ledgerRes.data ?? [],
       missions: missionsRes.data ?? [],
+      kyc: kycRes.data ?? null,
     };
   });
 
@@ -582,6 +587,57 @@ export const updatePlatformConfig = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+
+// ============================================================
+// KYC ADMIN
+// ============================================================
+export const getKycForPlayer = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ adminId: z.string().uuid(), playerId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.adminId);
+    const supabaseAdmin = await getAdmin();
+    const { data: kyc, error } = await (supabaseAdmin.from("winam_kyc") as any)
+      .select("*")
+      .eq("player_id", data.playerId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { kyc: kyc ?? null };
+  });
+
+export const verifyKyc = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ adminId: z.string().uuid(), playerId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.adminId);
+    const supabaseAdmin = await getAdmin();
+    const { error } = await (supabaseAdmin.from("winam_kyc") as any)
+      .update({
+        verified: true,
+        verified_at: new Date().toISOString(),
+        verified_by: data.adminId,
+      })
+      .eq("player_id", data.playerId);
+    if (error) throw new Error(error.message);
+    await audit(data.adminId, "kyc_verify", "player", data.playerId, {});
+    return { success: true };
+  });
+
+export const markKycPaid = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ adminId: z.string().uuid(), playerId: z.string().uuid() }))
+  .handler(async ({ data }) => {
+    await assertAdmin(data.adminId);
+    const supabaseAdmin = await getAdmin();
+    const { error } = await (supabaseAdmin.from("winam_kyc") as any)
+      .update({
+        payment_processed: true,
+        payment_processed_at: new Date().toISOString(),
+        payment_processed_by: data.adminId,
+      })
+      .eq("player_id", data.playerId);
+    if (error) throw new Error(error.message);
+    await audit(data.adminId, "kyc_mark_paid", "player", data.playerId, {});
+    return { success: true };
+  });
+
 // ============================================================
 // DRAW MANAGEMENT
 // ============================================================
@@ -793,19 +849,27 @@ export const getWinners = createServerFn({ method: "POST" })
 
     const playerIds = Array.from(new Set((rows ?? []).map((r) => r.player_id).filter(Boolean) as string[]));
     let playerMap: Record<string, { nickname: string | null; msisdn_last4: string }> = {};
+    let kycMap: Record<string, any> = {};
     if (playerIds.length > 0) {
-      const { data: players } = await supabaseAdmin
-        .from("winam_players")
-        .select("id, nickname, msisdn_last4")
-        .in("id", playerIds);
+      const [{ data: players }, { data: kycRows }] = await Promise.all([
+        supabaseAdmin
+          .from("winam_players")
+          .select("id, nickname, msisdn_last4")
+          .in("id", playerIds),
+        (supabaseAdmin.from("winam_kyc") as any)
+          .select("*")
+          .in("player_id", playerIds),
+      ]);
       playerMap = Object.fromEntries(
         (players ?? []).map((p) => [p.id, { nickname: p.nickname, msisdn_last4: p.msisdn_last4 }])
       );
+      kycMap = Object.fromEntries((kycRows ?? []).map((k: any) => [k.player_id, k]));
     }
     return {
       winners: (rows ?? []).map((r) => ({
         ...r,
         player: r.player_id ? playerMap[r.player_id] ?? null : null,
+        kyc: r.player_id ? kycMap[r.player_id] ?? null : null,
       })),
     };
   });
