@@ -73,16 +73,17 @@ function ResultsPage() {
   if (streakBonusEntries > 0) breakdownParts.push(`Day ${streak} streak +${streakBonusEntries}`);
   if (missionEntries > 0) breakdownParts.push(`Mission bonus +${missionEntries}`);
 
-  // Next session nudge
+  const puzzlesSolvedLabel =
+    puzzlesSolved === 0
+      ? "No puzzles solved"
+      : `${puzzlesSolved} puzzle${puzzlesSolved === 1 ? "" : "s"} solved`;
+
+  // Next round nudge
   let nudge = "";
   const remainder = puzzlesSolved % 5;
-  if (puzzlesSolved === 0) {
-    nudge = "Solve at least 5 puzzles in a round to earn tickets";
-  } else if (remainder === 0) {
-    nudge = "Every 5 puzzles solved earns 1 ticket";
-  } else {
+  if (remainder > 0) {
     const need = 5 - remainder;
-    nudge = `${need} more puzzle${need === 1 ? "" : "s"} would have earned you another ticket`;
+    nudge = `${need} more puzzle${need === 1 ? "" : "s"} next round would earn another ticket`;
   }
 
   const weekPct = weekCap > 0 ? Math.min(100, (weekTotal / weekCap) * 100) : 0;
@@ -112,43 +113,29 @@ function ResultsPage() {
 
         {/* Hero block */}
         <div className="flex flex-col items-center text-center">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" aria-hidden />
-            <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-b from-primary/25 to-primary/10 border border-primary/30 shadow-glow flex items-center justify-center">
-              <Trophy className="h-10 w-10 text-primary" />
-            </div>
-          </div>
+          <Trophy className="mb-5 h-12 w-12 text-primary" />
 
           <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
             Round Complete
           </p>
 
+          <p className="mt-3 text-4xl font-bold leading-tight text-foreground">{puzzlesSolvedLabel}</p>
+
           {entries > 0 ? (
             <>
-              <p
-                className="mt-2 text-5xl font-bold tabular-nums text-primary"
-                style={{ textShadow: "0 0 24px hsl(var(--primary) / 0.35)" }}
-              >
+              <p className="mt-3 text-2xl font-bold tabular-nums text-primary">
                 +{entries}
-                <span className="ml-2 text-2xl font-semibold align-baseline">
-                  {entries === 1 ? "ticket" : "tickets"}
+                <span className="ml-2 text-lg font-semibold align-baseline">
+                  {entries === 1 ? "ticket" : "tickets"} earned
                 </span>
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">Added to your weekly draw</p>
               {breakdownParts.length > 0 && (
                 <p className="mt-3 text-xs text-muted-foreground/70">
                   {breakdownParts.join("  ·  ")}
                 </p>
               )}
             </>
-          ) : (
-            <>
-              <p className="mt-3 text-3xl font-bold">No tickets this time</p>
-              <p className="mt-2 text-sm text-muted-foreground max-w-[280px]">
-                Every 5 puzzles solved earns 1 ticket toward the weekly draw
-              </p>
-            </>
-          )}
+          ) : null}
         </div>
 
         {/* Hairline divider */}
@@ -156,16 +143,14 @@ function ResultsPage() {
 
         {/* Weekly progress — flat block, no card chrome */}
         <div className="mt-6">
-          <div className="flex items-baseline justify-between mb-2.5">
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">
-              Tickets earned this week
-            </span>
-            <span className="text-sm font-semibold tabular-nums">
-              {weekTotal} <span className="text-muted-foreground font-normal">of {weekCap}</span>
-            </span>
+          <div className="mb-3 flex items-baseline justify-center">
+            <p className="text-lg font-semibold text-foreground">
+              <span className="text-2xl font-bold tabular-nums text-primary">{weekTotal}</span>
+              <span className="text-muted-foreground"> of {weekCap} tickets this week</span>
+            </p>
           </div>
           <Progress value={weekPct} />
-          <p className="mt-3 text-xs text-muted-foreground">{nudge}</p>
+          {nudge && <p className="mt-3 text-xs text-muted-foreground text-center">{nudge}</p>}
 
           {streakPill && (
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-streak/10 border border-streak/20 px-3 py-1.5">
@@ -185,7 +170,7 @@ function ResultsPage() {
           </button>
           <Link
             to="/app"
-            className="mt-3 w-full h-14 rounded-xl bg-surface-1 border border-border text-foreground font-semibold text-base flex items-center justify-center hover:bg-surface-2 transition-all"
+            className="mt-4 w-full h-10 text-muted-foreground font-semibold text-sm flex items-center justify-center hover:text-foreground transition-colors"
           >
             Back to Home
           </Link>
