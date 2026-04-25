@@ -205,6 +205,7 @@ function WinnersAdminPage() {
                               <th className="px-2 py-1 text-left">Player</th>
                               <th className="px-2 py-1 text-left">Prize</th>
                               <th className="px-2 py-1 text-left">KYC</th>
+                              <th className="px-2 py-1 text-left">Payment</th>
                               <th className="px-2 py-1 text-left">Payout details</th>
                               <th className="px-2 py-1 text-left">Ticket</th>
                               <th className="px-2 py-1 text-right">Actions</th>
@@ -228,8 +229,12 @@ function WinnersAdminPage() {
                                   {wn.prize_type === "cash" ? (
                                     <div className="flex flex-wrap gap-1">
                                       <KycPill status={kycStatus(wn.kyc)} />
-                                      <PaymentPill status={paymentStatus(wn.payment)} />
                                     </div>
+                                  ) : "—"}
+                                </td>
+                                <td className="px-2 py-1">
+                                  {wn.prize_type === "cash" && wn.kyc?.submitted_at ? (
+                                    <PaymentPill status={paymentStatus(wn.payment)} />
                                   ) : "—"}
                                 </td>
                                 <td className="px-2 py-1 text-muted-foreground">
