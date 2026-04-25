@@ -417,11 +417,23 @@ const bannerFields = z.object({
   display_order: z.number().int().min(0).max(9999),
 });
 
+async function assertActiveBannerLimit(supabaseAdmin: Awaited<ReturnType<typeof getAdmin>>, bannerId?: string) {
+  let query = supabaseAdmin
+    .from("winam_banners")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true);
+  if (bannerId) query = query.neq("id", bannerId);
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  if ((count ?? 0) >= 3) throw new Error("Maximum of 3 active banners allowed.");
+}
+
 export const createBanner = createServerFn({ method: "POST" })
   .inputValidator(z.object({ adminId: z.string().uuid() }).merge(bannerFields))
   .handler(async ({ data }) => {
     await assertAdmin(data.adminId);
     const supabaseAdmin = await getAdmin();
+    if (data.is_active) await assertActiveBannerLimit(supabaseAdmin);
     const { data: row, error } = await supabaseAdmin
       .from("winam_banners")
       .insert({
@@ -448,6 +460,7 @@ export const updateBanner = createServerFn({ method: "POST" })
     await assertAdmin(data.adminId);
     const supabaseAdmin = await getAdmin();
     const { adminId, bannerId, ...patch } = data;
+    if (patch.is_active === true) await assertActiveBannerLimit(supabaseAdmin, bannerId);
     const { error } = await supabaseAdmin
       .from("winam_banners")
       .update(patch)
