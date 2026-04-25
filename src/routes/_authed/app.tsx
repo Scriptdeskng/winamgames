@@ -196,7 +196,7 @@ function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
 
   let title = `🏆 You won ${formatNaira(winnerStatus.prizeAmount)}!`;
   let body = "Complete verification to claim your prize.";
-  let action: { label: string; step: 1 | 2 } | null = { label: "Claim my prize", step: 1 };
+  let action: { label: string; step?: 1 | 2 } | null = { label: "Claim my prize" };
 
   if (kyc?.identitySubmitted && !kyc?.bankSubmitted) {
     title = "🏆 One more step!";
@@ -233,7 +233,7 @@ function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
           {action && (
             <Link
               to="/kyc"
-              search={{ winnerId: winnerStatus.winnerId, step: action.step }}
+              search={{ winnerId: winnerStatus.winnerId, ...(action.step ? { step: action.step } : {}) }}
               className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl bg-gold px-4 text-sm font-bold text-background"
             >
               {action.label} <ChevronRight className="h-4 w-4" />

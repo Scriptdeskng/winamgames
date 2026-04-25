@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
-import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck, Trophy } from "lucide-react";
 import { z } from "zod";
 import React from "react";
 import { TopBar } from "@/components/layout/TopBar";
@@ -78,13 +78,15 @@ function KycPage() {
   }, [session?.playerId]);
 
   const identityLocked = !!kyc?.submitted_at;
-  const step = identityLocked && search.step === 1 ? 2 : search.step;
+  const bankSubmitted = !!kyc?.bank_details_submitted_at;
+  const showConfirmation = identityLocked && bankSubmitted && search.step !== 2;
+  const step = identityLocked ? 2 : search.step;
 
   React.useEffect(() => {
-    if (identityLocked && search.step === 1) {
+    if (identityLocked && !bankSubmitted && search.step === 1) {
       navigate({ search: { ...search, step: 2 }, replace: true });
     }
-  }, [identityLocked, navigate, search.step]);
+  }, [identityLocked, bankSubmitted, navigate, search.step]);
 
   if (!session || loading) {
     return (
@@ -98,10 +100,21 @@ function KycPage() {
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/app" title="Claim Prize" />
       <div className="px-4 pb-8 space-y-4">
-        <ProgressHeader step={step} />
+        {showConfirmation ? (
+          <h1 className="px-1 text-xl font-bold">Claim Prize</h1>
+        ) : (
+          <ProgressHeader step={step} />
+        )}
 
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-1 to-surface-1 p-5 shadow-card">
-          {step === 1 ? (
+          {showConfirmation ? (
+            <ReturningWinnerConfirmation
+              playerId={session.playerId}
+              kyc={kyc}
+              onUpdateBank={() => navigate({ search: { ...search, step: 2 } })}
+              onDone={() => navigate({ to: "/app" })}
+            />
+          ) : step === 1 ? (
             <IdentityStep
               playerId={session.playerId}
               onDone={() => {
@@ -347,6 +360,88 @@ function BankStep({
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit claim details"}
       </button>
     </form>
+  );
+}
+
+function ReturningWinnerConfirmation({
+  playerId,
+  kyc,
+  onUpdateBank,
+  onDone,
+}: {
+  playerId: string;
+  kyc: KycStatus;
+  onUpdateBank: () => void;
+  onDone: () => void;
+}) {
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const last4 = kyc?.account_number ? String(kyc.account_number).slice(-4) : "";
+  const fullName = [kyc?.first_name, kyc?.last_name].filter(Boolean).join(" ").trim();
+
+  const confirm = async () => {
+    if (!kyc?.bank_code || !kyc.bank_name || !kyc.account_number) {
+      setError("Update your bank details before confirming this claim.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await submitKycBankDetails({
+        data: {
+          playerId,
+          bankCode: kyc.bank_code,
+          bankName: kyc.bank_name,
+          accountNumber: kyc.account_number,
+          accountName: kyc.account_name ?? undefined,
+        },
+      });
+      onDone();
+    } catch (err) {
+      setError((err as Error).message || "Could not confirm prize claim.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
+          <Trophy className="h-5 w-5 text-gold" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">Claim your prize</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Your verified details are on file.</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface-2 p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Paying to</p>
+        <p className="mt-2 text-sm font-bold">{kyc?.bank_name} ••••{last4}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{fullName}</p>
+      </div>
+
+      {error && <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">{error}</p>}
+
+      <div className="grid gap-2">
+        <button
+          type="button"
+          disabled={saving}
+          onClick={confirm}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Confirm claim <ChevronRight className="h-4 w-4" /></>}
+        </button>
+        <button
+          type="button"
+          onClick={onUpdateBank}
+          className="h-11 rounded-xl border border-border bg-surface-2 text-sm font-semibold text-foreground"
+        >
+          Update bank details
+        </button>
+      </div>
+    </div>
   );
 }
 

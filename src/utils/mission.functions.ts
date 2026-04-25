@@ -392,7 +392,7 @@ export const getKycStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: kyc } = await (supabaseAdmin.from("winam_kyc") as any)
-      .select("submitted_at, bank_details_submitted_at, bank_name, account_number, verified, payment_processed")
+      .select("submitted_at, bank_details_submitted_at, bank_name, bank_code, account_number, account_name, first_name, last_name, dob, id_type, verified, payment_processed")
       .eq("player_id", data.playerId)
       .maybeSingle();
     return { kyc };
