@@ -902,8 +902,9 @@ export const getWinners = createServerFn({ method: "POST" })
     const playerIds = Array.from(new Set((rows ?? []).map((r) => r.player_id).filter(Boolean) as string[]));
     let playerMap: Record<string, { nickname: string | null; msisdn_last4: string }> = {};
     let kycMap: Record<string, any> = {};
+    let paymentMap: Record<string, any> = {};
     if (playerIds.length > 0) {
-      const [{ data: players }, { data: kycRows }] = await Promise.all([
+      const [{ data: players }, { data: kycRows }, { data: payments }] = await Promise.all([
         supabaseAdmin
           .from("winam_players")
           .select("id, nickname, msisdn_last4")
@@ -911,17 +912,22 @@ export const getWinners = createServerFn({ method: "POST" })
         (supabaseAdmin.from("winam_kyc") as any)
           .select("*")
           .in("player_id", playerIds),
+        (supabaseAdmin.from("winam_payments") as any)
+          .select("winner_id, id, status, paid_at")
+          .in("winner_id", (rows ?? []).map((r) => r.id)),
       ]);
       playerMap = Object.fromEntries(
         (players ?? []).map((p) => [p.id, { nickname: p.nickname, msisdn_last4: p.msisdn_last4 }])
       );
       kycMap = Object.fromEntries((kycRows ?? []).map((k: any) => [k.player_id, k]));
+      paymentMap = Object.fromEntries((payments ?? []).map((p: any) => [p.winner_id, p]));
     }
     return {
       winners: (rows ?? []).map((r) => ({
         ...r,
         player: r.player_id ? playerMap[r.player_id] ?? null : null,
         kyc: r.player_id ? kycMap[r.player_id] ?? null : null,
+        payment: r.id ? paymentMap[r.id] ?? null : null,
       })),
     };
   });
