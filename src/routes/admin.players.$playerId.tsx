@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2, ShieldCheck, CreditCard } from "lucide-react";
+import { ArrowLeft, Flag, Coins, Sparkles, X, Plus, Loader2, ShieldCheck } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
 import {
   getPlayerDetail,
@@ -9,7 +9,9 @@ import {
   adjustPlayerXP,
   updateSubscription,
   verifyKyc,
-  markKycPaid,
+  getKycForPlayer,
+  getPaymentsForPlayer,
+  markPaymentPaid,
 } from "@/utils/admin.functions";
 import { ConfirmModal } from "./-admin/ConfirmModal";
 
@@ -18,7 +20,8 @@ export const Route = createFileRoute("/admin/players/$playerId")({
 });
 
 type Detail = Awaited<ReturnType<typeof getPlayerDetail>>;
-type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub" | "verifyKyc" | "markPaid";
+type Payment = Awaited<ReturnType<typeof getPaymentsForPlayer>>["payments"][number];
+type Action = "flag" | "coins" | "xp" | "cancelSub" | "extendSub" | "verifyKyc" | "markPaymentPaid";
 
 function PlayerDetailPage() {
   const { playerId } = Route.useParams();
