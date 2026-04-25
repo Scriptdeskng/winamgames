@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
-import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck, Trophy } from "lucide-react";
 import { z } from "zod";
 import React from "react";
 import { TopBar } from "@/components/layout/TopBar";
@@ -78,13 +78,15 @@ function KycPage() {
   }, [session?.playerId]);
 
   const identityLocked = !!kyc?.submitted_at;
-  const step = identityLocked && search.step === 1 ? 2 : search.step;
+  const bankSubmitted = !!kyc?.bank_details_submitted_at;
+  const showConfirmation = identityLocked && bankSubmitted && search.step !== 2;
+  const step = identityLocked ? 2 : search.step;
 
   React.useEffect(() => {
-    if (identityLocked && search.step === 1) {
+    if (identityLocked && !bankSubmitted && search.step === 1) {
       navigate({ search: { ...search, step: 2 }, replace: true });
     }
-  }, [identityLocked, navigate, search.step]);
+  }, [identityLocked, bankSubmitted, navigate, search.step]);
 
   if (!session || loading) {
     return (
@@ -98,10 +100,21 @@ function KycPage() {
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/app" title="Claim Prize" />
       <div className="px-4 pb-8 space-y-4">
-        <ProgressHeader step={step} />
+        {showConfirmation ? (
+          <h1 className="px-1 text-xl font-bold">Claim Prize</h1>
+        ) : (
+          <ProgressHeader step={step} />
+        )}
 
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-1 to-surface-1 p-5 shadow-card">
-          {step === 1 ? (
+          {showConfirmation ? (
+            <ReturningWinnerConfirmation
+              playerId={session.playerId}
+              kyc={kyc}
+              onUpdateBank={() => navigate({ search: { ...search, step: 2 } })}
+              onDone={() => navigate({ to: "/app" })}
+            />
+          ) : step === 1 ? (
             <IdentityStep
               playerId={session.playerId}
               onDone={() => {
