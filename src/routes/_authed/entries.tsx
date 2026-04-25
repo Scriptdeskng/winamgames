@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authed/entries")({
   component: EntriesPage,
   head: () => ({
     meta: [
-      { title: "My Entries — WinamGames" },
+      { title: "My Tickets — WinamGames" },
       { name: "description", content: "View your weekly draw tickets." },
     ],
   }),
@@ -60,7 +60,7 @@ function EntriesPage() {
 
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-      <TopBar backTo="/app" title="My Entries" />
+      <TopBar backTo="/app" title="My Tickets" />
       <div className="px-4 pb-6 space-y-5">
         {currentWeek ? (
           <CurrentWeekTickets week={currentWeek} weekCap={data.weekCap} />
