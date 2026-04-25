@@ -363,6 +363,88 @@ function BankStep({
   );
 }
 
+function ReturningWinnerConfirmation({
+  playerId,
+  kyc,
+  onUpdateBank,
+  onDone,
+}: {
+  playerId: string;
+  kyc: KycStatus;
+  onUpdateBank: () => void;
+  onDone: () => void;
+}) {
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const last4 = kyc?.account_number ? String(kyc.account_number).slice(-4) : "";
+  const fullName = [kyc?.first_name, kyc?.last_name].filter(Boolean).join(" ").trim();
+
+  const confirm = async () => {
+    if (!kyc?.bank_code || !kyc.bank_name || !kyc.account_number) {
+      setError("Update your bank details before confirming this claim.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await submitKycBankDetails({
+        data: {
+          playerId,
+          bankCode: kyc.bank_code,
+          bankName: kyc.bank_name,
+          accountNumber: kyc.account_number,
+          accountName: kyc.account_name ?? undefined,
+        },
+      });
+      onDone();
+    } catch (err) {
+      setError((err as Error).message || "Could not confirm prize claim.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
+          <Trophy className="h-5 w-5 text-gold" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">Claim your prize</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Your verified details are on file.</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface-2 p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Paying to</p>
+        <p className="mt-2 text-sm font-bold">{kyc?.bank_name} ••••{last4}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{fullName}</p>
+      </div>
+
+      {error && <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">{error}</p>}
+
+      <div className="grid gap-2">
+        <button
+          type="button"
+          disabled={saving}
+          onClick={confirm}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-glow disabled:opacity-60"
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Confirm claim <ChevronRight className="h-4 w-4" /></>}
+        </button>
+        <button
+          type="button"
+          onClick={onUpdateBank}
+          className="h-11 rounded-xl border border-border bg-surface-2 text-sm font-semibold text-foreground"
+        >
+          Update bank details
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
