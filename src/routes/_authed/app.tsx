@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
   ChevronRight, Swords, BookOpen, Check, Flame,
-  Sparkles, Shuffle, Ticket, Calendar,
+  Sparkles, Shuffle, Ticket, Calendar, Trophy, X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { getPlayerData, getActiveMissions, getActiveBanners } from "@/utils/mission.functions";
+import { getPlayerData, getActiveMissions, getActiveBanners, getMyWinnerStatus } from "@/utils/mission.functions";
 import { getSession } from "@/lib/session";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { BannerStack, type Banner } from "@/components/home/BannerStack";
@@ -55,6 +55,7 @@ function HomePage() {
     playerResult: any;
     missionsResult: any;
     bannersResult: any;
+    winnerStatus: any;
   } | null>(null);
 
   React.useEffect(() => {
@@ -63,8 +64,9 @@ function HomePage() {
       getPlayerData({ data: { playerId: session.playerId } }),
       getActiveMissions({ data: { playerId: session.playerId } }),
       getActiveBanners(),
-    ]).then(([playerResult, missionsResult, bannersResult]) => {
-      setData({ playerResult, missionsResult, bannersResult });
+      getMyWinnerStatus({ data: { playerId: session.playerId } }),
+    ]).then(([playerResult, missionsResult, bannersResult, winnerStatus]) => {
+      setData({ playerResult, missionsResult, bannersResult, winnerStatus });
     });
   }, []);
 
@@ -74,6 +76,7 @@ function HomePage() {
   const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
+  const winnerStatus = data?.winnerStatus;
   const streak = player?.currentStreak ?? 0;
   const tier: RankTier = player?.rankTier ?? "starter";
 
@@ -94,6 +97,8 @@ function HomePage() {
           weekTotal={weekTotal}
           weekCap={weekCap}
         />
+
+        <WinnerBanner winnerStatus={winnerStatus} />
 
         <StreakRankStrip streak={streak} tier={tier} />
 
@@ -128,6 +133,89 @@ function HomePage() {
           </div>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+
+function formatNaira(amount: number) {
+  return `₦${amount.toLocaleString("en-NG")}`;
+}
+
+function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
+  const [dismissed, setDismissed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!winnerStatus?.won || winnerStatus.prizeType !== "airtime") return;
+    const key = `winner-airtime-dismissed-${winnerStatus.winnerId}`;
+    setDismissed(localStorage.getItem(key) === "1");
+  }, [winnerStatus]);
+
+  if (!winnerStatus?.won) return null;
+
+  if (winnerStatus.prizeType === "airtime") {
+    if (dismissed) return null;
+    const key = `winner-airtime-dismissed-${winnerStatus.winnerId}`;
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-success/30 bg-success/10 p-4 shadow-card">
+        <button
+          onClick={() => {
+            localStorage.setItem(key, "1");
+            setDismissed(true);
+          }}
+          className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          aria-label="Dismiss airtime winner notice"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="pr-8">
+          <p className="text-base font-bold text-success">🎉 You won {formatNaira(winnerStatus.prizeAmount)} airtime!</p>
+          <p className="mt-1 text-sm text-muted-foreground">It will be sent to your number within 24 hours.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const kyc = winnerStatus.kyc;
+  let title = `🏆 You won ${formatNaira(winnerStatus.prizeAmount)}!`;
+  let body = "Complete verification to claim your prize.";
+  let action: { label: string; step: 1 | 2 } | null = { label: "Claim my prize", step: 1 };
+
+  if (kyc?.identitySubmitted && !kyc?.bankSubmitted) {
+    title = "🏆 One more step!";
+    body = "Add your bank details to complete your claim.";
+    action = { label: "Add bank details", step: 2 };
+  } else if (kyc?.identitySubmitted && kyc?.bankSubmitted && !kyc?.paymentProcessed) {
+    title = "🏆 Prize claim complete.";
+    body = "Your payment will be processed within 3 business days.";
+    action = null;
+  } else if (kyc?.paymentProcessed) {
+    title = "🏆 Prize paid!";
+    body = "Your winnings have been sent to your account.";
+    action = null;
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/20 via-surface-1 to-surface-1 p-4 shadow-card">
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/20 blur-2xl" />
+      <div className="relative flex gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
+          <Trophy className="h-5 w-5 text-gold" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-bold text-foreground">{title}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+          {action && (
+            <Link
+              to="/kyc"
+              search={{ winnerId: winnerStatus.winnerId, step: action.step }}
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl bg-gold px-4 text-sm font-bold text-background"
+            >
+              {action.label} <ChevronRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
