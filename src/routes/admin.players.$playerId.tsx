@@ -168,7 +168,15 @@ function PlayerDetailPage() {
         />
       </Section>
 
-      <KycSection kyc={(detail as any).kyc} onVerify={() => setAction("verifyKyc")} onMarkPaid={() => setAction("markPaid")} />
+      <KycSection kyc={kyc} onVerify={() => setAction("verifyKyc")} />
+
+      <PaymentHistorySection
+        payments={payments}
+        onMarkPaid={(payment) => {
+          setPaymentToMark(payment);
+          setAction("markPaymentPaid");
+        }}
+      />
 
       <Section title="Recent sessions (last 20)">
         <SimpleTable
@@ -231,7 +239,7 @@ function PlayerDetailPage() {
         loading={busy}
         destructive={action === "flag" ? !p.is_flagged : action === "cancelSub"}
         disableConfirm={
-          ((action !== "verifyKyc" && action !== "markPaid") && reason.trim().length === 0) ||
+          ((action !== "verifyKyc" && action !== "markPaymentPaid") && reason.trim().length === 0) ||
           ((action === "coins" || action === "xp") && !amount) ||
           (action === "extendSub" && !days)
         }
@@ -261,7 +269,7 @@ function PlayerDetailPage() {
             />
           </div>
         )}
-        {action !== "verifyKyc" && action !== "markPaid" && (
+        {action !== "verifyKyc" && action !== "markPaymentPaid" && (
           <>
             <label className="text-xs text-muted-foreground">Reason (required)</label>
             <textarea
