@@ -1,33 +1,16 @@
-Plan to redesign `src/routes/_authed/results.tsx` only:
+Plan for `src/routes/_authed/results.tsx` only:
 
-1. Update the hero/header area
-   - Keep the `Round Complete` label.
-   - Keep the trophy icon, but remove its background card/glow wrapper so it appears cleaner.
-   - Make the first major headline the puzzles-solved stat:
-     - `No puzzles solved` when `puzzlesSolved === 0`
-     - `1 puzzle solved` when `puzzlesSolved === 1`
-     - `${puzzlesSolved} puzzles solved` otherwise
+1. Update nudge copy
+   - Change the generated nudge text to:
+     `${need} more puzzle${need === 1 ? "" : "s"} this round would have earned another ticket`
+   - Keep the existing `remainder > 0` condition and calculation unchanged.
 
-2. Adjust ticket earning display
-   - Remove the current zero-ticket headline/subtext.
-   - Show a single ticket line only when `entries > 0`, e.g. `+2 tickets earned` / `+1 ticket earned`.
-   - Keep existing breakdown chips/text if present, but place them beneath the ticket-earned line.
-
-3. Rework weekly progress as the motivating anchor
-   - Replace the current label layout with a stronger line like: `39 of 50 tickets this week`.
-   - Make the number/label larger and bolder than the current small uppercase treatment.
-   - Keep the same progress calculation and `Progress` component.
-   - Show the nudge only when `remainder > 0`, with copy: `${need} more puzzle(s) next round would earn another ticket`.
-   - Omit the nudge entirely when `remainder === 0`.
-
-4. Keep streak pill but reposition it
-   - Leave streak pill logic/copy unchanged.
-   - Place it directly under the weekly progress bar/nudge area.
-
-5. Reduce secondary CTA weight
-   - Keep `Play again` as the full green primary button.
-   - Change `Back to Home` from bordered/background button styling to a plain text link.
+2. Reduce empty vertical gap before CTAs
+   - Adjust the results page flex layout so the hero, weekly progress/streak area, and CTA section are distributed more evenly vertically.
+   - Keep “Play again” as the full green button and “Back to Home” as a plain text link.
+   - Avoid changing any data fetching, ticket logic, route behavior, or other files.
 
 Technical scope:
-- Only edit JSX layout and player-facing copy in `src/routes/_authed/results.tsx`.
-- No server function, data fetching, routing, search params, calculations, or game logic changes.
+- One file only: `src/routes/_authed/results.tsx`
+- JSX/classes/copy only
+- No server functions, backend changes, or logic changes beyond the text string.
