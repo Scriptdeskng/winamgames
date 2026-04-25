@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CheckCircle, ChevronDown, CreditCard, Download, Flag, Loader2 } from "lucide-react";
 import { getAdminSession } from "@/utils/admin.auth";
-import { getDrawWeeks, getWinners, flagWinner, markKycPaid, verifyKyc } from "@/utils/admin.functions";
+import { createPaymentRecord, getDrawWeeks, getWinners, flagWinner, markPaymentPaid, verifyKyc } from "@/utils/admin.functions";
 import { ConfirmModal } from "./-admin/ConfirmModal";
 
 export const Route = createFileRoute("/admin/winners")({
@@ -11,15 +11,19 @@ export const Route = createFileRoute("/admin/winners")({
 
 type Week = Awaited<ReturnType<typeof getDrawWeeks>>["weeks"][number];
 type Winner = Awaited<ReturnType<typeof getWinners>>["winners"][number] & { kyc?: any };
-type KycAction = { type: "verify" | "paid"; playerId: string; weekId: string } | null;
+type KycAction = { type: "verify" | "paid"; playerId: string; weekId: string; winner?: Winner } | null;
 
 function kycStatus(kyc: any) {
   if (!kyc) return "None";
-  if (kyc.payment_processed) return "Paid";
   if (kyc.verified) return "Verified";
   if (kyc.bank_details_submitted_at) return "Complete";
   if (kyc.submitted_at) return "Identity only";
   return "None";
+}
+
+function paymentStatus(payment: any) {
+  if (payment?.status === "paid") return "Paid";
+  return "Pending";
 }
 
 function maskAccount(account?: string | null) {
@@ -81,7 +85,23 @@ function WinnersAdminPage() {
     setBusy(true);
     try {
       if (action.type === "verify") await verifyKyc({ data: { adminId, playerId: action.playerId } });
-      if (action.type === "paid") await markKycPaid({ data: { adminId, playerId: action.playerId } });
+      if (action.type === "paid" && action.winner) {
+        let paymentId = action.winner.payment?.id;
+        if (!paymentId) {
+          const created = await createPaymentRecord({
+            data: {
+              adminId,
+              playerId: action.playerId,
+              winnerId: action.winner.id,
+              drawWeekId: action.winner.draw_week_id!,
+              amountNaira: action.winner.prize_amount,
+              prizeType: action.winner.prize_type,
+            },
+          });
+          paymentId = created.paymentId;
+        }
+        await markPaymentPaid({ data: { adminId, playerId: action.playerId, paymentId } });
+      }
       await loadWinners(action.weekId, true);
       setAction(null);
     } catch (e) {
