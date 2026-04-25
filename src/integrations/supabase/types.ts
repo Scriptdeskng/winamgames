@@ -298,6 +298,94 @@ export type Database = {
           },
         ]
       }
+      winam_kyc: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          bank_code: string | null
+          bank_details_submitted_at: string | null
+          bank_name: string | null
+          dob: string
+          first_name: string
+          id: string
+          id_number: string
+          id_type: string
+          last_name: string
+          payment_processed: boolean | null
+          payment_processed_at: string | null
+          payment_processed_by: string | null
+          player_id: string
+          submitted_at: string | null
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_code?: string | null
+          bank_details_submitted_at?: string | null
+          bank_name?: string | null
+          dob: string
+          first_name: string
+          id?: string
+          id_number: string
+          id_type: string
+          last_name: string
+          payment_processed?: boolean | null
+          payment_processed_at?: string | null
+          payment_processed_by?: string | null
+          player_id: string
+          submitted_at?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          bank_code?: string | null
+          bank_details_submitted_at?: string | null
+          bank_name?: string | null
+          dob?: string
+          first_name?: string
+          id?: string
+          id_number?: string
+          id_type?: string
+          last_name?: string
+          payment_processed?: boolean | null
+          payment_processed_at?: string | null
+          payment_processed_by?: string | null
+          player_id?: string
+          submitted_at?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winam_kyc_payment_processed_by_fkey"
+            columns: ["payment_processed_by"]
+            isOneToOne: false
+            referencedRelation: "winam_admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_kyc_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "winam_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "winam_kyc_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "winam_admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       winam_missions: {
         Row: {
           condition_type: Database["public"]["Enums"]["mission_condition_type"]

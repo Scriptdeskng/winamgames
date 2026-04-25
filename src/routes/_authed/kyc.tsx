@@ -186,7 +186,7 @@ function IdentityStep({ playerId, onDone }: { playerId: string; onDone: () => vo
         <p className="mt-1 text-sm text-muted-foreground">We need this to verify your prize claim before payout.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3">
         <Field label="First name">
           <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="field-input" autoComplete="given-name" />
         </Field>
@@ -196,7 +196,9 @@ function IdentityStep({ playerId, onDone }: { playerId: string; onDone: () => vo
       </div>
 
       <Field label="Date of birth">
-        <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="field-input" />
+        <div className="overflow-hidden">
+          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="field-input w-full box-border" />
+        </div>
       </Field>
 
       <div>
