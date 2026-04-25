@@ -82,7 +82,7 @@ function KycPage() {
 
   React.useEffect(() => {
     if (identityLocked && search.step === 1) {
-      navigate({ search: (prev) => ({ ...prev, step: 2 }), replace: true });
+      navigate({ search: { ...search, step: 2 }, replace: true });
     }
   }, [identityLocked, navigate, search.step]);
 
@@ -105,11 +105,11 @@ function KycPage() {
             <IdentityStep
               playerId={session.playerId}
               onDone={() => {
-                setKyc((prev) => ({
-                  ...(prev ?? {}),
+                setKyc({
+                  ...(kyc ?? {}),
                   submitted_at: new Date().toISOString(),
-                } as KycStatus));
-                navigate({ search: (prev) => ({ ...prev, step: 2 }) });
+                } as KycStatus);
+                navigate({ search: { ...search, step: 2 } });
               }}
             />
           ) : (
@@ -117,7 +117,7 @@ function KycPage() {
               playerId={session.playerId}
               identityLocked={identityLocked}
               existing={kyc}
-              onBack={() => navigate({ search: (prev) => ({ ...prev, step: 1 }) })}
+              onBack={() => navigate({ search: { ...search, step: 1 } })}
               onDone={() => navigate({ to: "/app" })}
             />
           )}
@@ -186,7 +186,7 @@ function IdentityStep({ playerId, onDone }: { playerId: string; onDone: () => vo
         <p className="mt-1 text-sm text-muted-foreground">We need this to verify your prize claim before payout.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3">
         <Field label="First name">
           <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="field-input" autoComplete="given-name" />
         </Field>
@@ -196,7 +196,9 @@ function IdentityStep({ playerId, onDone }: { playerId: string; onDone: () => vo
       </div>
 
       <Field label="Date of birth">
-        <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="field-input" />
+        <div className="overflow-hidden">
+          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="field-input w-full box-border" />
+        </div>
       </Field>
 
       <div>
