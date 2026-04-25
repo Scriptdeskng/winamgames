@@ -82,7 +82,7 @@ function KycPage() {
 
   React.useEffect(() => {
     if (identityLocked && search.step === 1) {
-      navigate({ search: (prev) => ({ ...prev, step: 2 }), replace: true });
+      navigate({ search: { ...search, step: 2 }, replace: true });
     }
   }, [identityLocked, navigate, search.step]);
 
@@ -109,7 +109,7 @@ function KycPage() {
                   ...(prev ?? {}),
                   submitted_at: new Date().toISOString(),
                 } as KycStatus));
-                navigate({ search: (prev) => ({ ...prev, step: 2 }) });
+                navigate({ search: { ...search, step: 2 } });
               }}
             />
           ) : (
@@ -117,7 +117,7 @@ function KycPage() {
               playerId={session.playerId}
               identityLocked={identityLocked}
               existing={kyc}
-              onBack={() => navigate({ search: (prev) => ({ ...prev, step: 1 }) })}
+              onBack={() => navigate({ search: { ...search, step: 1 } })}
               onDone={() => navigate({ to: "/app" })}
             />
           )}
