@@ -225,7 +225,12 @@ function WinnersAdminPage() {
                                   {wn.prize_type} ₦{wn.prize_amount.toLocaleString()}
                                 </td>
                                 <td className="px-2 py-1">
-                                  {wn.prize_type === "cash" ? <KycPill status={kycStatus(wn.kyc)} /> : "—"}
+                                  {wn.prize_type === "cash" ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      <KycPill status={kycStatus(wn.kyc)} />
+                                      <PaymentPill status={paymentStatus(wn.payment)} />
+                                    </div>
+                                  ) : "—"}
                                 </td>
                                 <td className="px-2 py-1 text-muted-foreground">
                                   {wn.prize_type === "cash" && wn.kyc?.bank_details_submitted_at ? (
@@ -242,8 +247,8 @@ function WinnersAdminPage() {
                                         <CheckCircle className="h-3.5 w-3.5" />
                                       </button>
                                     )}
-                                    {wn.prize_type === "cash" && wn.player_id && wn.kyc?.verified && !wn.kyc?.payment_processed && (
-                                      <button onClick={() => setAction({ type: "paid", playerId: wn.player_id!, weekId: w.id })} className="rounded-md p-1 text-gold hover:bg-gold/10" title="Mark paid">
+                                    {wn.prize_type === "cash" && wn.player_id && wn.kyc?.verified && wn.payment?.status !== "paid" && (
+                                      <button onClick={() => setAction({ type: "paid", playerId: wn.player_id!, weekId: w.id, winner: wn })} className="rounded-md p-1 text-gold hover:bg-gold/10" title="Mark paid">
                                         <CreditCard className="h-3.5 w-3.5" />
                                       </button>
                                     )}
