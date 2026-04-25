@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import { ChevronDown, Ticket, Swords, BookOpen, Flame } from "lucide-react";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getSession } from "@/lib/session";
 import { getPlayerEntries, type PlayerEntryWeek, type TicketSource } from "@/utils/entries.functions";
+import { getMyWinnerStatus } from "@/utils/mission.functions";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import React from "react";
 
@@ -37,13 +38,17 @@ function EntriesPage() {
   const [data, setData] = React.useState<{
     weeks: PlayerEntryWeek[];
     weekCap: number;
+    winnerStatus: any;
   } | null>(null);
 
   React.useEffect(() => {
     if (!session) return;
-    getPlayerEntries({ data: { playerId: session.playerId } }).then((res) => {
-      if (res.success) setData({ weeks: res.weeks, weekCap: res.weekCap });
-      else setData({ weeks: [], weekCap: 50 });
+    Promise.all([
+      getPlayerEntries({ data: { playerId: session.playerId } }),
+      getMyWinnerStatus({ data: { playerId: session.playerId } }),
+    ]).then(([res, winnerStatus]) => {
+      if (res.success) setData({ weeks: res.weeks, weekCap: res.weekCap, winnerStatus });
+      else setData({ weeks: [], weekCap: 50, winnerStatus });
     });
   }, []);
 
@@ -63,7 +68,7 @@ function EntriesPage() {
       <TopBar backTo="/app" title="My Tickets" />
       <div className="px-4 pb-6 space-y-5">
         {currentWeek ? (
-          <CurrentWeekTickets week={currentWeek} weekCap={data.weekCap} />
+          <CurrentWeekTickets week={currentWeek} weekCap={data.weekCap} winnerStatus={data.winnerStatus} />
         ) : (
           <EmptyCurrentWeek />
         )}
@@ -75,7 +80,7 @@ function EntriesPage() {
             </h2>
             <div className="space-y-2">
               {pastWeeks.map((w) => (
-                <PastWeekCard key={w.drawWeekId} week={w} />
+                <PastWeekCard key={w.drawWeekId} week={w} winnerStatus={data.winnerStatus} />
               ))}
             </div>
           </div>
@@ -85,7 +90,7 @@ function EntriesPage() {
   );
 }
 
-function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap: number }) {
+function CurrentWeekTickets({ week, weekCap, winnerStatus }: { week: PlayerEntryWeek; weekCap: number; winnerStatus: any }) {
   const [open, setOpen] = React.useState(false);
   const pct = Math.min(100, (week.totalTickets / weekCap) * 100);
   const hasTickets = week.tickets.length > 0;
@@ -93,7 +98,10 @@ function CurrentWeekTickets({ week, weekCap }: { week: PlayerEntryWeek; weekCap:
   return (
     <div className="rounded-2xl bg-surface-1 border border-border p-4 space-y-4 shadow-card">
       <div className="flex items-baseline justify-between">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
+        <div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">This Week</p>
+          <WinnerBadge week={week} winnerStatus={winnerStatus} />
+        </div>
         <p className="text-[10px] text-muted-foreground tabular-nums">
           {formatWeekRange(week.weekStartWat, week.weekEndWat)}
         </p>
@@ -147,7 +155,7 @@ function EmptyCurrentWeek() {
   );
 }
 
-function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
+function PastWeekCard({ week, winnerStatus }: { week: PlayerEntryWeek; winnerStatus: any }) {
   const [open, setOpen] = React.useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -157,6 +165,7 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
             <Ticket className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium">{formatWeekRange(week.weekStartWat, week.weekEndWat)}</p>
+              <WinnerBadge week={week} winnerStatus={winnerStatus} />
               <p className="text-[10px] text-muted-foreground tabular-nums">
                 {week.totalTickets} {week.totalTickets === 1 ? "ticket" : "tickets"}
               </p>
@@ -177,6 +186,29 @@ function PastWeekCard({ week }: { week: PlayerEntryWeek }) {
         </CollapsibleContent>
       </div>
     </Collapsible>
+  );
+}
+
+
+function WinnerBadge({ week, winnerStatus }: { week: PlayerEntryWeek; winnerStatus: any }) {
+  if (!winnerStatus?.won || winnerStatus.drawWeekId !== week.drawWeekId) return null;
+  const amount = `₦${winnerStatus.prizeAmount.toLocaleString("en-NG")}`;
+  if (winnerStatus.prizeType === "airtime") {
+    return (
+      <span className="mt-1 inline-flex w-fit rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+        🎉 {amount} airtime
+      </span>
+    );
+  }
+  const complete = !!winnerStatus.kyc?.identitySubmitted && !!winnerStatus.kyc?.bankSubmitted;
+  return (
+    <Link
+      to="/kyc"
+      search={{ winnerId: winnerStatus.winnerId, step: complete ? 2 : 1 }}
+      className="mt-1 inline-flex w-fit rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold hover:bg-gold/20"
+    >
+      🏆 {amount} — {complete ? "Claimed" : "Claim required"}
+    </Link>
   );
 }
 
