@@ -31,6 +31,8 @@ function WisdomDropPage() {
   const playerId = sessionData?.playerId ?? "";
   const [playerData, setPlayerData] = React.useState<any>(null);
   const nextButtonRef = React.useRef<HTMLDivElement>(null);
+  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
+  const session = useGameSession("wisdomdrop", playerId);
 
   React.useEffect(() => {
     if (!playerId) return;
@@ -44,9 +46,6 @@ function WisdomDropPage() {
     }, 350);
     return () => clearTimeout(t);
   }, [session.feedback]);
-
-  const coinBalance = playerData?.success ? playerData.player.coinBalance : 0;
-  const session = useGameSession("wisdomdrop", playerId);
 
   if (!session.sessionId) {
     return (
