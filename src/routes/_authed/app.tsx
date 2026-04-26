@@ -319,25 +319,25 @@ function DrawHeroCard({
   if (drawState === "locked") {
     return (
       <div className={cardChrome}>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-muted-foreground light:text-accent-foreground/80 uppercase tracking-wider mb-2">
           Weekly Draw
         </p>
-        <h3 className="text-2xl font-bold text-foreground">Draw closing soon</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="text-2xl font-bold text-foreground light:text-accent-foreground">Draw closing soon</h3>
+        <p className="text-sm text-muted-foreground light:text-accent-foreground/80 mt-1">
           Tickets locked — draw executes at 20:00 WAT
         </p>
-        <p className="text-sm text-muted-foreground mt-4 tabular-nums">
+        <p className="text-sm text-muted-foreground light:text-accent-foreground/80 mt-4 tabular-nums">
           <span className="font-bold">{weekTotal}</span>
           <span> / {weekCap} tickets this week</span>
         </p>
-        <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
+        <div className="mt-2 h-2 rounded-full bg-background/40 light:bg-accent-foreground/25 overflow-hidden">
           <div
-            className="h-full rounded-full bg-muted-foreground/40 transition-all"
+            className="h-full rounded-full bg-muted-foreground/40 light:bg-accent-foreground transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
         <div className="mt-3 flex items-center justify-end">
-          <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
+          <Link to="/entries" className="text-xs text-primary light:text-accent-foreground flex items-center gap-1 hover:underline">
             View my tickets <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
