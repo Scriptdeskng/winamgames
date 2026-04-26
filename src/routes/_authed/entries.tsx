@@ -204,13 +204,21 @@ function WinnerBadge({ week, winnerStatus }: { week: PlayerEntryWeek; winnerStat
     );
   }
   const complete = !!winnerStatus.kyc?.identitySubmitted && !!winnerStatus.kyc?.bankSubmitted;
+  const paid = !!winnerStatus.kyc?.paymentProcessed;
+  const label = paid ? "Paid" : complete ? "Claimed" : "Claim required";
+  const className = "mt-1 inline-flex w-fit rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold";
+
+  if (complete || paid) {
+    return <span className={className}>🏆 {amount} — {label}</span>;
+  }
+
   return (
     <Link
       to="/kyc"
       search={{ winnerId: winnerStatus.winnerId, step: complete ? 2 : 1 }}
-      className="mt-1 inline-flex w-fit rounded-full border border-gold/40 bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-gold hover:bg-gold/20"
+      className={`${className} hover:bg-gold/20`}
     >
-      🏆 {amount} — {complete ? "Claimed" : "Claim required"}
+      🏆 {amount} — {label}
     </Link>
   );
 }
