@@ -35,24 +35,36 @@ async function ensureCurrentDrawWeek(): Promise<string | null> {
   const weekStart = monday.toISOString().split("T")[0];
   const weekEnd = sunday.toISOString().split("T")[0];
 
-  const { data: newWeek, error } = await supabaseAdmin
-    .from("winam_draw_weeks")
-    .insert({
-      week_start_wat: weekStart,
-      week_end_wat: weekEnd,
-      entry_lock_at: `${weekEnd}T18:50:00+00:00`, // 19:50 WAT
-      draw_executes_at: `${weekEnd}T19:00:00+00:00`, // 20:00 WAT
-      status: "open",
-      total_entries: 0,
-    })
-    .select("id")
-    .single();
+  try {
+    const { data: newWeek, error: insertError } = await supabaseAdmin
+      .from("winam_draw_weeks")
+      .insert({
+        week_start_wat: weekStart,
+        week_end_wat: weekEnd,
+        entry_lock_at: `${weekEnd}T18:50:00+00:00`, // 19:50 WAT
+        draw_executes_at: `${weekEnd}T19:00:00+00:00`, // 20:00 WAT
+        status: "open",
+        total_entries: 0,
+      })
+      .select("id")
+      .single();
 
-  if (error || !newWeek) {
-    console.error("ensureCurrentDrawWeek insert failed:", error);
-    return null;
+    if (insertError) {
+      if (insertError.code === "23505") {
+        const { data: existing } = await supabaseAdmin
+          .from("winam_draw_weeks")
+          .select("id")
+          .eq("week_start_wat", weekStart)
+          .maybeSingle();
+        return existing?.id ?? null;
+      }
+      throw new Error(insertError.message);
+    }
+
+    return newWeek?.id ?? null;
+  } catch (err) {
+    throw err;
   }
-  return newWeek.id;
 }
 
 // ── startSession ──────────────────────────────────────────────────────
