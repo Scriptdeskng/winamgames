@@ -148,8 +148,9 @@ html.light {
   --background: #ffffff;
   --foreground: #0a0a0f;
   --surface-1: #f8f8fc;
-  --surface-2: #f4f4f8;
+  --surface-2: #e8e8f0;
   --surface-3: #eaeaf0;
+  --progress-track: #d8d8e4;
 
   --card: #ffffff;
   --card-foreground: #0a0a0f;
@@ -162,7 +163,7 @@ html.light {
   --secondary-foreground: #1a1a2e;
 
   --muted: #f4f4f8;
-  --muted-foreground: #6b6b80;
+  --muted-foreground: #55556a;
 
   --accent: #eaeaf0;
   --accent-foreground: #1a1a2e;
@@ -170,15 +171,15 @@ html.light {
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #7f1d1d;
 
-  --border: #e0e0ea;
-  --input: #f4f4f8;
+  --border: #c8c8d8;
+  --input: #c8c8d8;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #0a0a0f;
   --sidebar-primary-foreground: #0a0a0f;
   --sidebar-accent: #f4f4f8;
   --sidebar-accent-foreground: #1a1a2e;
-  --sidebar-border: #e0e0ea;
+  --sidebar-border: #c8c8d8;
 
   --shadow-soft: 0 2px 12px -2px oklch(0 0 0 / 12%);
   --shadow-glow: 0 0 20px -4px oklch(0.696 0.17 162.48 / 24%);
