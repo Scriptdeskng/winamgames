@@ -288,17 +288,17 @@ function DrawHeroCard({
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   const cardChrome =
-    "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card";
+    "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent light:bg-none light:bg-accent border border-primary/20 light:border-accent p-5 shadow-card";
 
   // ─── State: drawn ── winners selected, awaiting new week
   if (drawState === "drawn") {
     return (
       <div className={cardChrome}>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        <p className="text-xs font-medium text-muted-foreground light:text-accent-foreground/80 uppercase tracking-wider mb-2">
           Weekly Draw
         </p>
-        <h3 className="text-2xl font-bold text-foreground">Draw complete</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="text-2xl font-bold text-foreground light:text-accent-foreground">Draw complete</h3>
+        <p className="text-sm text-muted-foreground light:text-accent-foreground/80 mt-1">
           This week's winners have been selected
         </p>
         <Link
@@ -308,7 +308,7 @@ function DrawHeroCard({
           See winners
           <ChevronRight className="h-4 w-4" />
         </Link>
-        <p className="text-[11px] text-muted-foreground/80 mt-3">
+        <p className="text-[11px] text-muted-foreground/80 light:text-accent-foreground/70 mt-3">
           New draw week opens in a moment
         </p>
       </div>
