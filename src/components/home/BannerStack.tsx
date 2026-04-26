@@ -42,7 +42,7 @@ export function BannerStack({ banners }: { banners: Banner[] }) {
   if (N === 0) return null;
 
   return (
-    <div className="relative h-[104px] select-none">
+    <div className="relative h-[104px] pb-5 select-none">
       {visible.map((banner, i) => {
         const slot = (i - activeIndex + N) % N;
         const Icon = (banner.icon_url && ICON_MAP[banner.icon_url]) || Sparkles;
