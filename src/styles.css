@@ -145,47 +145,57 @@
 }
 
 html.light {
-  --background: #ffffff;
-  --foreground: #0a0a0f;
-  --surface-1: #f4f4f8;
-  --surface-2: #e8e8f0;
-  --surface-3: #eaeaf0;
-  --progress-track: #c8c8d8;
-
-  --card: #ffffff;
-  --card-foreground: #0a0a0f;
-  --popover: #ffffff;
-  --popover-foreground: #0a0a0f;
-
-  --primary-foreground: #0a0a0f;
-
-  --secondary: #c8c8d8;
-  --secondary-foreground: #1a1a2e;
-
-  --muted: #eaeaf2;
-  --muted-foreground: #444455;
-
-  --accent: #eaeaf0;
-  --accent-foreground: #1a1a2e;
-
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #7f1d1d;
-
-  --border: #c8c8d8;
-  --input: #c8c8d8;
-
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0a0a0f;
-  --sidebar-primary-foreground: #0a0a0f;
-  --sidebar-accent: #f4f4f8;
-  --sidebar-accent-foreground: #1a1a2e;
-  --sidebar-border: #c8c8d8;
-
-  --shadow-soft: 0 2px 12px -2px oklch(0 0 0 / 12%);
-  --shadow-glow: 0 0 20px -4px oklch(0.696 0.17 162.48 / 24%);
-  --shadow-card: 0 4px 24px -4px oklch(0 0 0 / 12%);
-
   color-scheme: light;
+
+  /* Page background — subtle cool blue-grey */
+  --background: #F4F6FA;
+
+  /* Cards and surfaces — pure white so they lift off the background */
+  --card: #FFFFFF;
+  --card-foreground: #0A0A1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A1A;
+
+  /* Surface layers */
+  --surface-1: #FFFFFF;
+  --surface-2: #EEF1F8;
+
+  /* Primary text — near black */
+  --foreground: #0A0A1A;
+
+  /* Secondary text */
+  --muted: #E8EDF6;
+  --muted-foreground: #4A4A6A;
+
+  /* Primary — keep emerald green unchanged */
+  --primary: oklch(0.696 0.17 162.48);
+  --primary-foreground: #FFFFFF;
+
+  /* Borders — cool blue-grey tint */
+  --border: #DDE3EE;
+  --input: #DDE3EE;
+  --ring: #DDE3EE;
+
+  /* Secondary / progress track */
+  --secondary: #C8D0E4;
+  --secondary-foreground: #0A0A1A;
+
+  /* Accent */
+  --accent: #EEF1F8;
+  --accent-foreground: #0A0A1A;
+
+  /* Destructive — keep red */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #FFFFFF;
+
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0A0A1A;
+  --sidebar-border: #DDE3EE;
+  --sidebar-accent: #EEF1F8;
+  --sidebar-accent-foreground: #0A0A1A;
+  --sidebar-primary: oklch(0.696 0.17 162.48);
+  --sidebar-primary-foreground: #FFFFFF;
 }
 
 @layer base {
