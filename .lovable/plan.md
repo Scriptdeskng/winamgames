@@ -1,18 +1,24 @@
-Update only the requested light-mode draw card styling and tokens.
+Update only the pre-launch preview styling for CheckMate and WisdomDrop plus the requested light-mode CSS hooks.
 
 Changes:
-- In `src/routes/_authed/app.tsx`:
-  - Remove the `isLightMode` state/effect and related hardcoded `bg-[#0A2518]`, `border-[#0A2518]`, and white text overrides from `DrawHeroCard`.
-  - Restore the card wrapper to use the default gradient in both dark and light mode: `from-primary/15 via-primary/5 to-transparent`.
-  - Keep text using the default semantic token classes (`text-foreground`, `text-muted-foreground`, `text-primary`).
-  - Set the progress track to `bg-black/10` so it is visible on the light mint background.
-  - Keep the progress fill as `bg-primary`.
-- In `src/styles.css` within `html.light`:
-  - Set `--accent` back to `#EEF5F0`.
-  - Set `--draw-card-bg` back to `#EEF5F0`.
+- `src/routes/_authed/checkmate.tsx`
+  - Replace the mini-board inline white RGBA square backgrounds with token/CSS-class based square classes so they can be themed.
+  - Add stable classes for mini-board light squares, dark squares, and hint squares.
+  - Replace external chess-piece image SVGs with text-based chess glyphs using `text-foreground`/`text-muted-foreground` so pieces render dark in light mode and light in dark mode.
+
+- `src/styles.css`
+  - Add `html.light` CSS overrides for the CheckMate preview square classes:
+    - dark squares: `#A8C0A0`
+    - light squares: `#E8F2EC`
+  - Keep these overrides scoped to `html.light`.
+
+- `src/routes/_authed/wisdomdrop.tsx`
+  - Replace hardcoded `bg-white/[...]`, `border-white/[...]`, and low-opacity muted preview text with token-based classes.
+  - Add `border border-border` and `bg-surface-2` to the example answer option buttons.
+  - Keep the EXAMPLE label and proverb text using `text-muted-foreground`.
 
 Scope constraints:
-- No other component changes.
-- No dark-mode changes.
+- No game logic changes.
 - No admin changes.
-- No game logic or server changes.
+- No unrelated component changes.
+- No dark-mode token changes.

@@ -208,20 +208,20 @@ function CheckMatePage() {
                 return (
                   <div
                     key={i}
-                    className="relative aspect-square flex items-center justify-center"
-                    style={{
-                      backgroundColor: isHint
-                        ? "rgba(255,255,255,0.15)"
+                    className={cn(
+                      "relative aspect-square flex items-center justify-center",
+                      isHint
+                        ? "checkmate-preview-hint"
                         : (row + col) % 2 === 0
-                          ? "rgba(255,255,255,0.08)"
-                          : "rgba(255,255,255,0.04)"
-                    }}
+                          ? "checkmate-preview-light"
+                          : "checkmate-preview-dark"
+                    )}
                   >
                     {isQueen && (
-                      <img src="https://lichess1.org/assets/piece/staunty/wQ.svg" alt="" className="w-8 h-8 opacity-40" />
+                      <span aria-hidden className="text-3xl leading-none text-foreground/70">♕</span>
                     )}
                     {isKing && (
-                      <img src="https://lichess1.org/assets/piece/staunty/bK.svg" alt="" className="w-8 h-8 opacity-40" />
+                      <span aria-hidden className="text-3xl leading-none text-muted-foreground">♚</span>
                     )}
                   </div>
                 );
