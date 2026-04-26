@@ -397,37 +397,43 @@ function Podium({
 
 const PODIUM_STYLES: Record<
   1 | 2 | 3,
-  { ring: string; bg: string; label: string; pad: string; avatar: string; glow: boolean; medalBg: string; medalText: string }
+  { ring: string; bg: string; lightBg: string; label: string; pad: string; avatar: string; glow: boolean; medalBg: string; medalText: string; medalClass: string }
 > = {
   1: {
     ring: "ring-2 ring-coin/50",
     bg: "bg-gradient-to-b from-coin/15 to-coin/5",
+    lightBg: "leaderboard-podium-first",
     label: "text-coin",
     pad: "pt-5 pb-5 px-3",
     avatar: "h-16 w-16",
     glow: true,
     medalBg: "bg-coin/25",
     medalText: "text-coin",
+    medalClass: "leaderboard-podium-medal-first",
   },
   2: {
     ring: "ring-1 ring-[oklch(0.78_0.02_250)]/40",
     bg: "bg-gradient-to-b from-[oklch(0.78_0.02_250)]/15 to-[oklch(0.78_0.02_250)]/5",
+    lightBg: "leaderboard-podium-second",
     label: "text-[oklch(0.88_0.02_250)]",
     pad: "pt-4 pb-4 px-2",
     avatar: "h-12 w-12",
     glow: false,
     medalBg: "bg-[oklch(0.78_0.02_250)]/20",
     medalText: "text-[oklch(0.88_0.02_250)]",
+    medalClass: "leaderboard-podium-medal-second",
   },
   3: {
     ring: "ring-1 ring-[oklch(0.58_0.09_55)]/50",
     bg: "bg-gradient-to-b from-[oklch(0.58_0.09_55)]/15 to-[oklch(0.58_0.09_55)]/5",
+    lightBg: "leaderboard-podium-third",
     label: "text-[oklch(0.78_0.10_55)]",
     pad: "pt-4 pb-4 px-2",
     avatar: "h-12 w-12",
     glow: false,
     medalBg: "bg-[oklch(0.58_0.09_55)]/20",
     medalText: "text-[oklch(0.78_0.10_55)]",
+    medalClass: "leaderboard-podium-medal-third",
   },
 };
 
@@ -450,7 +456,7 @@ function PodiumPillar({
 
   return (
     <div
-      className={`relative rounded-2xl ${style.bg} ${style.ring} ${style.pad} flex flex-col items-center text-center ${
+      className={`relative rounded-2xl ${style.bg} ${style.lightBg} ${style.ring} ${style.pad} flex flex-col items-center text-center ${
         style.glow ? "shadow-glow" : ""
       } ${isMe ? "outline outline-2 outline-primary/60 outline-offset-2" : ""}`}
     >
@@ -482,7 +488,7 @@ function PodiumPillar({
         {player.score}
       </div>
 
-      <span className={`mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${style.medalBg} ${style.medalText}`}>
+      <span className={`mt-2 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${style.medalBg} ${style.medalText} ${style.medalClass}`}>
         {placeLabel}
       </span>
     </div>
@@ -640,7 +646,7 @@ function YourStandingCard({
 
       {gapUp && gapUp.score > 0 && (
         <>
-          <div className="h-1.5 w-full rounded-full bg-border/60 overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-black/10 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-500"
               style={{ width: `${pct}%` }}

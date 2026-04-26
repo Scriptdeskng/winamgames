@@ -212,6 +212,24 @@ html.light .checkmate-preview-dark {
   background-color: #A8C0A0;
 }
 
+html.light .leaderboard-podium-first {
+  background: #FFF3CC;
+}
+
+html.light .leaderboard-podium-second {
+  background: #D4EDE0;
+}
+
+html.light .leaderboard-podium-third {
+  background: #FFE8D6;
+}
+
+html.light .leaderboard-podium-medal-first,
+html.light .leaderboard-podium-medal-second,
+html.light .leaderboard-podium-medal-third {
+  color: #0A1A0F;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
