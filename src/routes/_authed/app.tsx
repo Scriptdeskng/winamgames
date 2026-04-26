@@ -30,10 +30,10 @@ function getCountdownParts(ms: number) {
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground">
+      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground light:text-accent-foreground">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[10px] text-muted-foreground lowercase mt-0.5 leading-none">
+      <span className="text-[10px] text-muted-foreground light:text-accent-foreground/80 lowercase mt-0.5 leading-none">
         {label}
       </span>
     </div>
@@ -42,7 +42,7 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
 
 function CountdownColon() {
   return (
-    <span className="font-mono text-4xl font-bold leading-none text-foreground pb-[14px]">
+    <span className="font-mono text-4xl font-bold leading-none text-foreground light:text-accent-foreground pb-[14px]">
       :
     </span>
   );
