@@ -60,7 +60,7 @@ export function BannerStack({ banners }: { banners: Banner[] }) {
             }}
             transition={{ type: "spring", stiffness: 280, damping: 30 }}
           >
-            <div className="relative rounded-2xl bg-surface-1 border border-border p-4 shadow-card flex items-start gap-3">
+            <div className="relative h-[88px] overflow-hidden rounded-2xl bg-surface-1 border border-border p-4 shadow-card flex items-start gap-3">
               <div className={`h-12 w-12 rounded-xl ${style.bg} flex items-center justify-center shrink-0`}>
                 <Icon className={`h-6 w-6 ${style.fg}`} />
               </div>
