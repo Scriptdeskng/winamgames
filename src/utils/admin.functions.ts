@@ -831,7 +831,7 @@ export const executeDrawWeek = createServerFn({ method: "POST" })
     const [ledgerRes, flaggedRes] = await Promise.all([
       supabaseAdmin
         .from("winam_entry_ledger")
-        .select("player_id, entries_delta")
+        .select("id, player_id, entries_delta")
         .eq("draw_week_id", data.drawWeekId),
       supabaseAdmin.from("winam_players").select("id").eq("is_flagged", true),
     ]);
