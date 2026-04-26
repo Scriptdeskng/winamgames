@@ -348,7 +348,7 @@ function DrawHeroCard({
   // ─── State: open / new_week ── default countdown UI
   return (
     <div className={cardChrome}>
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+      <p className="text-xs font-medium text-muted-foreground light:text-accent-foreground/80 uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
       <div className="flex items-end gap-1.5">
@@ -364,19 +364,19 @@ function DrawHeroCard({
         <CountdownColon />
         <CountdownUnit value={seconds} label="sec" />
       </div>
-      <p className="text-sm text-foreground mt-3 tabular-nums">
-        <span className="font-bold text-primary">{weekTotal}</span>
-        <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
+      <p className="text-sm text-foreground light:text-accent-foreground mt-3 tabular-nums">
+        <span className="font-bold text-primary light:text-accent-foreground">{weekTotal}</span>
+        <span className="text-muted-foreground light:text-accent-foreground/80"> / {weekCap} tickets this week</span>
       </p>
-      <div className="mt-2 h-2 rounded-full bg-background/40 overflow-hidden">
+      <div className="mt-2 h-2 rounded-full bg-background/40 light:bg-accent-foreground/25 overflow-hidden">
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className="h-full rounded-full bg-primary light:bg-accent-foreground transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
-        <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
+        <p className="text-[11px] text-muted-foreground light:text-accent-foreground/80">Draw every Sunday at 20:00 WAT</p>
+        <Link to="/entries" className="text-xs text-primary light:text-accent-foreground flex items-center gap-1 hover:underline">
           View my tickets <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
