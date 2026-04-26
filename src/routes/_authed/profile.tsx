@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/TopBar";
 import {
-  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2, ShieldCheck, ChevronDown,
+  User, Coins, Flame, Ticket, Award, LogOut, ChevronRight, ArrowRight, Clock, Info, Pencil, Check, X, Loader2, ShieldCheck, ChevronDown, Sun, Moon,
 } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
 import { RANK_CONFIG, type RankTier } from "@/components/profile/RankBadge";
 import { getPlayerData, updateNickname, getKycStatus } from "@/utils/mission.functions";
 import { getSession, clearSession, updateSessionNickname } from "@/lib/session";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
+import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import React from "react";
 
@@ -214,6 +216,8 @@ function ProfilePage() {
           </AccordionItem>
         </Accordion>
 
+        <AppearanceSection />
+
         {/* ── Logout (quiet, bottom) ──────────────────────────── */}
         <div className="pt-2">
           <button
@@ -223,6 +227,31 @@ function ProfilePage() {
             <LogOut className="h-4 w-4" />
             Log out
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppearanceSection() {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
+  const Icon = isDark ? Sun : Moon;
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-1">
+        Appearance
+      </h3>
+      <div className="rounded-2xl bg-surface-1 border border-border p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Icon className="h-4.5 w-4.5 text-primary" />
+            </div>
+            <span className="text-sm font-medium">Dark mode</span>
+          </div>
+          <Switch checked={isDark} onCheckedChange={toggle} aria-label="Toggle dark mode" />
         </div>
       </div>
     </div>
