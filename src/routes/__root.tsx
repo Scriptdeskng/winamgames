@@ -62,6 +62,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `(function() {
+    if (window.location.pathname.startsWith('/admin')) {
+      document.documentElement.classList.remove('light');
+      return;
+    }
     const stored = localStorage.getItem('winam-theme');
     if (stored === 'light') {
       document.documentElement.classList.add('light');
