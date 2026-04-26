@@ -74,6 +74,7 @@ function HomePage() {
   const weekTotal = data?.playerResult?.success ? data.playerResult.weekTotal : 0;
   const weekCap = data?.playerResult?.success ? data.playerResult.weekCap : 50;
   const drawWeek = data?.playerResult?.success ? data.playerResult.drawWeek : null;
+  const publishedWeekId = data?.playerResult?.success ? data.playerResult.publishedWeekId : null;
   const missions = data?.missionsResult?.success ? data.missionsResult.missions : [];
   const banners: Banner[] = data?.bannersResult?.success ? data.bannersResult.banners : [];
   const winnerStatus = data?.winnerStatus;
@@ -93,7 +94,10 @@ function HomePage() {
       <TopBar />
       <div className="px-4 pb-6 space-y-5">
         <DrawHeroCard
+          drawWeekId={drawWeek?.id}
+          drawWeekStatus={drawWeek?.status}
           drawExecutesAt={drawWeek?.drawExecutesAt}
+          publishedWeekId={publishedWeekId}
           weekTotal={weekTotal}
           weekCap={weekCap}
         />
@@ -247,11 +251,17 @@ function WinnerBanner({ winnerStatus }: { winnerStatus: any }) {
 
 // ── DrawHeroCard ──────────────────────────────────────────────────────
 function DrawHeroCard({
+  drawWeekId,
+  drawWeekStatus,
   drawExecutesAt,
+  publishedWeekId,
   weekTotal,
   weekCap,
 }: {
+  drawWeekId: string | undefined;
+  drawWeekStatus: string | undefined;
   drawExecutesAt: string | undefined;
+  publishedWeekId: string | null | undefined;
   weekTotal: number;
   weekCap: number;
 }) {
@@ -269,8 +279,8 @@ function DrawHeroCard({
   const targetDate = React.useMemo(() => {
     if (drawExecutesAt) {
       const d = new Date(drawExecutesAt);
-      // drawExecutesAt is the 20:00 WAT execution time; lock is 1h earlier.
-      const lock = new Date(d.getTime() - 60 * 60 * 1000);
+      // drawExecutesAt is the 20:00 WAT execution time; lock is 10 minutes earlier.
+      const lock = new Date(d.getTime() - 10 * 60 * 1000);
       if (lock.getTime() > Date.now()) return lock;
     }
     return getNextEntriesLockWAT();
@@ -290,8 +300,10 @@ function DrawHeroCard({
   const cardChrome =
     "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card";
 
+  const isCurrentWeekPublished = !!drawWeekId && publishedWeekId === drawWeekId;
+
   // ─── State: drawn ── winners selected, awaiting new week
-  if (drawState === "drawn") {
+  if (isCurrentWeekPublished && (drawState === "drawn" || drawWeekStatus === "drawn")) {
     return (
       <div className={cardChrome}>
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
@@ -310,6 +322,24 @@ function DrawHeroCard({
         </Link>
         <p className="text-[11px] text-muted-foreground/80 mt-3">
           New draw week opens in a moment
+        </p>
+      </div>
+    );
+  }
+
+  if (!isCurrentWeekPublished && (drawState === "drawn" || drawWeekStatus === "drawn")) {
+    return (
+      <div className={cardChrome}>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Weekly Draw
+        </p>
+        <h3 className="text-2xl font-bold text-foreground">Draw in progress</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Winners are being prepared and will appear soon.
+        </p>
+        <p className="text-sm text-muted-foreground mt-4 tabular-nums">
+          <span className="font-bold">{weekTotal}</span>
+          <span> / {weekCap} tickets this week</span>
         </p>
       </div>
     );
