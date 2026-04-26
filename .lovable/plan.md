@@ -1,13 +1,10 @@
-Update `src/styles.css` only, limited to the existing `html.light` block.
+Update `src/styles.css` only.
 
-Changes:
-- Set `--surface-1` back to `#f4f4f8`.
-- Set `--muted` back to `#eaeaf2`.
-- Keep `--muted-foreground` as `#444455`.
-- Ensure the progress-bar unfilled track is the only token using `#c8c8d8`; since the progress component uses a secondary-style track if no dedicated token is wired, set `--secondary` to `#c8c8d8` in the light block if needed.
-- Leave all components and dark-mode tokens unchanged.
+Change:
+- Replace the existing `html.light` block with the provided cool blue-grey light palette exactly, including the specified page, card, surface, text, muted, primary, border/input/ring, secondary/progress, accent, destructive, and sidebar token values.
 
 Scope constraints:
+- No dark mode changes.
 - No component changes.
 - No admin changes.
 - No game logic or server changes.
