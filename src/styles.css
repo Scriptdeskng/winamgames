@@ -144,6 +144,49 @@
   --shadow-card: 0 4px 24px -4px oklch(0 0 0 / 50%);
 }
 
+html.light {
+  --background: #ffffff;
+  --foreground: #0a0a0f;
+  --surface-1: #f8f8fc;
+  --surface-2: #f4f4f8;
+  --surface-3: #eaeaf0;
+
+  --card: #ffffff;
+  --card-foreground: #0a0a0f;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0f;
+
+  --primary-foreground: #0a0a0f;
+
+  --secondary: #f4f4f8;
+  --secondary-foreground: #1a1a2e;
+
+  --muted: #f4f4f8;
+  --muted-foreground: #6b6b80;
+
+  --accent: #eaeaf0;
+  --accent-foreground: #1a1a2e;
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #7f1d1d;
+
+  --border: #e0e0ea;
+  --input: #f4f4f8;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a0a0f;
+  --sidebar-primary-foreground: #0a0a0f;
+  --sidebar-accent: #f4f4f8;
+  --sidebar-accent-foreground: #1a1a2e;
+  --sidebar-border: #e0e0ea;
+
+  --shadow-soft: 0 2px 12px -2px oklch(0 0 0 / 12%);
+  --shadow-glow: 0 0 20px -4px oklch(0.696 0.17 162.48 / 24%);
+  --shadow-card: 0 4px 24px -4px oklch(0 0 0 / 12%);
+
+  color-scheme: light;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

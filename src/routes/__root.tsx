@@ -59,6 +59,26 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+    if (window.location.pathname.startsWith('/admin')) {
+      document.documentElement.classList.remove('light');
+      return;
+    }
+    const stored = localStorage.getItem('winam-theme');
+    if (stored === 'light') {
+      document.documentElement.classList.add('light');
+    } else if (stored === 'dark') {
+      document.documentElement.classList.remove('light');
+    } else {
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.classList.add('light');
+      }
+    }
+  })();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
