@@ -2,10 +2,153 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { Chess } from "chess.js";
 
+interface CashTier { position: number; amount_naira: number }
+interface AirtimeTier { count: number; amount_naira: number }
+
+async function autoAudit(
+  action: string,
+  targetType: string | null,
+  targetId: string | null,
+  details: Record<string, unknown> = {}
+) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("winam_admin_audit_log").insert({
+      admin_id: null,
+      action,
+      target_type: targetType,
+      target_id: targetId,
+      details: { source: "auto", ...details } as never,
+    });
+  } catch (e) {
+    console.error("[autoAudit] failed to log", action, e);
+  }
+}
+
+async function autoExecuteDrawIfReady(): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const nowIso = new Date().toISOString();
+
+  const { data: week, error: weekError } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .select("*")
+    .eq("status", "locked")
+    .lte("draw_executes_at", nowIso)
+    .order("week_start_wat", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (weekError) throw new Error(weekError.message);
+  if (!week || week.status !== "locked") return;
+
+  const { expandTickets, selectWinners } = await import("@/utils/draw-engine");
+  const crypto = await import("crypto");
+
+  const { data: cfgRows, error: cfgError } = await supabaseAdmin
+    .from("winam_platform_config")
+    .select("key, value")
+    .in("key", ["prize_cash_tiers", "prize_airtime_tiers", "weekly_cap"]);
+  if (cfgError) throw new Error(cfgError.message);
+
+  const cfg: Record<string, unknown> = {};
+  for (const r of cfgRows ?? []) cfg[r.key] = r.value;
+  const cashTiers = (cfg.prize_cash_tiers as CashTier[]) ?? [
+    { position: 1, amount_naira: 35000 },
+    { position: 2, amount_naira: 10000 },
+    { position: 3, amount_naira: 5000 },
+  ];
+  const airtimeTiers = (cfg.prize_airtime_tiers as AirtimeTier[]) ?? [
+    { count: 75, amount_naira: 200 },
+  ];
+  const weeklyCap = typeof cfg.weekly_cap === "number" ? (cfg.weekly_cap as number) : 50;
+
+  const [ledgerRes, flaggedRes] = await Promise.all([
+    supabaseAdmin
+      .from("winam_entry_ledger")
+      .select("player_id, entries_delta")
+      .eq("draw_week_id", week.id),
+    supabaseAdmin.from("winam_players").select("id").eq("is_flagged", true),
+  ]);
+  if (ledgerRes.error) throw new Error(ledgerRes.error.message);
+  if (flaggedRes.error) throw new Error(flaggedRes.error.message);
+
+  const buf = new Uint8Array(32);
+  if (typeof globalThis.crypto?.getRandomValues === "function") {
+    globalThis.crypto.getRandomValues(buf);
+  } else {
+    const random = crypto.randomBytes(32);
+    buf.set(random);
+  }
+  const seed = Array.from(buf)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const flagged = new Set((flaggedRes.data ?? []).map((p) => p.id));
+  const tickets = expandTickets(ledgerRes.data ?? [], weeklyCap, flagged);
+  const winners = selectWinners(tickets, seed, cashTiers, airtimeTiers);
+
+  if (winners.length === 0) {
+    throw new Error("No eligible tickets to draw winners from");
+  }
+
+  const rows = winners.map((wn) => ({
+    draw_week_id: week.id,
+    player_id: wn.playerId,
+    position: wn.position,
+    prize_type: wn.prizeType,
+    prize_amount: wn.prizeAmount,
+    ticket_id: wn.ticketId,
+  }));
+  const { error: insertWinnersError } = await supabaseAdmin.from("winam_winners").insert(rows);
+  if (insertWinnersError) throw new Error(insertWinnersError.message);
+
+  const { error: drawnError } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .update({ status: "drawn", draw_seed: seed })
+    .eq("id", week.id)
+    .eq("status", "locked");
+  if (drawnError) throw new Error(drawnError.message);
+
+  await autoAudit("draw_execute", "draw_week", week.id, {
+    winner_count: winners.length,
+    total_tickets: tickets.length,
+    seed,
+  });
+
+  const { error: publishError } = await supabaseAdmin.from("winam_platform_config").upsert({
+    key: "winners_published_week_id",
+    value: week.id as never,
+    updated_by: "auto",
+    updated_at: new Date().toISOString(),
+  });
+  if (publishError) throw new Error(publishError.message);
+
+  await autoAudit("winners_publish", "draw_week", week.id, {});
+
+  const { error: settleError } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .update({ status: "settled" })
+    .eq("id", week.id)
+    .in("status", ["drawn", "locked"]);
+  if (settleError) throw new Error(settleError.message);
+
+  await autoAudit("draw_settle", "draw_week", week.id, {});
+}
+
+async function safelyAutoExecuteDrawIfReady() {
+  try {
+    await autoExecuteDrawIfReady();
+  } catch (err) {
+    console.error("autoExecuteDrawIfReady failed:", err);
+  }
+}
+
 // ── ensureCurrentDrawWeek ─────────────────────────────────────────────
 // Returns the id of the current open draw week, creating one if missing.
 // Triggers lazily on the first session of a new week — no cron required.
 async function ensureCurrentDrawWeek(): Promise<string | null> {
+  await safelyAutoExecuteDrawIfReady();
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
@@ -76,6 +219,8 @@ export const startSession = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    await safelyAutoExecuteDrawIfReady();
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Ensure current draw week exists (auto-rollover)
