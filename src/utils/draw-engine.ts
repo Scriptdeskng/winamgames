@@ -2,6 +2,7 @@
 // Used by executeDrawWeek to select winners from the weekly ticket pool.
 
 export interface LedgerRow {
+  id: string;
   player_id: string;
   entries_delta: number;
 }
@@ -47,27 +48,36 @@ export function seedFromHex(hex: string): number {
   return parseInt(clean, 16) >>> 0;
 }
 
-// Group ledger rows by player, clamp to weekly cap, expand to virtual tickets.
+// Expand ledger rows into virtual tickets, matching the player-facing ticket ID format.
 export function expandTickets(
   rows: LedgerRow[],
   weeklyCap: number,
   excludedPlayerIds: Set<string>
 ): VirtualTicket[] {
-  const totals = new Map<string, number>();
-  for (const r of rows) {
-    if (excludedPlayerIds.has(r.player_id)) continue;
-    if (r.entries_delta <= 0) continue;
-    totals.set(r.player_id, (totals.get(r.player_id) ?? 0) + r.entries_delta);
-  }
   const tickets: VirtualTicket[] = [];
-  for (const [playerId, total] of totals.entries()) {
-    const capped = Math.min(total, weeklyCap);
-    for (let i = 0; i < capped; i++) {
+  const generatedByPlayer = new Map<string, number>();
+
+  for (const row of rows) {
+    if (excludedPlayerIds.has(row.player_id)) continue;
+    if (row.entries_delta <= 0) continue;
+
+    const alreadyGenerated = generatedByPlayer.get(row.player_id) ?? 0;
+    const remainingForPlayer = weeklyCap - alreadyGenerated;
+    if (remainingForPlayer <= 0) continue;
+
+    const count = Math.min(row.entries_delta, remainingForPlayer);
+    const compact = row.id.replace(/-/g, "").toUpperCase();
+    const base = compact.slice(0, 6);
+
+    for (let ticketIndexWithinRow = 0; ticketIndexWithinRow < count; ticketIndexWithinRow++) {
+      const suffix = String(ticketIndexWithinRow + 1).padStart(2, "0");
       tickets.push({
-        playerId,
-        ticketId: `${playerId.slice(0, 8)}-${String(i).padStart(3, "0")}`,
+        playerId: row.player_id,
+        ticketId: `WG-${base}-${suffix}`,
       });
     }
+
+    generatedByPlayer.set(row.player_id, alreadyGenerated + count);
   }
   return tickets;
 }
