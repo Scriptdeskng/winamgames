@@ -302,7 +302,7 @@ function DrawHeroCard({
 
   const cardChrome = cn(
     "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card",
-    isLightMode && "bg-none bg-[#1DB954] border-[#1DB954] text-white"
+    isLightMode && "bg-none bg-[#0A2518] border-[#0A2518] text-white"
   );
 
   // ─── State: drawn ── winners selected, awaiting new week

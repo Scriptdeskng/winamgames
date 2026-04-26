@@ -1,12 +1,15 @@
-Update `src/routes/_authed/app.tsx` only for the weekly draw countdown card.
+Update only the requested light-mode color values.
 
 Changes:
-- Update the `DrawHeroCard` shared `cardChrome` class so the card keeps its current dark-mode gradient, but uses `bg-accent` in light mode.
-- For muted/secondary text inside `DrawHeroCard`, add light-mode foreground overrides so labels and small text render white on the green background.
-- For the progress track and small chip-like surface inside the card, add light-mode background overrides so they remain visible on the green card.
+- In `src/routes/_authed/app.tsx`, change the `DrawHeroCard` light-mode overrides from `#1DB954` to `#0A2518` for:
+  - card background: `bg-[#0A2518]`
+  - card border: `border-[#0A2518]`
+- Keep existing white text and white progress bar overrides unchanged.
+- In `src/styles.css` within `html.light`, change:
+  - `--accent` to `#0A2518`
+  - `--draw-card-bg` to `#0A2518`
 
 Scope constraints:
+- No other component changes.
+- No dark-mode changes.
 - No admin changes.
-- No dark-mode behavior changes.
-- No unrelated component changes.
-- No game logic or server changes.
