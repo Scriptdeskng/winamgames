@@ -147,42 +147,42 @@
 html.light {
   color-scheme: light;
 
-  /* Page background — subtle cool blue-grey */
-  --background: #F4F6FA;
+  /* Page background — very faint green tint */
+  --background: #F4F8F5;
 
-  /* Cards and surfaces — pure white so they lift off the background */
+  /* Cards — white so they lift off the green-grey background */
   --card: #FFFFFF;
-  --card-foreground: #0A0A1A;
+  --card-foreground: #0A1A0F;
   --popover: #FFFFFF;
-  --popover-foreground: #0A0A1A;
+  --popover-foreground: #0A1A0F;
 
   /* Surface layers */
   --surface-1: #FFFFFF;
-  --surface-2: #EEF1F8;
+  --surface-2: #EEF5F0;
 
-  /* Primary text — near black */
-  --foreground: #0A0A1A;
+  /* Primary text — near black with green undertone */
+  --foreground: #0A1A0F;
 
-  /* Secondary text */
-  --muted: #E8EDF6;
-  --muted-foreground: #4A4A6A;
+  /* Muted */
+  --muted: #E8F2EC;
+  --muted-foreground: #3D5A45;
 
   /* Primary — keep emerald green unchanged */
   --primary: oklch(0.696 0.17 162.48);
   --primary-foreground: #FFFFFF;
 
-  /* Borders — cool blue-grey tint */
-  --border: #DDE3EE;
-  --input: #DDE3EE;
-  --ring: #DDE3EE;
+  /* Borders — green-grey tint */
+  --border: #C8DDD0;
+  --input: #C8DDD0;
+  --ring: #C8DDD0;
 
   /* Secondary / progress track */
-  --secondary: #C8D0E4;
-  --secondary-foreground: #0A0A1A;
+  --secondary: #C0D8C8;
+  --secondary-foreground: #0A1A0F;
 
   /* Accent */
-  --accent: #EEF1F8;
-  --accent-foreground: #0A0A1A;
+  --accent: #EEF5F0;
+  --accent-foreground: #0A1A0F;
 
   /* Destructive — keep red */
   --destructive: oklch(0.577 0.245 27.325);
@@ -190,10 +190,10 @@ html.light {
 
   /* Sidebar */
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #0A0A1A;
-  --sidebar-border: #DDE3EE;
-  --sidebar-accent: #EEF1F8;
-  --sidebar-accent-foreground: #0A0A1A;
+  --sidebar-foreground: #0A1A0F;
+  --sidebar-border: #C8DDD0;
+  --sidebar-accent: #EEF5F0;
+  --sidebar-accent-foreground: #0A1A0F;
   --sidebar-primary: oklch(0.696 0.17 162.48);
   --sidebar-primary-foreground: #FFFFFF;
 }
