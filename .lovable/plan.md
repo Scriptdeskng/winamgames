@@ -1,21 +1,33 @@
-Implement the admin Help Center exactly within the requested scope: one sidebar update and one new route file.
+Plan to align winner ticket IDs with the My Tickets display format:
 
-Files to change:
-1. `src/routes/-admin/AdminSidebar.tsx`
-   - Import `HelpCircle` from `lucide-react`.
-   - Add `{ to: "/admin/help", label: "Help", icon: HelpCircle }` as the final item in the existing `NAV` array so it appears at the bottom of the nav list, above the logged-in/logout section.
+1. Update `src/utils/draw-engine.ts`
+   - Extend `LedgerRow` to include `id: string`.
+   - Change `expandTickets()` so it expands tickets per ledger row instead of generating IDs from `playerId` totals.
+   - Preserve the weekly cap per player while generating ticket IDs from each ledger row ID and ticket index within that row:
+     ```ts
+     WG-${ledgerIdWithoutDashesUppercaseFirst6}-${twoDigitIndex}
+     ```
+   - Keep flagged-player exclusion and deterministic winner selection behavior unchanged.
 
-2. `src/routes/admin.help.tsx`
-   - Create a new TanStack route at `/admin/help`.
-   - Hardcode the Help Center UI with no server functions, no database reads/writes, and no backend changes.
-   - Build the layout using the existing admin dark theme classes:
-     - Page title and subtitle.
-     - Responsive two-column layout: article list on the left, article content on the right; single column on mobile.
-     - One selectable article: “Weekly Draw Runbook”, highlighted when active.
-     - Full runbook content with the requested sections: overview, schedule table, warning callouts, normal flow, verification checklist, manual override, winner management, incident response, and quick reference cards.
-   - Use compact admin-style tables, amber warning callouts, bordered cards, muted helper text, and readable numbered step spacing.
+2. Update `src/utils/game.functions.ts`
+   - In `autoExecuteDrawIfReady()`, update the ledger query used for `expandTickets()` from:
+     ```ts
+     .select("player_id, entries_delta")
+     ```
+     to:
+     ```ts
+     .select("id, player_id, entries_delta")
+     ```
 
-Validation:
-- Run the project build after changes to confirm the new route and sidebar link typecheck successfully.
+3. Update `src/utils/admin.functions.ts`
+   - In `executeDrawWeek()`, update the ledger query used for `expandTickets()` the same way:
+     ```ts
+     .select("id, player_id, entries_delta")
+     ```
+   - Leave unrelated ledger queries unchanged, since they only calculate totals and do not feed the draw engine.
 
-No database changes, no server functions, no admin panel behavior changes beyond the new Help route/link, and no other files will be modified.
+4. Verify
+   - Run the project build after the edits.
+   - Confirm there are no TypeScript errors from the stricter `LedgerRow` type.
+
+No database changes. No route/UI changes. No other files beyond the requested implementation files.
