@@ -181,9 +181,9 @@ html.light {
   --secondary-foreground: #0A1A0F;
 
   /* Accent */
-  --accent: #B8DFC8;
-  --accent-foreground: #0A1A0F;
-  --draw-card-bg: #B8DFC8;
+  --accent: #1DB954;
+  --accent-foreground: #FFFFFF;
+  --draw-card-bg: #1DB954;
 
   /* Softer light-mode shadows */
   --shadow-card: 0 1px 4px 0 rgba(0, 0, 0, 0.06);
