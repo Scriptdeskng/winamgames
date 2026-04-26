@@ -147,10 +147,10 @@
 html.light {
   --background: #ffffff;
   --foreground: #0a0a0f;
-  --surface-1: #f8f8fc;
+  --surface-1: #e0e0ec;
   --surface-2: #e8e8f0;
   --surface-3: #eaeaf0;
-  --progress-track: #d8d8e4;
+  --progress-track: #c8c8d8;
 
   --card: #ffffff;
   --card-foreground: #0a0a0f;
@@ -162,8 +162,8 @@ html.light {
   --secondary: #f4f4f8;
   --secondary-foreground: #1a1a2e;
 
-  --muted: #f4f4f8;
-  --muted-foreground: #55556a;
+  --muted: #d8d8e6;
+  --muted-foreground: #444455;
 
   --accent: #eaeaf0;
   --accent-foreground: #1a1a2e;
