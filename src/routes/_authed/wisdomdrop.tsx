@@ -93,16 +93,16 @@ function WisdomDropPage() {
           </div>
 
           <div className="flex-1 flex items-center justify-center w-full py-4">
-            <div className="w-full max-w-[280px] rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-2 mx-4">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground/40 font-semibold">Example</p>
-              <p className="text-xs text-muted-foreground/40 leading-relaxed">
+            <div className="w-full max-w-[280px] rounded-xl bg-surface-1 border border-border p-3 space-y-2 mx-4">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Example</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 "A child who is not taught at home will teach the village a ____"
               </p>
               <div className="grid grid-cols-2 gap-1.5">
                 {["lesson", "song", "dance", "game"].map((opt) => (
                   <div
                     key={opt}
-                    className="h-7 rounded-lg border border-white/[0.05] bg-white/[0.02] flex items-center justify-center text-[11px] text-muted-foreground/30"
+                    className="h-7 rounded-lg border border-border bg-surface-2 flex items-center justify-center text-[11px] text-muted-foreground"
                   >
                     {opt}
                   </div>
