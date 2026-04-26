@@ -40,7 +40,7 @@ async function ensureCurrentDrawWeek(): Promise<string | null> {
     .insert({
       week_start_wat: weekStart,
       week_end_wat: weekEnd,
-      entry_lock_at: `${weekEnd}T18:00:00+00:00`, // 19:00 WAT
+      entry_lock_at: `${weekEnd}T18:50:00+00:00`, // 19:50 WAT
       draw_executes_at: `${weekEnd}T19:00:00+00:00`, // 20:00 WAT
       status: "open",
       total_entries: 0,

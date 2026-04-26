@@ -34,12 +34,27 @@ export const getPlayerData = createServerFn({ method: "POST" })
     ) ?? 0;
 
     // Get current draw week
+    const nowWAT = new Date(Date.now() + 60 * 60 * 1000);
+    const todayWAT = nowWAT.toISOString().split("T")[0];
     const { data: drawWeek } = await supabaseAdmin
       .from("winam_draw_weeks")
       .select("id, draw_executes_at, week_start_wat, week_end_wat, status")
-      .eq("status", "open")
+      .in("status", ["open", "locked", "drawn"])
+      .gte("week_end_wat", todayWAT)
+      .order("week_start_wat", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const { data: publishedCfg } = await supabaseAdmin
+      .from("winam_platform_config")
+      .select("value")
+      .eq("key", "winners_published_week_id")
+      .maybeSingle();
+    const rawPublishedWeekId = publishedCfg?.value as unknown;
+    const publishedWeekId =
+      typeof rawPublishedWeekId === "string" && rawPublishedWeekId.length > 10
+        ? rawPublishedWeekId
+        : null;
 
     // Get weekly entry total
     let weekTotal = 0;
@@ -79,8 +94,10 @@ export const getPlayerData = createServerFn({ method: "POST" })
             drawExecutesAt: drawWeek.draw_executes_at,
             weekStartWat: drawWeek.week_start_wat,
             weekEndWat: drawWeek.week_end_wat,
+            status: drawWeek.status,
           }
         : null,
+      publishedWeekId,
     };
   });
 

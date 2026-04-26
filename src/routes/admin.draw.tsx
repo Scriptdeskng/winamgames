@@ -80,6 +80,19 @@ function DrawPage() {
     }
   };
 
+  const handlePublishWeek = async (drawWeekId: string) => {
+    if (!adminId) return;
+    setBusy(true);
+    try {
+      await publishWinners({ data: { adminId, drawWeekId } });
+      refresh();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const exportCsv = (week: Week, winners: Winner[]) => {
     const header = "position,prize_type,prize_amount,ticket_id,player_id,nickname,msisdn_last4\n";
     const rows = winners
@@ -223,17 +236,31 @@ function DrawPage() {
                       <td className="px-3 py-2 text-right tabular-nums">{w.total_tickets}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{w.unique_players}</td>
                       <td className="px-3 py-2 text-right">
-                        {(w.status === "drawn" || w.status === "settled") && winners && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              exportCsv(w, winners);
-                            }}
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            <Download className="h-3 w-3" /> CSV
-                          </button>
-                        )}
+                        <div className="flex justify-end gap-3">
+                          {w.status === "drawn" && (
+                            <button
+                              disabled={busy}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePublishWeek(w.id);
+                              }}
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40"
+                            >
+                              <Send className="h-3 w-3" /> Publish
+                            </button>
+                          )}
+                          {(w.status === "drawn" || w.status === "settled") && winners && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportCsv(w, winners);
+                              }}
+                              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <Download className="h-3 w-3" /> CSV
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     {isOpen && (
