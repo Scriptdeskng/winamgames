@@ -23,6 +23,7 @@ import { Route as AdminWinnersRouteImport } from './routes/admin.winners'
 import { Route as AdminPlayersRouteImport } from './routes/admin.players'
 import { Route as AdminMissionsRouteImport } from './routes/admin.missions'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminHelpRouteImport } from './routes/admin.help'
 import { Route as AdminDrawRouteImport } from './routes/admin.draw'
 import { Route as AdminConfigRouteImport } from './routes/admin.config'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
@@ -104,6 +105,11 @@ const AdminMissionsRoute = AdminMissionsRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHelpRoute = AdminHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDrawRoute = AdminDrawRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/config': typeof AdminConfigRoute
   '/admin/draw': typeof AdminDrawRoute
+  '/admin/help': typeof AdminHelpRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/missions': typeof AdminMissionsRoute
   '/admin/players': typeof AdminPlayersRouteWithChildren
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/config': typeof AdminConfigRoute
   '/admin/draw': typeof AdminDrawRoute
+  '/admin/help': typeof AdminHelpRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/missions': typeof AdminMissionsRoute
   '/admin/players': typeof AdminPlayersRouteWithChildren
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/config': typeof AdminConfigRoute
   '/admin/draw': typeof AdminDrawRoute
+  '/admin/help': typeof AdminHelpRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/missions': typeof AdminMissionsRoute
   '/admin/players': typeof AdminPlayersRouteWithChildren
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/config'
     | '/admin/draw'
+    | '/admin/help'
     | '/admin/login'
     | '/admin/missions'
     | '/admin/players'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/config'
     | '/admin/draw'
+    | '/admin/help'
     | '/admin/login'
     | '/admin/missions'
     | '/admin/players'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/config'
     | '/admin/draw'
+    | '/admin/help'
     | '/admin/login'
     | '/admin/missions'
     | '/admin/players'
@@ -454,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/help': {
+      id: '/admin/help'
+      path: '/help'
+      fullPath: '/admin/help'
+      preLoaderRoute: typeof AdminHelpRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/draw': {
@@ -593,6 +612,7 @@ interface AdminRouteChildren {
   AdminBannersRoute: typeof AdminBannersRoute
   AdminConfigRoute: typeof AdminConfigRoute
   AdminDrawRoute: typeof AdminDrawRoute
+  AdminHelpRoute: typeof AdminHelpRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMissionsRoute: typeof AdminMissionsRoute
   AdminPlayersRoute: typeof AdminPlayersRouteWithChildren
@@ -604,6 +624,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBannersRoute: AdminBannersRoute,
   AdminConfigRoute: AdminConfigRoute,
   AdminDrawRoute: AdminDrawRoute,
+  AdminHelpRoute: AdminHelpRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMissionsRoute: AdminMissionsRoute,
   AdminPlayersRoute: AdminPlayersRouteWithChildren,
