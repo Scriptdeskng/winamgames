@@ -12,6 +12,7 @@ import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getDrawState, getNextEntriesLockWAT, type DrawState } from "@/lib/draw-state";
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/app")({
   component: HomePage,
@@ -27,22 +28,22 @@ function getCountdownParts(ms: number) {
   };
 }
 
-function CountdownUnit({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label, isLightMode = false }: { value: number; label: string; isLightMode?: boolean }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground light:text-accent-foreground">
+      <span className={cn("font-mono text-4xl font-bold tabular-nums leading-none text-foreground", isLightMode && "text-white")}>
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[10px] text-muted-foreground light:text-accent-foreground/80 lowercase mt-0.5 leading-none">
+      <span className={cn("text-[10px] text-muted-foreground lowercase mt-0.5 leading-none", isLightMode && "text-white/80")}>
         {label}
       </span>
     </div>
   );
 }
 
-function CountdownColon() {
+function CountdownColon({ isLightMode = false }: { isLightMode?: boolean }) {
   return (
-    <span className="font-mono text-4xl font-bold leading-none text-foreground light:text-accent-foreground pb-[14px]">
+    <span className={cn("font-mono text-4xl font-bold leading-none text-foreground pb-[14px]", isLightMode && "text-white")}>
       :
     </span>
   );
