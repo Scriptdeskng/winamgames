@@ -147,7 +147,7 @@
 html.light {
   --background: #ffffff;
   --foreground: #0a0a0f;
-  --surface-1: #e0e0ec;
+  --surface-1: #f4f4f8;
   --surface-2: #e8e8f0;
   --surface-3: #eaeaf0;
   --progress-track: #c8c8d8;
@@ -159,10 +159,10 @@ html.light {
 
   --primary-foreground: #0a0a0f;
 
-  --secondary: #f4f4f8;
+  --secondary: #c8c8d8;
   --secondary-foreground: #1a1a2e;
 
-  --muted: #d8d8e6;
+  --muted: #eaeaf2;
   --muted-foreground: #444455;
 
   --accent: #eaeaf0;

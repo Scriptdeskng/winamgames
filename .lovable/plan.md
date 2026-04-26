@@ -1,14 +1,13 @@
 Update `src/styles.css` only, limited to the existing `html.light` block.
 
-Token changes:
-- Set `--surface-1` to `#e0e0ec` for stronger pre-launch icon/preview contrast.
-- Set `--muted` to `#d8d8e6` for more visible muted backgrounds.
-- Set `--muted-foreground` to `#444455` for improved secondary/body text readability.
-- Set the progress track token already present in the light block (`--progress-track`) to `#c8c8d8` so unfilled progress bars are more visible.
-- If progress bars are using a shared surface/secondary token instead of `--progress-track`, keep the change token-only and adjust the relevant existing light-mode token in the same block to `#c8c8d8` without editing components.
+Changes:
+- Set `--surface-1` back to `#f4f4f8`.
+- Set `--muted` back to `#eaeaf2`.
+- Keep `--muted-foreground` as `#444455`.
+- Ensure the progress-bar unfilled track is the only token using `#c8c8d8`; since the progress component uses a secondary-style track if no dedicated token is wired, set `--secondary` to `#c8c8d8` in the light block if needed.
+- Leave all components and dark-mode tokens unchanged.
 
 Scope constraints:
 - No component changes.
-- No dark-mode changes.
 - No admin changes.
 - No game logic or server changes.
