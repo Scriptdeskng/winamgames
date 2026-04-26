@@ -12,7 +12,6 @@ import { BannerStack, type Banner } from "@/components/home/BannerStack";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
 import { getDrawState, getNextEntriesLockWAT, type DrawState } from "@/lib/draw-state";
 import React from "react";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/app")({
   component: HomePage,
@@ -28,22 +27,22 @@ function getCountdownParts(ms: number) {
   };
 }
 
-function CountdownUnit({ value, label, isLightMode = false }: { value: number; label: string; isLightMode?: boolean }) {
+function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className={cn("font-mono text-4xl font-bold tabular-nums leading-none text-foreground", isLightMode && "text-white")}>
+      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground">
         {String(value).padStart(2, "0")}
       </span>
-      <span className={cn("text-[10px] text-muted-foreground lowercase mt-0.5 leading-none", isLightMode && "text-white/80")}>
+      <span className="text-[10px] text-muted-foreground lowercase mt-0.5 leading-none">
         {label}
       </span>
     </div>
   );
 }
 
-function CountdownColon({ isLightMode = false }: { isLightMode?: boolean }) {
+function CountdownColon() {
   return (
-    <span className={cn("font-mono text-4xl font-bold leading-none text-foreground pb-[14px]", isLightMode && "text-white")}>
+    <span className="font-mono text-4xl font-bold leading-none text-foreground pb-[14px]">
       :
     </span>
   );
@@ -287,33 +286,19 @@ function DrawHeroCard({
   const remaining = targetDate.getTime() - now;
   const { days, hours, minutes, seconds } = getCountdownParts(remaining);
   const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
-  const [isLightMode, setIsLightMode] = React.useState(false);
 
-  React.useEffect(() => {
-    const root = document.documentElement;
-    const updateTheme = () => setIsLightMode(root.classList.contains("light"));
-    updateTheme();
-
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const cardChrome = cn(
-    "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card",
-    isLightMode && "bg-none bg-[#0A2518] border-[#0A2518] text-white"
-  );
+  const cardChrome =
+    "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card";
 
   // ─── State: drawn ── winners selected, awaiting new week
   if (drawState === "drawn") {
     return (
       <div className={cardChrome}>
-        <p className={cn("text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2", isLightMode && "text-white/80")}>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Weekly Draw
         </p>
-        <h3 className={cn("text-2xl font-bold text-foreground", isLightMode && "text-white")}>Draw complete</h3>
-        <p className={cn("text-sm text-muted-foreground mt-1", isLightMode && "text-white/80")}>
+        <h3 className="text-2xl font-bold text-foreground">Draw complete</h3>
+        <p className="text-sm text-muted-foreground mt-1">
           This week's winners have been selected
         </p>
         <Link
@@ -323,7 +308,7 @@ function DrawHeroCard({
           See winners
           <ChevronRight className="h-4 w-4" />
         </Link>
-        <p className={cn("text-[11px] text-muted-foreground/80 mt-3", isLightMode && "text-white/70")}>
+        <p className="text-[11px] text-muted-foreground/80 mt-3">
           New draw week opens in a moment
         </p>
       </div>
@@ -334,25 +319,25 @@ function DrawHeroCard({
   if (drawState === "locked") {
     return (
       <div className={cardChrome}>
-        <p className={cn("text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2", isLightMode && "text-white/80")}>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Weekly Draw
         </p>
-        <h3 className={cn("text-2xl font-bold text-foreground", isLightMode && "text-white")}>Draw closing soon</h3>
-        <p className={cn("text-sm text-muted-foreground mt-1", isLightMode && "text-white/80")}>
+        <h3 className="text-2xl font-bold text-foreground">Draw closing soon</h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Tickets locked — draw executes at 20:00 WAT
         </p>
-        <p className={cn("text-sm text-muted-foreground mt-4 tabular-nums", isLightMode && "text-white/80")}>
+        <p className="text-sm text-muted-foreground mt-4 tabular-nums">
           <span className="font-bold">{weekTotal}</span>
           <span> / {weekCap} tickets this week</span>
         </p>
-        <div className={cn("mt-2 h-2 rounded-full bg-background/40 overflow-hidden", isLightMode && "bg-white/25")}>
+        <div className="mt-2 h-2 rounded-full bg-black/10 overflow-hidden">
           <div
-            className={cn("h-full rounded-full bg-muted-foreground/40 transition-all", isLightMode && "bg-white")}
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
         <div className="mt-3 flex items-center justify-end">
-          <Link to="/entries" className={cn("text-xs text-primary flex items-center gap-1 hover:underline", isLightMode && "text-white")}>
+          <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
             View my tickets <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -363,35 +348,35 @@ function DrawHeroCard({
   // ─── State: open / new_week ── default countdown UI
   return (
     <div className={cardChrome}>
-      <p className={cn("text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2", isLightMode && "text-white/80")}>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
         Weekly Draw
       </p>
       <div className="flex items-end gap-1.5">
         {days > 0 && (
           <>
-            <CountdownUnit value={days} label="day" isLightMode={isLightMode} />
-            <CountdownColon isLightMode={isLightMode} />
+            <CountdownUnit value={days} label="day" />
+            <CountdownColon />
           </>
         )}
-        <CountdownUnit value={hours} label="hr" isLightMode={isLightMode} />
-        <CountdownColon isLightMode={isLightMode} />
-        <CountdownUnit value={minutes} label="min" isLightMode={isLightMode} />
-        <CountdownColon isLightMode={isLightMode} />
-        <CountdownUnit value={seconds} label="sec" isLightMode={isLightMode} />
+        <CountdownUnit value={hours} label="hr" />
+        <CountdownColon />
+        <CountdownUnit value={minutes} label="min" />
+        <CountdownColon />
+        <CountdownUnit value={seconds} label="sec" />
       </div>
-      <p className={cn("text-sm text-foreground mt-3 tabular-nums", isLightMode && "text-white")}>
-        <span className={cn("font-bold text-primary", isLightMode && "text-white")}>{weekTotal}</span>
-        <span className={cn("text-muted-foreground", isLightMode && "text-white/80")}> / {weekCap} tickets this week</span>
+      <p className="text-sm text-foreground mt-3 tabular-nums">
+        <span className="font-bold text-primary">{weekTotal}</span>
+        <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
       </p>
-      <div className={cn("mt-2 h-2 rounded-full bg-background/40 overflow-hidden", isLightMode && "bg-white/25")}>
+      <div className="mt-2 h-2 rounded-full bg-black/10 overflow-hidden">
         <div
-          className={cn("h-full rounded-full bg-primary transition-all", isLightMode && "bg-white")}
+          className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <p className={cn("text-[11px] text-muted-foreground", isLightMode && "text-white/80")}>Draw every Sunday at 20:00 WAT</p>
-        <Link to="/entries" className={cn("text-xs text-primary flex items-center gap-1 hover:underline", isLightMode && "text-white")}>
+        <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
+        <Link to="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
           View my tickets <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
