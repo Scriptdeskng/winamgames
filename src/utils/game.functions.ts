@@ -29,6 +29,42 @@ async function autoExecuteDrawIfReady(): Promise<void> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const nowIso = new Date().toISOString();
 
+  const { data: openWeek, error: openWeekError } = await supabaseAdmin
+    .from("winam_draw_weeks")
+    .select("*")
+    .eq("status", "open")
+    .lte("entry_lock_at", nowIso)
+    .order("week_start_wat", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (openWeekError) throw new Error(openWeekError.message);
+
+  if (openWeek) {
+    const { data: entries, error: entriesError } = await supabaseAdmin
+      .from("winam_entry_ledger")
+      .select("entries_delta")
+      .eq("draw_week_id", openWeek.id);
+    if (entriesError) throw new Error(entriesError.message);
+
+    const totalEntries = (entries ?? []).reduce(
+      (sum, row) => sum + (row.entries_delta ?? 0),
+      0
+    );
+
+    const { error: lockError } = await supabaseAdmin
+      .from("winam_draw_weeks")
+      .update({ status: "locked", total_entries: totalEntries })
+      .eq("id", openWeek.id)
+      .eq("status", "open");
+    if (lockError) throw new Error(lockError.message);
+
+    await autoAudit("draw_lock", "draw_week", openWeek.id, {
+      total_entries: totalEntries,
+      source: "auto",
+    });
+  }
+
   const { data: week, error: weekError } = await supabaseAdmin
     .from("winam_draw_weeks")
     .select("*")
