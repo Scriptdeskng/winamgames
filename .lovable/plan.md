@@ -1,20 +1,20 @@
-I’ll make a focused light-mode contrast fix for `src/routes/_authed/leaderboard.tsx` and `src/styles.css` with no dark-mode changes.
+I’ll make only the requested light-mode contrast fixes for the leaderboard podium cards.
 
 Plan:
-1. Update the podium card styling in `leaderboard.tsx`
-   - Add stable podium background class names for 1st, 2nd, and 3rd place cards while keeping their existing dark-mode gradient classes unchanged.
-   - Ensure the rank badge pills use dark, readable text in light mode via light-only CSS overrides.
+1. Update `src/routes/_authed/leaderboard.tsx`
+   - Keep player names using `text-foreground`.
+   - Change the podium puzzle count row to use `text-foreground` so the numbers are clearly readable on light tinted cards.
+   - Add a stable class to the podium avatar circles so light-mode CSS can override their transparent gradient backgrounds.
+   - Keep existing dark-mode podium gradients and styling intact.
 
-2. Add light-mode-only CSS overrides in `src/styles.css`
-   - `html.light .leaderboard-podium-first` background: `#FFF3CC`
-   - `html.light .leaderboard-podium-second` background: `#D4EDE0`
-   - `html.light .leaderboard-podium-third` background: `#FFE8D6`
-   - Add matching light-mode rank-pill text overrides so `1ST`, `2ND`, and `3RD` remain readable.
+2. Update `src/styles.css`
+   - Replace the current shared light-mode badge text override with explicit colors:
+     - 1ST: `#92610A`
+     - 2ND: `#1A5C3A`
+     - 3RD: `#7A3A1A`
+   - Add a light-mode-only avatar circle override using a visible token-based surface (`var(--surface-2)` / muted-style background) for podium avatar circles.
+   - Leave all overrides scoped under `html.light` so dark mode is unchanged.
 
-3. Update “Your Standing” progress bar track
-   - Change the progress track from the current border-opacity background to `bg-black/10` so it is visible on light cards.
-   - Leave the progress fill unchanged.
-
-4. Verify scope
-   - Confirm changes are limited to `leaderboard.tsx` and `styles.css`.
-   - Run a build/typecheck if available after implementation.
+3. Verify
+   - Confirm the scope is limited to `leaderboard.tsx` and `styles.css`.
+   - Run the build after implementation.
