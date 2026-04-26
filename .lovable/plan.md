@@ -1,7 +1,7 @@
 Update `src/styles.css` only.
 
 Change:
-- Replace the existing `html.light` block with the provided cool blue-grey light palette exactly, including the specified page, card, surface, text, muted, primary, border/input/ring, secondary/progress, accent, destructive, and sidebar token values.
+- Replace the entire existing `html.light` block with the provided green-grey light palette exactly, including the specified background, card, surface, foreground, muted, primary, border/input/ring, secondary/progress, accent, destructive, and sidebar token values.
 
 Scope constraints:
 - No dark mode changes.
