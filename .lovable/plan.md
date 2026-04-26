@@ -1,24 +1,20 @@
-Update only the pre-launch preview styling for CheckMate and WisdomDrop plus the requested light-mode CSS hooks.
+I’ll make a focused light-mode contrast fix for `src/routes/_authed/leaderboard.tsx` and `src/styles.css` with no dark-mode changes.
 
-Changes:
-- `src/routes/_authed/checkmate.tsx`
-  - Replace the mini-board inline white RGBA square backgrounds with token/CSS-class based square classes so they can be themed.
-  - Add stable classes for mini-board light squares, dark squares, and hint squares.
-  - Replace external chess-piece image SVGs with text-based chess glyphs using `text-foreground`/`text-muted-foreground` so pieces render dark in light mode and light in dark mode.
+Plan:
+1. Update the podium card styling in `leaderboard.tsx`
+   - Add stable podium background class names for 1st, 2nd, and 3rd place cards while keeping their existing dark-mode gradient classes unchanged.
+   - Ensure the rank badge pills use dark, readable text in light mode via light-only CSS overrides.
 
-- `src/styles.css`
-  - Add `html.light` CSS overrides for the CheckMate preview square classes:
-    - dark squares: `#A8C0A0`
-    - light squares: `#E8F2EC`
-  - Keep these overrides scoped to `html.light`.
+2. Add light-mode-only CSS overrides in `src/styles.css`
+   - `html.light .leaderboard-podium-first` background: `#FFF3CC`
+   - `html.light .leaderboard-podium-second` background: `#D4EDE0`
+   - `html.light .leaderboard-podium-third` background: `#FFE8D6`
+   - Add matching light-mode rank-pill text overrides so `1ST`, `2ND`, and `3RD` remain readable.
 
-- `src/routes/_authed/wisdomdrop.tsx`
-  - Replace hardcoded `bg-white/[...]`, `border-white/[...]`, and low-opacity muted preview text with token-based classes.
-  - Add `border border-border` and `bg-surface-2` to the example answer option buttons.
-  - Keep the EXAMPLE label and proverb text using `text-muted-foreground`.
+3. Update “Your Standing” progress bar track
+   - Change the progress track from the current border-opacity background to `bg-black/10` so it is visible on light cards.
+   - Leave the progress fill unchanged.
 
-Scope constraints:
-- No game logic changes.
-- No admin changes.
-- No unrelated component changes.
-- No dark-mode token changes.
+4. Verify scope
+   - Confirm changes are limited to `leaderboard.tsx` and `styles.css`.
+   - Run a build/typecheck if available after implementation.
