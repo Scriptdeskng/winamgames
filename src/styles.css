@@ -224,10 +224,20 @@ html.light .leaderboard-podium-third {
   background: #FFE8D6;
 }
 
-html.light .leaderboard-podium-medal-first,
-html.light .leaderboard-podium-medal-second,
+html.light .leaderboard-podium-medal-first {
+  color: #92610A;
+}
+
+html.light .leaderboard-podium-medal-second {
+  color: #1A5C3A;
+}
+
 html.light .leaderboard-podium-medal-third {
-  color: #0A1A0F;
+  color: #7A3A1A;
+}
+
+html.light .leaderboard-podium-avatar {
+  background: var(--surface-2) !important;
 }
 
 @layer base {
