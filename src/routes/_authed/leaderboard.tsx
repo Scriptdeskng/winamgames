@@ -465,7 +465,7 @@ function PodiumPillar({
       )}
 
       <div
-        className={`${style.avatar} rounded-full flex items-center justify-center mb-2 shadow-lg`}
+        className={`${style.avatar} leaderboard-podium-avatar rounded-full flex items-center justify-center mb-2 shadow-lg`}
         style={{
           background: `radial-gradient(circle at 30% 30%, color-mix(in oklab, currentColor 30%, transparent), transparent 70%), ${
             place === 1
@@ -483,7 +483,7 @@ function PodiumPillar({
         {isMe ? "You" : player.name}
       </p>
 
-      <div className={`mt-1.5 inline-flex items-center gap-1 ${place === 1 ? "text-base" : "text-sm"} font-bold tabular-nums font-display ${style.label}`}>
+      <div className={`mt-1.5 inline-flex items-center gap-1 ${place === 1 ? "text-base" : "text-sm"} font-bold tabular-nums font-display text-foreground`}>
         <Puzzle className={place === 1 ? "h-4 w-4" : "h-3 w-3"} />
         {player.score}
       </div>
