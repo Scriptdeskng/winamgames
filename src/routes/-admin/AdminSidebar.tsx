@@ -7,6 +7,7 @@ import {
   Target,
   Settings,
   Award,
+  HelpCircle,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const NAV: NavItem[] = [
   { to: "/admin/missions", label: "Missions", icon: Target },
   { to: "/admin/config", label: "Config", icon: Settings },
   { to: "/admin/winners", label: "Winners", icon: Award },
+  { to: "/admin/help", label: "Help", icon: HelpCircle },
 ];
 
 export function AdminSidebar({ email, onLogout }: Props) {
