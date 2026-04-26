@@ -203,6 +203,15 @@ html.light {
   --sidebar-primary-foreground: #FFFFFF;
 }
 
+html.light .checkmate-preview-light,
+html.light .checkmate-preview-hint {
+  background-color: #E8F2EC;
+}
+
+html.light .checkmate-preview-dark {
+  background-color: #A8C0A0;
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -284,6 +293,17 @@ html.light {
     box-shadow: 0 0 0 2px oklch(0.696 0.17 162.48 / 20%);
   }
 
+  .checkmate-preview-light {
+    background-color: rgba(255,255,255,0.08);
+  }
+
+  .checkmate-preview-dark {
+    background-color: rgba(255,255,255,0.04);
+  }
+
+  .checkmate-preview-hint {
+    background-color: rgba(255,255,255,0.15);
+  }
 
   /* Landing page motion — subtle, GPU-friendly */
   @keyframes landing-float {
