@@ -86,6 +86,7 @@ function PlayersIndex() {
               <th className="px-3 py-2 text-left">Tier</th>
               <th className="px-3 py-2 text-right">Coins</th>
               <th className="px-3 py-2 text-right">XP</th>
+              <th className="px-3 py-2 text-right">Tickets</th>
               <th className="px-3 py-2 text-right">Streak</th>
               <th className="px-3 py-2 text-left">Last session</th>
               <th className="px-3 py-2"></th>
@@ -94,13 +95,13 @@ function PlayersIndex() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center">
+                <td colSpan={9} className="px-3 py-8 text-center">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
                 </td>
               </tr>
             ) : players.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={9} className="px-3 py-8 text-center text-sm text-muted-foreground">
                   No players found.
                 </td>
               </tr>
@@ -119,6 +120,7 @@ function PlayersIndex() {
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{p.coin_balance.toLocaleString()}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{p.xp_total.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{(p.week_tickets ?? 0).toLocaleString()}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{p.current_streak}</td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
                     {p.last_session_date ?? "—"}

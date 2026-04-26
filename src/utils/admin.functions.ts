@@ -181,7 +181,32 @@ export const getPlayers = createServerFn({ method: "POST" })
     }
 
     const { data: players, count } = await q;
-    return { players: players ?? [], total: count ?? 0 };
+    const playerRows = players ?? [];
+    const currentWeek = await getOpenOrLockedDrawWeek();
+
+    let ticketTotals: Record<string, number> = {};
+    if (currentWeek && playerRows.length > 0) {
+      const playerIds = playerRows.map((p) => p.id);
+      const { data: ledgerRows, error: ledgerError } = await supabaseAdmin
+        .from("winam_entry_ledger")
+        .select("player_id, entries_delta")
+        .eq("draw_week_id", currentWeek.id)
+        .in("player_id", playerIds);
+
+      if (ledgerError) throw new Error(ledgerError.message);
+      ticketTotals = (ledgerRows ?? []).reduce<Record<string, number>>((acc, row) => {
+        acc[row.player_id] = (acc[row.player_id] ?? 0) + (row.entries_delta ?? 0);
+        return acc;
+      }, {});
+    }
+
+    return {
+      players: playerRows.map((player) => ({
+        ...player,
+        week_tickets: ticketTotals[player.id] ?? 0,
+      })),
+      total: count ?? 0,
+    };
   });
 
 export const getPlayerDetail = createServerFn({ method: "POST" })
