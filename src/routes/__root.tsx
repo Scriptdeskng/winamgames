@@ -62,18 +62,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `(function() {
+    const root = document.documentElement;
     if (window.location.pathname.startsWith('/admin')) {
-      document.documentElement.classList.remove('light');
+      root.classList.remove('light');
+      root.classList.add('dark');
       return;
     }
     const stored = localStorage.getItem('winam-theme');
     if (stored === 'light') {
-      document.documentElement.classList.add('light');
+      root.classList.remove('dark');
+      root.classList.add('light');
     } else if (stored === 'dark') {
-      document.documentElement.classList.remove('light');
+      root.classList.remove('light');
+      root.classList.add('dark');
     } else {
       if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-        document.documentElement.classList.add('light');
+        root.classList.remove('dark');
+        root.classList.add('light');
       }
     }
   })();`,

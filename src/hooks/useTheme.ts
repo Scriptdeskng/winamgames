@@ -9,10 +9,13 @@ export function useTheme() {
   });
 
   useEffect(() => {
+    const root = document.documentElement;
     if (theme === "light") {
-      document.documentElement.classList.add("light");
+      root.classList.remove("dark");
+      root.classList.add("light");
     } else {
-      document.documentElement.classList.remove("light");
+      root.classList.remove("light");
+      root.classList.add("dark");
     }
     localStorage.setItem("winam-theme", theme);
   }, [theme]);
