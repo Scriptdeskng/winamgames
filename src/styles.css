@@ -293,6 +293,17 @@ html.light .checkmate-preview-dark {
     box-shadow: 0 0 0 2px oklch(0.696 0.17 162.48 / 20%);
   }
 
+  .checkmate-preview-light {
+    background-color: rgba(255,255,255,0.08);
+  }
+
+  .checkmate-preview-dark {
+    background-color: rgba(255,255,255,0.04);
+  }
+
+  .checkmate-preview-hint {
+    background-color: rgba(255,255,255,0.15);
+  }
 
   /* Landing page motion — subtle, GPU-friendly */
   @keyframes landing-float {
