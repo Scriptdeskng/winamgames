@@ -156,6 +156,8 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
             gameType,
           },
         });
+      } else {
+        navigate({ to: "/app" });
       }
     } catch (err) {
       console.error("Close session failed:", err);
@@ -228,7 +230,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       const newLives = result.correct ? state.lives : state.lives - 1;
       const isLastPuzzle = !result.nextPuzzle;
       const isDead = newLives <= 0;
-      const isGameOver = isDead || (result.correct && isLastPuzzle);
+      const isGameOver = isDead || isLastPuzzle;
       const finalHints = state.hintsUsed;
 
       // Queue the advance — consumed by `advance()` (button) or auto-timer (correct only).
