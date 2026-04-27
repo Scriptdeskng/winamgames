@@ -393,6 +393,17 @@ export const submitKycIdentity = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: winner, error: winnerError } = await supabaseAdmin
+      .from("winam_winners")
+      .select("id")
+      .eq("player_id", data.playerId)
+      .limit(1)
+      .maybeSingle();
+
+    if (winnerError || !winner) {
+      throw new Error("KYC submission is only available to draw winners.");
+    }
+
     const payload = {
       player_id: data.playerId,
       first_name: data.firstName.trim(),
@@ -422,6 +433,17 @@ export const submitKycBankDetails = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: winner, error: winnerError } = await supabaseAdmin
+      .from("winam_winners")
+      .select("id")
+      .eq("player_id", data.playerId)
+      .limit(1)
+      .maybeSingle();
+
+    if (winnerError || !winner) {
+      throw new Error("KYC submission is only available to draw winners.");
+    }
+
     const { data: updated, error } = await (supabaseAdmin.from("winam_kyc") as any)
       .update({
         bank_code: data.bankCode.trim(),
