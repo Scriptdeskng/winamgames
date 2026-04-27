@@ -197,7 +197,12 @@ export const getActiveMissions = createServerFn({ method: "POST" })
     };
 
     let todaysMissions = await loadTodaysMissions();
-    const slotsAvailable = Math.max(0, TARGET_PENDING - todaysMissions.length);
+    const hasAnyTodayMissions = todaysMissions.some(
+      (m) => m.assigned_date_wat === todayWat
+    );
+    const slotsAvailable = hasAnyTodayMissions
+      ? 0
+      : Math.max(0, TARGET_PENDING - todaysMissions.length);
 
     if (slotsAvailable > 0 && drawWeek) {
       const pendingIds = todaysMissions.map((p) => p.mission_id);

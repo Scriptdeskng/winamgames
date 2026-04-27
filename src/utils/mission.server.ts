@@ -51,7 +51,11 @@ export async function evaluatePendingMissions(
       )
     `)
     .eq("player_id", playerId)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .eq("assigned_date_wat", _watDate)
+    .order("assigned_date_wat", { ascending: false })
+    .order("id", { ascending: true })
+    .limit(3);
 
   if (!pending || pending.length === 0) return [];
 
