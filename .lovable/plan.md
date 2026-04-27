@@ -1,25 +1,23 @@
-Implement the requested winner-only KYC protection with no unrelated changes.
+Plan:
 
-Files to change:
-- `src/utils/mission.functions.ts` because this project currently contains the KYC server functions there; there is no `src/utils/kyc.functions.ts` file.
-- `src/routes/_authed/kyc.tsx`
+1. Update only `src/utils/game.functions.ts`.
 
-Planned changes:
-1. Add a winner check at the start of `submitKycIdentity()`
-   - After loading `supabaseAdmin`, before building the KYC payload, query `winam_winners` for the current `playerId`.
-   - If the query errors or no winner row exists, throw:
-     `KYC submission is only available to draw winners.`
+2. In `closeSession()`, extend the session fetch to include `puzzles_solved`:
+   - Current fetch selects `draw_week_id, session_date_wat, game_type`.
+   - Change it to also select `puzzles_solved` so the function can detect an already-closed session.
 
-2. Add the same winner check at the start of `submitKycBankDetails()`
-   - Run it before updating bank details.
-   - Use the same error message.
+3. Immediately after the existing `if (!session)` validation, add the primary idempotency guard:
+   - If `session.puzzles_solved !== null`, return:
+     ```ts
+     return { success: false as const, error: "Session already closed" };
+     ```
+   - This runs before any writes, so duplicate XP, coins, ticket ledger rows, streak updates, missions, and puzzle history are skipped.
 
-3. Add route guard in `src/routes/_authed/kyc.tsx`
-   - Import and call existing `getMyWinnerStatus()` from `mission.functions.ts`.
-   - On page load, if there is no session or `getMyWinnerStatus()` returns `won: false`, navigate immediately to `/app`.
-   - Only load/display KYC data after winner status is confirmed, so non-winners do not see the claim form.
+4. Add the requested ledger-based fallback guard immediately after the `puzzles_solved` guard:
+   - Query `winam_entry_ledger` for `source_id = data.sessionId` and `source_type = "game_session"`.
+   - If a row exists, return the same `Session already closed` response.
+   - This is redundant once `puzzles_solved` is set, but keeps the extra protection requested for existing sessions where ledger rows may already exist.
 
-4. Verify
-   - Run the build after changes.
+5. Run `bun run build` after the edit to verify TypeScript and production build compatibility.
 
-Note: I will keep the changes limited to these two existing files because the requested `src/utils/kyc.functions.ts` does not exist in this codebase.
+No other files will be changed.

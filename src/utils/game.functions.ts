@@ -881,12 +881,34 @@ export const closeSession = createServerFn({ method: "POST" })
     // Get session to find draw_week_id
     const { data: session } = await supabaseAdmin
       .from("winam_game_sessions")
-      .select("draw_week_id, session_date_wat, game_type")
+      .select("draw_week_id, session_date_wat, game_type, puzzles_solved, hints_used, entries_awarded, coins_awarded, duration_seconds")
       .eq("id", data.sessionId)
       .single();
 
     if (!session) {
       return { success: false as const, error: "Session not found" };
+    }
+
+    if (
+      session.puzzles_solved > 0 ||
+      session.hints_used > 0 ||
+      session.entries_awarded > 0 ||
+      session.coins_awarded > 0 ||
+      session.duration_seconds > 0
+    ) {
+      return { success: false as const, error: "Session already closed" };
+    }
+
+    const { data: existingLedger } = await supabaseAdmin
+      .from("winam_entry_ledger")
+      .select("id")
+      .eq("source_id", data.sessionId)
+      .eq("source_type", "game_session")
+      .limit(1)
+      .maybeSingle();
+
+    if (existingLedger) {
+      return { success: false as const, error: "Session already closed" };
     }
 
     // ── Entry calculation ──
