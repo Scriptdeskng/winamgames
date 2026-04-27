@@ -138,12 +138,17 @@ async function autoExecuteDrawIfReady(): Promise<void> {
   const { error: insertWinnersError } = await supabaseAdmin.from("winam_winners").insert(rows);
   if (insertWinnersError) throw new Error(insertWinnersError.message);
 
-  const { error: drawnError } = await supabaseAdmin
+  const { data: updated, error: updateError } = await supabaseAdmin
     .from("winam_draw_weeks")
     .update({ status: "drawn", draw_seed: seed })
     .eq("id", week.id)
-    .eq("status", "locked");
-  if (drawnError) throw new Error(drawnError.message);
+    .eq("status", "locked")
+    .select("id")
+    .maybeSingle();
+
+  if (updateError || !updated) {
+    throw new Error("Draw week was already executed or status changed — aborting to prevent duplicate winners.");
+  }
 
   await autoAudit("draw_execute", "draw_week", week.id, {
     winner_count: winners.length,
