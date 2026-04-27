@@ -6,7 +6,7 @@ import React from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { getSession } from "@/lib/session";
 import { useAllowScroll } from "@/hooks/useAllowScroll";
-import { getKycStatus, submitKycBankDetails, submitKycIdentity } from "@/utils/mission.functions";
+import { getKycStatus, getMyWinnerStatus, submitKycBankDetails, submitKycIdentity } from "@/utils/mission.functions";
 
 const searchSchema = z.object({
   winnerId: z.string().optional(),
@@ -71,11 +71,31 @@ function KycPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (!session) return;
-    getKycStatus({ data: { playerId: session.playerId } })
-      .then((res) => setKyc(res.kyc))
-      .finally(() => setLoading(false));
-  }, [session?.playerId]);
+    if (!session) {
+      navigate({ to: "/app", replace: true });
+      return;
+    }
+
+    let cancelled = false;
+    getMyWinnerStatus({ data: { playerId: session.playerId } })
+      .then(async (winnerStatus) => {
+        if (!winnerStatus.won) {
+          navigate({ to: "/app", replace: true });
+          return;
+        }
+
+        const res = await getKycStatus({ data: { playerId: session.playerId } });
+        if (!cancelled) setKyc(res.kyc);
+      })
+      .catch(() => navigate({ to: "/app", replace: true }))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, session?.playerId]);
 
   const identityLocked = !!kyc?.submitted_at;
   const bankSubmitted = !!kyc?.bank_details_submitted_at;
