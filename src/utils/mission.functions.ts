@@ -182,30 +182,54 @@ export const getActiveMissions = createServerFn({ method: "POST" })
       )
     `;
 
-    const loadTodaysMissions = async (): Promise<PlayerMissionRow[]> => {
-      const { data: todaysMissions } = await (supabaseAdmin
+    const loadActiveMissions = async (): Promise<PlayerMissionRow[]> => {
+      const { data: todayRows } = await (supabaseAdmin
         .from("winam_player_missions") as any)
         .select(missionSelect)
         .eq("player_id", data.playerId)
         .or(`status.eq.pending,and(status.eq.completed,assigned_date_wat.eq.${todayWat})`)
-        .order("assigned_date_wat", { ascending: false })
+        .eq("assigned_date_wat", todayWat)
         .order("completed_at", { ascending: true, nullsFirst: true })
         .order("id", { ascending: true })
         .limit(TARGET_PENDING);
 
-      return (todaysMissions ?? []) as PlayerMissionRow[];
+      const carryOverSlotsNeeded = Math.max(0, TARGET_PENDING - (todayRows ?? []).length);
+      let carryOvers: PlayerMissionRow[] = [];
+
+      if (carryOverSlotsNeeded > 0) {
+        const { data: oldPending } = await (supabaseAdmin
+          .from("winam_player_missions") as any)
+          .select(missionSelect)
+          .eq("player_id", data.playerId)
+          .eq("status", "pending")
+          .lt("assigned_date_wat", todayWat)
+          .order("assigned_date_wat", { ascending: true })
+          .order("id", { ascending: true })
+          .limit(carryOverSlotsNeeded);
+
+        carryOvers = (oldPending ?? []) as PlayerMissionRow[];
+
+        if (carryOvers.length > 0) {
+          await supabaseAdmin
+            .from("winam_player_missions")
+            .update({ assigned_date_wat: todayWat })
+            .in(
+              "id",
+              carryOvers.map((c) => c.id)
+            );
+
+          carryOvers = carryOvers.map((c) => ({ ...c, assigned_date_wat: todayWat }));
+        }
+      }
+
+      return ([...(todayRows ?? []), ...carryOvers] as PlayerMissionRow[]).slice(0, TARGET_PENDING);
     };
 
-    let todaysMissions = await loadTodaysMissions();
-    const hasAnyTodayMissions = todaysMissions.some(
-      (m) => m.assigned_date_wat === todayWat
-    );
-    const slotsAvailable = hasAnyTodayMissions
-      ? 0
-      : Math.max(0, TARGET_PENDING - todaysMissions.length);
+    let activeMissions = await loadActiveMissions();
+    const slotsAvailable = Math.max(0, TARGET_PENDING - activeMissions.length);
 
     if (slotsAvailable > 0 && drawWeek) {
-      const pendingIds = todaysMissions.map((p) => p.mission_id);
+      const pendingIds = activeMissions.map((p) => p.mission_id);
 
       const { data: recentCompleted } = await supabaseAdmin
         .from("winam_player_missions")
@@ -258,13 +282,13 @@ export const getActiveMissions = createServerFn({ method: "POST" })
           assigned_date_wat: todayWat,
         }));
         await (supabaseAdmin.from("winam_player_missions") as any).insert(inserts);
-        todaysMissions = await loadTodaysMissions();
+        activeMissions = await loadActiveMissions();
       }
     }
 
     return {
       success: true as const,
-      missions: todaysMissions.map((pm) => {
+      missions: activeMissions.map((pm) => {
         const m = pm.winam_missions as unknown as {
           title: string;
           condition_type: string;

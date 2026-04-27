@@ -1,44 +1,25 @@
-Plan to fix the three mission bugs with changes limited to the requested files.
+Plan to fix mission carry-over behavior
 
-Files to change:
-- `src/utils/mission.server.ts`
-- `src/utils/mission.functions.ts`
+Scope: `src/utils/mission.functions.ts` only.
 
-Implementation:
-1. In `evaluatePendingMissions()` in `src/utils/mission.server.ts`:
-   - Stop ignoring the `_watDate` parameter.
-   - Restrict the pending mission query to missions assigned on `_watDate`.
-   - Order the query consistently with the visible slot logic.
-   - Limit evaluation to 3 rows so only the visible daily mission slots can progress/complete/reward.
+1. Update `getActiveMissions()` mission loading flow
+   - Load missions already assigned for today, limited to the 3 visible slots.
+   - Load pending missions from previous WAT dates only if today has fewer than 3 rows.
+   - Preserve each carried-over mission’s progress and update its `assigned_date_wat` to today.
 
-   Target query shape:
-   ```ts
-   .eq("player_id", playerId)
-   .eq("status", "pending")
-   .eq("assigned_date_wat", _watDate)
-   .order("assigned_date_wat", { ascending: false })
-   .order("id", { ascending: true })
-   .limit(3)
-   ```
+2. Combine active slot rows before assignment
+   - Build a combined list from today’s rows plus carried-over pending rows.
+   - Use this combined list as the current visible 3-slot slate.
 
-2. In `getActiveMissions()` in `src/utils/mission.functions.ts`:
-   - Replace the current slot refill calculation that fills whenever fewer than 3 missions are returned.
-   - Add `hasAnyTodayMissions` based on `assigned_date_wat === todayWat`.
-   - Set `slotsAvailable` to `0` when the player already has at least one mission assigned today.
-   - Keep refill behavior only for a fresh WAT day when no missions exist for today.
+3. Fill only truly empty slots
+   - Calculate `slotsAvailable` from `TARGET_PENDING - combinedMissions.length`.
+   - Keep the existing new mission assignment/exclusion logic unchanged, except use `combinedMissions` for the `pendingIds` exclusion list.
+   - Use `if (slotsAvailable > 0 && drawWeek)` as requested.
 
-   Target logic:
-   ```ts
-   const hasAnyTodayMissions = todaysMissions.some(
-     (m) => m.assigned_date_wat === todayWat
-   );
-   const slotsAvailable = hasAnyTodayMissions
-     ? 0
-     : Math.max(0, TARGET_PENDING - todaysMissions.length);
-   ```
+4. Return the correct active slate
+   - After new mission insertion, reload the active rows so the final response includes today’s missions, carry-overs, and any newly assigned missions.
+   - Map the final combined/current mission list in the return payload, not the old `todaysMissions` variable.
 
-3. Verification:
-   - Run the project build after the code changes.
-   - Do not edit any other source files.
-
-No database changes are required.
+5. Verify
+   - Run the project build after the edit.
+   - Confirm only `src/utils/mission.functions.ts` changed.
