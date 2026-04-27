@@ -868,11 +868,17 @@ export const executeDrawWeek = createServerFn({ method: "POST" })
     const { error: insErr } = await supabaseAdmin.from("winam_winners").insert(rows);
     if (insErr) throw new Error(insErr.message);
 
-    const { error: updErr } = await supabaseAdmin
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from("winam_draw_weeks")
       .update({ status: "drawn", draw_seed: seed })
-      .eq("id", data.drawWeekId);
-    if (updErr) throw new Error(updErr.message);
+      .eq("id", data.drawWeekId)
+      .eq("status", "locked")
+      .select("id")
+      .maybeSingle();
+
+    if (updateError || !updated) {
+      throw new Error("Draw week was already executed or status changed — aborting to prevent duplicate winners.");
+    }
 
     await audit(data.adminId, "draw_execute", "draw_week", data.drawWeekId, {
       winner_count: winners.length,
