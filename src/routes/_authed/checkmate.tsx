@@ -387,6 +387,7 @@ function CheckMatePage() {
           isGameOver={session.gameOver}
           autoAdvanceMs={session.autoAdvanceMs}
           onAdvance={session.advance}
+          closing={session.closing}
         />
 
         {!session.feedback && (
