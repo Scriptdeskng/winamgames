@@ -1,38 +1,14 @@
-Plan:
+Plan to fix `closeSession()` idempotency
 
-1. Update only these files:
-   - `src/components/games/useGameSession.ts`
-   - `src/components/games/AnswerFooter.tsx`
-   - `src/routes/_authed/wisdomdrop.tsx`
-   - `src/routes/_authed/checkmate.tsx`
+1. Update `src/utils/game.functions.ts`
+   - In `closeSession()`, remove the `session.puzzles_solved !== null` guard entirely.
+   - Keep the session fetch for the fields still needed later in the function: `draw_week_id`, `session_date_wat`, and `game_type`.
+   - Keep the existing `winam_entry_ledger` lookup unchanged as the only idempotency guard:
+     - `source_id = data.sessionId`
+     - `source_type = 'game_session'`
+     - return `Session already closed` only if a ledger row exists.
 
-2. In `useGameSession.ts`:
-   - Add `closing: boolean` to `GameSessionState`.
-   - Add `closing: false` to `INITIAL_STATE`.
-   - At the top of `endSession()`, guard against missing session or an in-progress close:
-     ```ts
-     if (!state.sessionId || state.closing) return;
-     setState((s) => ({ ...s, closing: true }));
-     ```
-   - Add `state.closing` to the `endSession()` dependency list.
-   - At the top of `advance()`, add:
-     ```ts
-     if (state.closing) return;
-     ```
-   - Add `state.closing` to the `advance()` dependency list.
-   - No separate return wiring is needed beyond `...state`, because exposing the new `closing` field through the hook return happens automatically.
+2. Do not make any other code or database changes.
 
-3. In `AnswerFooter.tsx`:
-   - Add an optional `closing?: boolean` prop.
-   - When `closing` is true:
-     - Disable the button.
-     - Show `Loading...` as the label.
-     - Do not attach the click handler.
-   - Keep existing behavior unchanged when `closing` is false.
-
-4. In `wisdomdrop.tsx` and `checkmate.tsx`:
-   - Pass `closing={session.closing}` to `AnswerFooter`.
-
-5. Run the production build after the edits.
-
-No other changes.
+3. Verification
+   - Run the build after the code change to confirm the project still compiles.
