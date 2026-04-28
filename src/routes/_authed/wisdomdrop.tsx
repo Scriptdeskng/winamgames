@@ -327,6 +327,7 @@ function WisdomDropPage() {
             isGameOver={session.gameOver}
             autoAdvanceMs={session.autoAdvanceMs}
             onAdvance={session.advance}
+            closing={session.closing}
           />
         </div>
 

@@ -39,6 +39,7 @@ interface GameSessionState {
   lastReveal: RevealData | null;
   awaitingAdvance: boolean;
   selectedAnswer: string | null;
+  closing: boolean;
 }
 
 const INITIAL_STATE: GameSessionState = {
@@ -62,6 +63,7 @@ const INITIAL_STATE: GameSessionState = {
   lastReveal: null,
   awaitingAdvance: false,
   selectedAnswer: null,
+  closing: false,
 };
 
 // Auto-advance windows tuned per game type.
@@ -114,7 +116,8 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
   }, [playerId, gameType]);
 
   const endSession = useCallback(async (solved?: number, hints?: number) => {
-    if (!state.sessionId) return;
+    if (!state.sessionId || state.closing) return;
+    setState((s) => ({ ...s, closing: true }));
 
     const duration = Math.floor((Date.now() - state.startTime) / 1000);
     const finalSolved = solved ?? state.puzzlesSolved;
@@ -163,13 +166,15 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       console.error("Close session failed:", err);
       navigate({ to: "/app" });
     }
-  }, [state.sessionId, state.startTime, state.puzzlesSolved, state.hintsUsed, state.puzzleIds, playerId, navigate, gameType]);
+  }, [state.sessionId, state.closing, state.startTime, state.puzzlesSolved, state.hintsUsed, state.puzzleIds, playerId, navigate, gameType]);
 
   /**
    * Apply the queued advance: either move to the next puzzle or end the session.
    * Safe to call multiple times — the pending ref is consumed on the first call.
    */
   const advance = useCallback(() => {
+    if (state.closing) return;
+
     if (advanceTimerRef.current) {
       clearTimeout(advanceTimerRef.current);
       advanceTimerRef.current = null;
@@ -197,7 +202,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
       currentHintTier: 0,
       hintData: null,
     }));
-  }, [endSession]);
+  }, [state.closing, endSession]);
 
   const submit = useCallback(async (answer: string) => {
     if (!state.sessionId || !state.currentPuzzle || state.loading || state.gameOver) return;
