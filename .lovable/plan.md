@@ -1,22 +1,38 @@
 Plan:
 
-1. Update only `src/utils/game.functions.ts`.
+1. Update only these files:
+   - `src/components/games/useGameSession.ts`
+   - `src/components/games/AnswerFooter.tsx`
+   - `src/routes/_authed/wisdomdrop.tsx`
+   - `src/routes/_authed/checkmate.tsx`
 
-2. In `closeSession()`, change the session fetch so it selects only the fields needed for the existing logic plus the closed-session signal:
-   - Keep: `draw_week_id`, `session_date_wat`, `game_type`, `puzzles_solved`
-   - Remove from the select: `hints_used`, `entries_awarded`, `coins_awarded`, `duration_seconds`
-
-3. Replace the current multi-field idempotency guard:
-   - Remove checks against `hints_used`, `entries_awarded`, `coins_awarded`, and `duration_seconds`.
-   - Use only:
+2. In `useGameSession.ts`:
+   - Add `closing: boolean` to `GameSessionState`.
+   - Add `closing: false` to `INITIAL_STATE`.
+   - At the top of `endSession()`, guard against missing session or an in-progress close:
      ```ts
-     if (session.puzzles_solved !== null) {
-       return { success: false as const, error: "Session already closed" };
-     }
+     if (!state.sessionId || state.closing) return;
+     setState((s) => ({ ...s, closing: true }));
      ```
+   - Add `state.closing` to the `endSession()` dependency list.
+   - At the top of `advance()`, add:
+     ```ts
+     if (state.closing) return;
+     ```
+   - Add `state.closing` to the `advance()` dependency list.
+   - No separate return wiring is needed beyond `...state`, because exposing the new `closing` field through the hook return happens automatically.
 
-4. Leave the ledger-based fallback check exactly where it is and unchanged.
+3. In `AnswerFooter.tsx`:
+   - Add an optional `closing?: boolean` prop.
+   - When `closing` is true:
+     - Disable the button.
+     - Show `Loading...` as the label.
+     - Do not attach the click handler.
+   - Keep existing behavior unchanged when `closing` is false.
 
-5. Make no other code changes.
+4. In `wisdomdrop.tsx` and `checkmate.tsx`:
+   - Pass `closing={session.closing}` to `AnswerFooter`.
 
-6. After implementation, run the build command to verify the app compiles successfully.
+5. Run the production build after the edits.
+
+No other changes.
