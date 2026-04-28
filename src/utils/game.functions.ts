@@ -883,20 +883,15 @@ export const closeSession = createServerFn({ method: "POST" })
       return { success: false as const, error: "Player not found" };
     }
 
-    // Fetch session including puzzles_solved to detect already-closed sessions
+    // Fetch session data needed for close processing
     const { data: session } = await supabaseAdmin
       .from("winam_game_sessions")
-      .select("draw_week_id, session_date_wat, game_type, puzzles_solved")
+      .select("draw_week_id, session_date_wat, game_type")
       .eq("id", data.sessionId)
       .single();
 
     if (!session) {
       return { success: false as const, error: "Session not found" };
-    }
-
-    // Idempotency guard — if puzzles_solved is already set, session was already closed
-    if (session.puzzles_solved !== null) {
-      return { success: false as const, error: "Session already closed" };
     }
 
     const { data: existingLedger } = await supabaseAdmin
