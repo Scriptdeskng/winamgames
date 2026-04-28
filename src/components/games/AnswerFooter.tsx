@@ -9,6 +9,7 @@ interface AnswerFooterProps {
   autoAdvanceMs: number;
   onAdvance: () => void;
   disabled?: boolean;
+  closing?: boolean;
 }
 
 /**
@@ -23,17 +24,18 @@ export function AnswerFooter({
   autoAdvanceMs,
   onAdvance,
   disabled,
+  closing,
 }: AnswerFooterProps) {
   if (!feedback) return null;
 
   const isCorrect = feedback === "correct";
   const showRing = isCorrect && !isGameOver;
-  const label = isLastPuzzle || isGameOver ? "See Results" : isCorrect ? "Next" : "Continue";
+  const label = closing ? "Loading..." : isLastPuzzle || isGameOver ? "See Results" : isCorrect ? "Next" : "Continue";
 
   return (
     <button
-      onClick={onAdvance}
-      disabled={disabled}
+      onClick={closing ? undefined : onAdvance}
+      disabled={disabled || closing}
       className={cn(
         "group relative h-14 w-full rounded-xl font-semibold text-base transition-all overflow-hidden",
         "flex items-center justify-center gap-3",
