@@ -147,6 +147,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
           search: {
             entries: result.entries,
             baseEntries: result.baseEntries ?? 0,
+            streakBonus: result.streakBonus ?? 0,
             coins: result.coins,
             xp: result.xp,
             streak: result.streak,
