@@ -154,7 +154,7 @@ function WinnersList({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-xs font-medium tabular-nums">
-                            {w.nickname ?? maskPhone(w.msisdnLast4)}
+                            {maskName(w.nickname, w.msisdnLast4)}
                           </span>
                           <span className="text-[9px] text-muted-foreground tabular-nums flex items-center gap-0.5">
                             <Hash className="h-2 w-2" />
@@ -186,7 +186,7 @@ function WinnersList({
                       className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0"
                     >
                       <span className="text-[11px] tabular-nums">
-                        {w.nickname ?? maskPhone(w.msisdnLast4)}
+                        {maskName(w.nickname, w.msisdnLast4)}
                       </span>
                       <span className="text-[10px] text-muted-foreground tabular-nums">
                         #{w.ticketId.slice(0, 6).toUpperCase()}
@@ -207,7 +207,7 @@ function WinnersPage() {
   useAllowScroll();
   const data = Route.useLoaderData();
 
-  if (!data.weekId || !data.week || data.winners.length === 0) {
+  if (!data.weeks || data.weeks.length === 0) {
     const nextLock = getNextEntriesLockWAT();
     const drawDate = new Date(nextLock.getTime() + 60 * 60 * 1000);
     const formatted = drawDate.toLocaleDateString("en-US", {
@@ -247,8 +247,6 @@ function WinnersPage() {
     );
   }
 
-  const weekLabel = formatWeekLabel(data.week.week_start_wat, data.week.week_end_wat);
-
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <TopBar backTo="/app" title="Winners" />
@@ -269,11 +267,14 @@ function WinnersPage() {
           </Link>
         </div>
 
-        <WinnersList
-          weekLabel={weekLabel}
-          winners={data.winners as WinnerRow[]}
-          defaultOpen
-        />
+        {data.weeks.map((entry, i) => (
+          <WinnersList
+            key={entry.week.id}
+            weekLabel={formatWeekLabel(entry.week.week_start_wat, entry.week.week_end_wat)}
+            winners={entry.winners as WinnerRow[]}
+            defaultOpen={i === 0}
+          />
+        ))}
       </div>
     </div>
   );
