@@ -55,7 +55,11 @@ const POSITION_STYLES = [
   { bg: "bg-[oklch(0.55_0.05_55)]/15", text: "text-[oklch(0.55_0.05_55)]", label: "3rd" },
 ];
 
-function maskPhone(last4: string) {
+function maskName(nickname: string | null, last4: string) {
+  if (nickname && nickname.length > 0) {
+    const visible = nickname.slice(0, 2);
+    return `${visible}***`;
+  }
   return `***${last4}`;
 }
 

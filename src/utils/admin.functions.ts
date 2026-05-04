@@ -1040,6 +1040,7 @@ export const getPublishedWinners = createServerFn({ method: "POST" })
     type WinnerRow = NonNullable<typeof allWinners>[number];
     const winnersByWeek = new Map<string, WinnerRow[]>();
     for (const w of allWinners ?? []) {
+      if (!w.draw_week_id) continue;
       const arr = winnersByWeek.get(w.draw_week_id) ?? [];
       arr.push(w);
       winnersByWeek.set(w.draw_week_id, arr);
