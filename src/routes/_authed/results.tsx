@@ -11,6 +11,7 @@ import { useAllowScroll } from "@/hooks/useAllowScroll";
 const resultsSearchSchema = z.object({
   entries: fallback(z.number(), 0).default(0),
   baseEntries: fallback(z.number(), 0).default(0),
+  streakBonus: fallback(z.number(), 0).default(0),
   coins: fallback(z.number(), 0).default(0),
   xp: fallback(z.number(), 0).default(0),
   streak: fallback(z.number(), 0).default(0),
@@ -37,6 +38,7 @@ function ResultsPage() {
   const {
     entries,
     baseEntries,
+    streakBonus,
     streak,
     weekTotal,
     weekCap,
@@ -65,7 +67,7 @@ function ResultsPage() {
     : [];
 
   const missionEntries = completedMissions.reduce((sum: number, m: { rewardAmount: number }) => sum + m.rewardAmount, 0);
-  const streakBonusEntries = Math.max(0, entries - baseEntries - missionEntries);
+  const streakBonusEntries = streakBonus;
 
   // Build breakdown chips
   const breakdownParts: string[] = [];
