@@ -1002,34 +1002,28 @@ export const flagWinner = createServerFn({ method: "POST" })
 export const getPublishedWinners = createServerFn({ method: "POST" })
   .handler(async () => {
     const supabaseAdmin = await getAdmin();
-    const { data: cfg } = await supabaseAdmin
-      .from("winam_platform_config")
-      .select("value")
-      .eq("key", "winners_published_week_id")
-      .maybeSingle();
 
-    const raw = cfg?.value as unknown;
-    let weekId: string | null = null;
-    if (typeof raw === "string" && raw.length > 10 && raw !== "null") weekId = raw;
+    // Fetch all settled draw weeks, most recent first
+    const { data: weeks } = await supabaseAdmin
+      .from("winam_draw_weeks")
+      .select("id, week_start_wat, week_end_wat, draw_executes_at, status")
+      .eq("status", "settled")
+      .order("week_start_wat", { ascending: false });
 
-    if (!weekId) return { weekId: null, week: null, winners: [] };
+    if (!weeks || weeks.length === 0) return { weeks: [] };
 
-    const [weekRes, winnersRes] = await Promise.all([
-      supabaseAdmin
-        .from("winam_draw_weeks")
-        .select("id, week_start_wat, week_end_wat, draw_executes_at, status")
-        .eq("id", weekId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("winam_winners")
-        .select("id, position, prize_type, prize_amount, ticket_id, player_id")
-        .eq("draw_week_id", weekId)
-        .eq("is_flagged", false)
-        .order("position", { ascending: true }),
-    ]);
+    // Fetch all non-flagged winners across these weeks in one query
+    const weekIds = weeks.map((w) => w.id);
+    const { data: allWinners } = await supabaseAdmin
+      .from("winam_winners")
+      .select("id, position, prize_type, prize_amount, ticket_id, player_id, draw_week_id")
+      .in("draw_week_id", weekIds)
+      .eq("is_flagged", false)
+      .order("position", { ascending: true });
 
+    // Resolve player nicknames + msisdn last4 in one query
     const playerIds = Array.from(
-      new Set((winnersRes.data ?? []).map((w) => w.player_id).filter(Boolean) as string[])
+      new Set((allWinners ?? []).map((w) => w.player_id).filter(Boolean) as string[])
     );
     let playerMap: Record<string, { nickname: string | null; msisdn_last4: string }> = {};
     if (playerIds.length > 0) {
@@ -1042,19 +1036,35 @@ export const getPublishedWinners = createServerFn({ method: "POST" })
       );
     }
 
-    return {
-      weekId,
-      week: weekRes.data,
-      winners: (winnersRes.data ?? []).map((w) => ({
-        id: w.id,
-        position: w.position,
-        prizeType: w.prize_type,
-        prizeAmount: w.prize_amount,
-        ticketId: w.ticket_id,
-        nickname: w.player_id ? playerMap[w.player_id]?.nickname ?? null : null,
-        msisdnLast4: w.player_id ? playerMap[w.player_id]?.msisdn_last4 ?? "----" : "----",
-      })),
-    };
+    // Group winners by week
+    type WinnerRow = NonNullable<typeof allWinners>[number];
+    const winnersByWeek = new Map<string, WinnerRow[]>();
+    for (const w of allWinners ?? []) {
+      const arr = winnersByWeek.get(w.draw_week_id) ?? [];
+      arr.push(w);
+      winnersByWeek.set(w.draw_week_id, arr);
+    }
+
+    // Build per-week results, dropping weeks with no winners
+    const results = weeks
+      .map((week) => {
+        const ws = winnersByWeek.get(week.id) ?? [];
+        return {
+          week,
+          winners: ws.map((w) => ({
+            id: w.id,
+            position: w.position,
+            prizeType: w.prize_type,
+            prizeAmount: w.prize_amount,
+            ticketId: w.ticket_id,
+            nickname: w.player_id ? playerMap[w.player_id]?.nickname ?? null : null,
+            msisdnLast4: w.player_id ? playerMap[w.player_id]?.msisdn_last4 ?? "----" : "----",
+          })),
+        };
+      })
+      .filter((r) => r.winners.length > 0);
+
+    return { weeks: results };
   });
 
 
