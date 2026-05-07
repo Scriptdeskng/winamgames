@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { startSession, submitMove, useHint, closeSession } from "@/utils/game.functions";
+import { startSession, submitMove, useHint, closeSession } from "@/lib/winam-game-api";
 
 interface RevealData {
   correctAnswer: string;
@@ -91,7 +91,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
   const start = useCallback(async (coins: number) => {
     setState((s) => ({ ...s, loading: true }));
     try {
-      const result = await startSession({ data: { playerId, gameType } });
+      const result = await startSession({ playerId, gameType });
       if (!result.success) {
         setState((s) => ({ ...s, loading: false }));
         return;
@@ -125,14 +125,12 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
 
     try {
       const result = await closeSession({
-        data: {
-          sessionId: state.sessionId,
-          playerId,
-          puzzlesSolved: finalSolved,
-          hintsUsed: finalHints,
-          durationSeconds: duration,
-          servedPuzzleIds: state.puzzleIds,
-        },
+        sessionId: state.sessionId,
+        playerId,
+        puzzlesSolved: finalSolved,
+        hintsUsed: finalHints,
+        durationSeconds: duration,
+        servedPuzzleIds: state.puzzleIds,
       });
 
       if (result.success) {
@@ -218,13 +216,11 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
 
     try {
       const result = await submitMove({
-        data: {
-          sessionId: state.sessionId,
-          puzzleId,
-          answer,
-          timeMs,
-          nextPuzzleId,
-        },
+        sessionId: state.sessionId,
+        puzzleId,
+        answer,
+        timeMs,
+        nextPuzzleId,
       }) as {
         correct: boolean;
         submittedAnswer?: string;
@@ -281,7 +277,7 @@ export function useGameSession(gameType: "checkmate" | "wisdomdrop", playerId: s
 
     setState((s) => ({ ...s, loading: true }));
     try {
-      const result = await useHint({ data: { playerId, puzzleId, tier } });
+      const result = await useHint({ playerId, puzzleId, tier });
       if (result.success) {
         setState((s) => ({
           ...s,

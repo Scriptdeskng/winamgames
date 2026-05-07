@@ -1,0 +1,16 @@
+import { Suspense } from "react";
+import SubscribeClient from "./subscribe-client";
+
+export default function SubscribePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-[100dvh] bg-background flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </main>
+      }
+    >
+      <SubscribeClient />
+    </Suspense>
+  );
+}
