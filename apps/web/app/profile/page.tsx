@@ -151,19 +151,27 @@ export default function ProfilePage() {
 
   if (!ready || !session) return null;
 
-  if (!profile) {
+  if (loadingData && !profile) {
     return <ProfileSkeleton onBack={() => router.push("/app")} />;
   }
 
+  const safeProfile = profile ?? {};
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <span className="text-base font-bold text-foreground truncate max-w-[200px]">Profile</span>
-          <div className="h-10 w-10" aria-hidden />
+          <span className="flex-1 px-2 text-center text-base font-bold text-foreground truncate">Profile</span>
+          <button
+            onClick={toggleTheme}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-surface-1 px-3 text-xs font-semibold text-foreground hover:border-primary/30 transition-colors"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4 text-primary" /> : <Moon className="h-4 w-4 text-primary" />}
+            <span>{theme === "dark" ? "Light" : "Dark"}</span>
+          </button>
         </div>
 
         <div className="px-4 pb-8 space-y-5">
@@ -192,7 +200,7 @@ export default function ProfilePage() {
           </div>
 
           <VerificationSection
-            kyc={kyc}
+            kyc={safeProfile.kyc ?? kyc}
             fullName={fullName}
             idType={idType}
             dob={dob}
@@ -223,11 +231,11 @@ function ProfileSkeleton({ onBack }: { onBack: () => void }) {
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <button onClick={onBack} className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <span className="text-base font-bold text-foreground truncate max-w-[200px]">Profile</span>
+          <span className="flex-1 px-2 text-center text-base font-bold text-foreground truncate">Profile</span>
           <div className="h-10 w-10" aria-hidden />
         </div>
 
