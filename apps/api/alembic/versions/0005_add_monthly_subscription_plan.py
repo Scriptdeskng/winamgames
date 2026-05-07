@@ -1,6 +1,6 @@
 """add monthly subscription plan
 
-Revision ID: 0005_add_monthly_subscription_plan
+Revision ID: 0005_monthly_plan
 Revises: 0004_intelli_evt_changes
 Create Date: 2026-05-07 00:00:00
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 from alembic import op
 
 
-revision = "0005_add_monthly_subscription_plan"
+revision = "0005_monthly_plan"
 down_revision = "0004_intelli_evt_changes"
 branch_labels = None
 depends_on = None
