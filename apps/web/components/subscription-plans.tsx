@@ -24,7 +24,11 @@ export default function SubscriptionPlans({ mode }: Props) {
   }, [selectedPlan]);
 
   const handleRedirect = () => {
-    window.location.href = buildCheckoutUrl(selectedPlan);
+    const checkoutUrl = buildCheckoutUrl(selectedPlan);
+    const tab = window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+    if (tab) {
+      tab.opener = null;
+    }
   };
 
   return (
