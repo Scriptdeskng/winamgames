@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Build, Migrate \u0026 Deploy (Production)
+    name: Build, Migrate and Deploy (Production)
     runs-on: ubuntu-latest
 
     steps:
