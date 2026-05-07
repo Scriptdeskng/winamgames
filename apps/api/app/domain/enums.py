@@ -59,6 +59,7 @@ class RewardType(str, Enum):
 class SubscriptionPlan(str, Enum):
     daily = "daily"
     weekly = "weekly"
+    monthly = "monthly"
 
 
 class SubscriptionStatus(str, Enum):
@@ -66,4 +67,3 @@ class SubscriptionStatus(str, Enum):
     grace = "grace"
     expired = "expired"
     cancelled = "cancelled"
-

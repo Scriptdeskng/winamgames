@@ -50,6 +50,19 @@ def _latest_subscription(db: Session, player_id: str) -> WinamSubscription | Non
     ).scalar_one_or_none()
 
 
+def _plan_from_amount(amount: Any, fallback: SubscriptionPlan | None = None) -> SubscriptionPlan:
+    try:
+        numeric_amount = float(amount)
+    except (TypeError, ValueError):
+        return fallback or SubscriptionPlan.weekly
+
+    if numeric_amount <= 75:
+        return SubscriptionPlan.daily
+    if numeric_amount < 150:
+        return SubscriptionPlan.weekly
+    return SubscriptionPlan.monthly
+
+
 def find_or_create_player(db: Session, msisdn: str) -> WinamPlayer:
     digits = normalize_msisdn_for_intelli(msisdn)
     last4 = digits[-4:]
@@ -96,7 +109,10 @@ def sync_subscription_from_intelli(
         if valid_until is None:
             valid_until = wat_now().replace(hour=22, minute=59, second=59, microsecond=999999)
         carrier_ref = str(subscription_data.get("subscription_id") or subscription_data.get("telco_ref") or "")
-        plan = SubscriptionPlan.weekly if subscription_data.get("auto_renewal") else SubscriptionPlan.daily
+        plan = _plan_from_amount(
+            subscription_data.get("amount"),
+            fallback=current.plan if current else (SubscriptionPlan.weekly if subscription_data.get("auto_renewal") else SubscriptionPlan.daily),
+        )
         sub = current or WinamSubscription(player_id=player.id, plan=plan, status=SubscriptionStatus.active)
         sub.plan = plan
         sub.status = SubscriptionStatus.active
@@ -147,6 +163,7 @@ def apply_intelli_notification(db: Session, payload: dict[str, Any]) -> dict[str
     current = _latest_subscription(db, player.id)
     subscription_data = {
         "subscription_id": product.get("identity") or product.get("id"),
+        "amount": details.get("amount"),
         "starts_date": details.get("date"),
         "ends_date": details.get("expiry"),
         "expiry": details.get("expiry"),
