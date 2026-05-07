@@ -87,6 +87,7 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     if (!session) {
       router.replace("/login");
       return;
@@ -102,7 +103,7 @@ export default function ProfilePage() {
       .finally(() => {
         setLoadingData(false);
       });
-  }, [router, session]);
+  }, [ready, router, session]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
