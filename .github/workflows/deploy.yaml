@@ -28,7 +28,6 @@ jobs:
             git fetch origin deploy
             git reset --hard origin/deploy
 
-            make prod-verify
-            make prod-up
+            make prod-deploy
 
             docker system prune -f
