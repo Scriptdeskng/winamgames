@@ -61,10 +61,11 @@ def _request(method: str, path: str, payload: dict[str, Any] | None = None) -> I
 
 
 def send_otp(msisdn: str) -> IntelliResponse:
+    normalized = normalize_msisdn_for_intelli(msisdn)
     return _request(
         "POST",
         f"/service/{settings.intelli_service_path_id}/auth/send-otp/",
-        {"msisdn": msisdn, "telco": settings.intelli_telco},
+        {"msisdn": normalized, "telco": settings.intelli_telco},
     )
 
 
