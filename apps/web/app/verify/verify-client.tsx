@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -8,12 +8,13 @@ import { sendOtp, verifyOtp } from "@/lib/api";
 import { setSession } from "@/lib/session";
 
 const RESEND_SECONDS = 25;
+const OTP_LENGTH = 6;
 
 export default function VerifyClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const msisdn = useMemo(() => searchParams.get("msisdn") ?? "", [searchParams]);
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(Array.from({ length: OTP_LENGTH }, () => ""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(RESEND_SECONDS);
@@ -34,22 +35,58 @@ export default function VerifyClient() {
   const last4 = msisdn.slice(-4);
 
   const updateDigit = (index: number, value: string) => {
-    const digit = value.replace(/\D/g, "").slice(-1);
+    const digits = value.replace(/\D/g, "");
     setOtp((current) => {
       const next = [...current];
-      next[index] = digit;
+      if (digits.length > 1) {
+        const pasted = digits.slice(0, OTP_LENGTH).split("");
+        pasted.forEach((digit, offset) => {
+          if (index + offset < OTP_LENGTH) {
+            next[index + offset] = digit;
+          }
+        });
+        return next;
+      }
+      next[index] = digits.slice(-1);
       return next;
     });
 
-    if (digit && index < 3) {
+    if (digits && index < OTP_LENGTH - 1) {
       const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement | null;
       nextInput?.focus();
     }
   };
 
+  const handleKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement | null;
+      prevInput?.focus();
+    }
+  };
+
+  const handlePaste = (index: number, event: ClipboardEvent<HTMLInputElement>) => {
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH - index);
+    if (!pasted) return;
+    event.preventDefault();
+
+    setOtp((current) => {
+      const next = [...current];
+      pasted.split("").forEach((digit, offset) => {
+        if (index + offset < OTP_LENGTH) {
+          next[index + offset] = digit;
+        }
+      });
+      return next;
+    });
+
+    const focusIndex = Math.min(index + pasted.length, OTP_LENGTH - 1);
+    const nextInput = document.getElementById(`otp-${focusIndex}`) as HTMLInputElement | null;
+    nextInput?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.length !== 4) return;
+    if (code.length !== OTP_LENGTH) return;
 
     setLoading(true);
     setError("");
@@ -83,7 +120,7 @@ export default function VerifyClient() {
   };
 
   const handleResend = async () => {
-    setOtp(["", "", "", ""]);
+    setOtp(Array.from({ length: OTP_LENGTH }, () => ""));
     setError("");
     try {
       const result = await sendOtp(msisdn);
@@ -113,7 +150,7 @@ export default function VerifyClient() {
 
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold text-foreground">Enter your code</h1>
-            <p className="text-sm text-muted-foreground">We sent a code to •••{last4}</p>
+            <p className="text-sm text-muted-foreground">We sent a 6-digit code to •••{last4}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -126,6 +163,8 @@ export default function VerifyClient() {
                   maxLength={1}
                   value={digit}
                   onChange={(e) => updateDigit(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={(e) => handlePaste(index, e)}
                   className="w-12 h-14 rounded-xl bg-surface-2 border border-border text-center text-2xl font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               ))}
@@ -135,7 +174,7 @@ export default function VerifyClient() {
 
             <button
               type="submit"
-              disabled={loading || code.length !== 4}
+              disabled={loading || code.length !== OTP_LENGTH}
               className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-glow transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify →"}
