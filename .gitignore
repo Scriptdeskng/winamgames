@@ -40,3 +40,7 @@ dist-ssr
 .env.test.local
 !.env.example
 !.env.production.example
+
+# Python cache
+__pycache__/
+*.py[cod]
