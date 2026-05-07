@@ -103,11 +103,11 @@ export default function VerifyClient() {
         nickname: null,
         msisdn: result.msisdn,
         subscriptionActive: !!result.hasActiveSubscription,
-        subscriptionRedirectUrl: result.redirectUrl ?? null,
+        subscriptionRedirectUrl: result.redirectUrl ?? "/renew",
       });
 
       if (!result.hasActiveSubscription) {
-        router.push(`/subscribe?redirectUrl=${encodeURIComponent(result.redirectUrl ?? "")}`);
+        router.push("/renew");
         return;
       }
 

@@ -130,7 +130,6 @@ export default function AppPage() {
   }
 
   if (subscription && !subscription.has_active_subscription) {
-    const redirectUrl = subscription?.client_action?.redirection_url || "/subscribe";
     return (
       <main className="min-h-[100dvh] bg-background text-foreground">
         <div className="mx-auto min-h-[100dvh] max-w-[430px] px-4 py-6 flex flex-col justify-center gap-4">
@@ -140,13 +139,13 @@ export default function AppPage() {
             </div>
             <h1 className="text-xl font-bold">Subscription required</h1>
             <p className="text-sm text-muted-foreground">
-              Intelli says your subscription is inactive. Tap below to continue to your subscription page.
+              Intelli says your subscription is inactive. Tap below to choose a plan and continue.
             </p>
             <button
-              onClick={() => window.location.href = redirectUrl}
+              onClick={() => router.push("/renew")}
               className="mt-2 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-glow"
             >
-              Continue to Intelli
+              Choose a plan
             </button>
           </div>
         </div>

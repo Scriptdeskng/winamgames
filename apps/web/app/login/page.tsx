@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           <p className="text-center text-xs text-muted-foreground">
             Don't have an account?{" "}
-            <Link href="/subscribe" className="text-primary hover:underline">
+            <Link href="/renew" className="text-primary hover:underline">
               Subscribe
             </Link>
           </p>
@@ -99,4 +99,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

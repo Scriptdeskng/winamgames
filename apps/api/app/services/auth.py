@@ -183,6 +183,7 @@ def verify_otp(db: Session, msisdn: str, code: str) -> dict:
         redirect_url = None
         if isinstance(data.get("client_action"), dict):
             redirect_url = data["client_action"].get("redirection_url")
+        redirect_url = redirect_url or "/renew"
         return {
             "success": True,
             "message": response.message or "OTP verified successfully",
@@ -296,7 +297,7 @@ def get_player_subscription_status(db: Session, player_id: str) -> dict[str, obj
                     "ends_date": latest.valid_until.isoformat() if latest and latest.valid_until else None,
                 } if active else None,
                 "billing_records": [],
-                "client_action": None if active else {"action": "redirect", "redirection_url": "/subscribe"},
+                "client_action": None if active else {"action": "redirect", "redirection_url": "/renew"},
             },
         }
 
@@ -313,6 +314,11 @@ def get_player_subscription_status(db: Session, player_id: str) -> dict[str, obj
         )
     return {
         "success": response.success,
-        "data": response.data,
+        "data": {
+            **(response.data or {}),
+            "client_action": None
+            if (response.data or {}).get("has_active_subscription")
+            else {"action": "redirect", "redirection_url": "/renew"},
+        },
         "message": response.message,
     }

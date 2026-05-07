@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import SubscribeClient from "./subscribe-client";
+import SubscriptionPlans from "@/components/subscription-plans";
 
 export default function SubscribePage() {
   return (
@@ -10,7 +10,7 @@ export default function SubscribePage() {
         </main>
       }
     >
-      <SubscribeClient />
+      <SubscriptionPlans mode="subscribe" />
     </Suspense>
   );
 }
