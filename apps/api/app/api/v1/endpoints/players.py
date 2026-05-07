@@ -15,6 +15,7 @@ from app.domain.models import (
 from app.services.draws import get_current_draw_week
 from app.services.missions import ensure_active_missions
 from app.services.auth import get_player_subscription_status
+from app.services.kyc import get_kyc_status as get_kyc_status_service
 
 router = APIRouter()
 
@@ -62,6 +63,40 @@ def get_me(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
 @router.get("/subscription")
 def get_subscription(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
     return get_player_subscription_status(db, player_id)
+
+
+@router.get("/profile")
+def get_profile(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+    dashboard = get_dashboard(player_id, db)
+    subscription = get_player_subscription_status(db, player_id)
+    kyc_result = get_kyc_status_service(db, player_id)
+    kyc = kyc_result.get("kyc")
+    return {
+        "success": True,
+        "player": dashboard.get("player"),
+        "dashboard": dashboard,
+        "subscription": subscription,
+        "kyc": (
+            {
+                "id": kyc.id,
+                "player_id": kyc.player_id,
+                "first_name": kyc.first_name,
+                "last_name": kyc.last_name,
+                "dob": kyc.dob,
+                "id_type": kyc.id_type,
+                "id_number": kyc.id_number,
+                "bank_code": kyc.bank_code,
+                "bank_name": kyc.bank_name,
+                "account_number": kyc.account_number,
+                "account_name": kyc.account_name,
+                "submitted_at": kyc.submitted_at.isoformat() if kyc.submitted_at else None,
+                "bank_details_submitted_at": kyc.bank_details_submitted_at.isoformat() if kyc.bank_details_submitted_at else None,
+                "verified": bool(kyc.verified),
+            }
+            if kyc
+            else None
+        ),
+    }
 
 
 @router.get("/dashboard")

@@ -166,13 +166,13 @@ export default function AppPage() {
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
         <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => router.push("/profile")}
+          <Link
+            href="/profile"
             className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
             aria-label="Profile"
           >
             <span className="text-sm font-bold text-primary">{(session.nickname ?? "W")[0].toUpperCase()}</span>
-          </button>
+          </Link>
           <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
           <button
             onClick={handleLogout}

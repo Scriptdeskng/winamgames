@@ -66,6 +66,10 @@ export function getDashboard(playerId: string) {
   return request<any>(`/players/dashboard?player_id=${encodeURIComponent(playerId)}`);
 }
 
+export function getProfile(playerId: string) {
+  return request<any>(`/players/profile?player_id=${encodeURIComponent(playerId)}`);
+}
+
 export function getSubscriptionStatus(playerId: string) {
   return request<any>(`/players/subscription?player_id=${encodeURIComponent(playerId)}`);
 }

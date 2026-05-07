@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.domain.enums import SubscriptionPlan, SubscriptionStatus
@@ -77,7 +78,19 @@ def find_or_create_player(db: Session, msisdn: str) -> WinamPlayer:
     if not player:
         player = WinamPlayer(msisdn_hash=msisdn_hash, msisdn_last4=last4, msisdn=digits)
         db.add(player)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            player = (
+                db.execute(
+                    select(WinamPlayer)
+                    .where((WinamPlayer.msisdn == digits) | (WinamPlayer.msisdn_hash == msisdn_hash))
+                    .limit(1)
+                ).scalar_one_or_none()
+            )
+            if not player:
+                raise
         db.refresh(player)
         return player
 
@@ -87,7 +100,19 @@ def find_or_create_player(db: Session, msisdn: str) -> WinamPlayer:
         player.msisdn_last4 = last4
     if player.msisdn_hash != msisdn_hash:
         player.msisdn_hash = msisdn_hash
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        player = (
+            db.execute(
+                select(WinamPlayer)
+                .where((WinamPlayer.msisdn == digits) | (WinamPlayer.msisdn_hash == msisdn_hash))
+                .limit(1)
+            ).scalar_one_or_none()
+        )
+        if not player:
+            raise
     db.refresh(player)
     return player
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ArrowRight,
   Award,
   Check,
@@ -18,12 +19,11 @@ import {
   ShieldCheck,
   Sun,
   Ticket,
-  Trophy,
   User,
   X,
 } from "lucide-react";
 import { clearSession, getSession, updateSessionNickname } from "@/lib/session";
-import { getDashboard, getKycStatus, setNickname } from "@/lib/api";
+import { getProfile, setNickname } from "@/lib/api";
 import type { WinamSession } from "@/lib/session";
 
 type RankTier = "starter" | "recruit" | "sergeant" | "veteran" | "champion" | "icon" | "legend" | "immortal";
@@ -75,8 +75,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<WinamSession | null>(null);
-  const [dashboard, setDashboard] = useState<any>(null);
-  const [kyc, setKyc] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loadingData, setLoadingData] = useState(true);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
@@ -91,14 +91,16 @@ export default function ProfilePage() {
       router.replace("/login");
       return;
     }
-    Promise.all([getDashboard(session.playerId), getKycStatus(session.playerId)])
-      .then(([dash, kycRes]) => {
-        setDashboard(dash);
-        setKyc(kycRes?.kyc ?? null);
+    setLoadingData(true);
+    getProfile(session.playerId)
+      .then((result) => {
+        setProfile(result);
       })
       .catch(() => {
-        setDashboard(null);
-        setKyc(null);
+        setProfile(null);
+      })
+      .finally(() => {
+        setLoadingData(false);
       });
   }, [router, session]);
 
@@ -115,6 +117,8 @@ export default function ProfilePage() {
     router.push("/login");
   };
 
+  const dashboard = profile?.dashboard ?? null;
+  const kyc = profile?.kyc ?? null;
   const player = dashboard?.player ?? {};
   const weekTotal = dashboard?.weekTotal ?? 0;
   const weekCap = dashboard?.weekCap ?? 50;
@@ -145,24 +149,21 @@ export default function ProfilePage() {
   const idType = kyc?.id_type ? String(kyc.id_type).toUpperCase() : "—";
   const dob = kyc?.dob ? new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${kyc.dob}T00:00:00`)) : "—";
 
-  if (!ready || !session || !dashboard) return null;
+  if (!ready || !session) return null;
+
+  if (!profile) {
+    return <ProfileSkeleton onBack={() => router.push("/app")} />;
+  }
 
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
         <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center">
-            <span className="sr-only">Back</span>
-            <ArrowRight className="h-4 w-4 rotate-180" />
+          <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
+            <ArrowLeft className="h-5 w-5" />
           </Link>
-          <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-          <button
-            onClick={logout}
-            className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center"
-            aria-label="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <span className="text-base font-bold text-foreground truncate max-w-[200px]">Profile</span>
+          <div className="h-10 w-10" aria-hidden />
         </div>
 
         <div className="px-4 pb-8 space-y-5">
@@ -212,6 +213,54 @@ export default function ProfilePage() {
             <LogOut className="h-4 w-4" />
             Log out
           </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function ProfileSkeleton({ onBack }: { onBack: () => void }) {
+  return (
+    <main className="min-h-[100dvh] bg-background text-foreground">
+      <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button onClick={onBack} className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <span className="text-base font-bold text-foreground truncate max-w-[200px]">Profile</span>
+          <div className="h-10 w-10" aria-hidden />
+        </div>
+
+        <div className="px-4 pb-8 space-y-5">
+          <div className="rounded-[28px] bg-surface-1 border border-border p-4 shadow-card animate-pulse">
+            <div className="h-4 w-24 rounded-full bg-surface-2" />
+            <div className="mt-4 h-10 w-40 rounded-2xl bg-surface-2" />
+            <div className="mt-3 h-3 w-28 rounded-full bg-surface-2" />
+            <div className="mt-4 h-2.5 w-full rounded-full bg-surface-2" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card animate-pulse">
+              <div className="h-4 w-10 rounded-full bg-surface-2" />
+              <div className="mt-5 h-8 w-16 rounded-full bg-surface-2" />
+              <div className="mt-2 h-3 w-20 rounded-full bg-surface-2" />
+            </div>
+            <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card animate-pulse">
+              <div className="h-4 w-12 rounded-full bg-surface-2" />
+              <div className="mt-5 h-8 w-16 rounded-full bg-surface-2" />
+              <div className="mt-2 h-3 w-20 rounded-full bg-surface-2" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-5 w-32 rounded-full bg-surface-2 animate-pulse" />
+            <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card animate-pulse">
+              <div className="h-4 w-40 rounded-full bg-surface-2" />
+              <div className="mt-2 h-3 w-56 rounded-full bg-surface-2" />
+            </div>
+            <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card animate-pulse">
+              <div className="h-4 w-36 rounded-full bg-surface-2" />
+              <div className="mt-2 h-3 w-48 rounded-full bg-surface-2" />
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -451,15 +500,6 @@ function ActivitySection() {
               <Award className="h-4.5 w-4.5 text-coin" />
             </div>
             <span className="text-sm font-medium">Recent Winners</span>
-          </div>
-          <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" />
-        </Link>
-        <Link href="/leaderboard" className="flex items-center justify-between p-4 hover:bg-surface-2 transition-colors border-t border-border">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-streak/10 flex items-center justify-center">
-              <Trophy className="h-4.5 w-4.5 text-streak" />
-            </div>
-            <span className="text-sm font-medium">Leaderboard</span>
           </div>
           <ChevronDown className="h-4 w-4 -rotate-90 text-muted-foreground" />
         </Link>

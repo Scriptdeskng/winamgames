@@ -135,16 +135,16 @@ prod-seed: prod-wait-db
 
 prod-bootstrap: prod-migrate prod-seed
 
-prod-smoke: prod-intelli-webhook-smoke prod-admin-draw-smoke prod-admin-integration-smoke
+prod-smoke: prod-bootstrap prod-intelli-webhook-smoke prod-admin-draw-smoke prod-admin-integration-smoke
 
-prod-intelli-webhook-smoke: prod-wait-db
-	$(PROD_COMPOSE) run --rm --no-deps api python -m scripts.intelli_webhook_smoke_test
+prod-intelli-webhook-smoke: prod-build prod-bootstrap
+	$(PROD_COMPOSE) run --rm --no-deps -e WINAM_INTELLI_MOCK=true api python -m scripts.intelli_webhook_smoke_test
 
-prod-admin-draw-smoke: prod-wait-db
-	$(PROD_COMPOSE) run --rm --no-deps api python -m scripts.admin_draw_smoke_test
+prod-admin-draw-smoke: prod-build prod-bootstrap
+	$(PROD_COMPOSE) run --rm --no-deps -e WINAM_INTELLI_MOCK=true api python -m scripts.admin_draw_smoke_test
 
-prod-admin-integration-smoke: prod-wait-db
-	$(PROD_COMPOSE) run --rm --no-deps api python -m scripts.admin_integration_smoke_test
+prod-admin-integration-smoke: prod-build prod-bootstrap
+	$(PROD_COMPOSE) run --rm --no-deps -e WINAM_INTELLI_MOCK=true api python -m scripts.admin_integration_smoke_test
 
 prod-verify: prod-build prod-migrate prod-seed prod-smoke
 

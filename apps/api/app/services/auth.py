@@ -4,6 +4,7 @@ import hashlib
 import re
 from datetime import timedelta
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.domain.enums import SubscriptionPlan, SubscriptionStatus
@@ -61,14 +62,44 @@ def _upsert_player(db: Session, msisdn: str) -> tuple[WinamPlayer, bool]:
     if not player:
         player = WinamPlayer(msisdn_hash=msisdn_hash, msisdn_last4=last4, msisdn=digits)
         db.add(player)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            player = (
+                db.execute(
+                    select(WinamPlayer)
+                    .where((WinamPlayer.msisdn == digits) | (WinamPlayer.msisdn_hash == msisdn_hash))
+                    .limit(1)
+                ).scalar_one_or_none()
+            )
+            if not player:
+                raise
+        else:
+            db.refresh(player)
+            return player, True
         db.refresh(player)
         return player, True
 
     player.msisdn_hash = msisdn_hash
     player.msisdn = digits
     player.msisdn_last4 = last4
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        player = (
+            db.execute(
+                select(WinamPlayer)
+                .where((WinamPlayer.msisdn == digits) | (WinamPlayer.msisdn_hash == msisdn_hash))
+                .limit(1)
+            ).scalar_one_or_none()
+        )
+        if not player:
+            raise
+    else:
+        db.refresh(player)
+        return player, is_new
     db.refresh(player)
     return player, is_new
 
