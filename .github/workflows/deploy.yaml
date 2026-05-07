@@ -1,0 +1,34 @@
+name: Deploy Winam Games
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  deploy:
+    name: Build, Migrate \u0026 Deploy (Production)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: deploy
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /home/devops/winamgames
+            git fetch origin deploy
+            git reset --hard origin/deploy
+
+            make prod-verify
+            make prod-up
+
+            docker system prune -f
