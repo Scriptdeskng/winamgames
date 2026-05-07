@@ -21,7 +21,9 @@ make reset-db
 ## Run Smoke Tests
 
 ```bash
+make intelli-webhook-smoke
 make admin-draw-smoke
+make admin-integration-smoke
 ```
 
 ## View Status

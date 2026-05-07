@@ -39,7 +39,9 @@ Use this checklist before switching traffic fully to the Next.js + FastAPI stack
 
 - [ ] Seed data loads from the legacy `src/data` puzzle files.
 - [ ] Gameplay seed test passes.
+- [ ] Intelli webhook smoke test passes.
 - [ ] Admin draw lifecycle smoke test passes.
+- [ ] Admin integration smoke test passes.
 - [ ] Mission rewards show both `tickets` and `coins` in the UI.
 - [ ] Draw lifecycle works:
   - lock
@@ -50,6 +52,7 @@ Use this checklist before switching traffic fully to the Next.js + FastAPI stack
 ## Production Readiness
 
 - [ ] Production environment variables are confirmed.
+- [ ] Intelli is set to live mode with `WINAM_INTELLI_MOCK=false` in production.
 - [ ] Database migrations are applied.
 - [ ] Seed/bootstrap process is documented and repeatable.
 - [ ] Any external providers for SMS, payouts, or email are configured.
@@ -61,4 +64,3 @@ Use this checklist before switching traffic fully to the Next.js + FastAPI stack
 - [ ] Visual QA on admin routes is approved.
 - [ ] No user-facing flow is missing compared with Lovable.
 - [ ] No admin-operational flow is missing compared with Lovable.
-
