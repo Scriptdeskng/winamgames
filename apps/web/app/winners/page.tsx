@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Award, ChevronDown, Gamepad2, Hash, Trophy } from "lucide-react";
 import { getPublishedWinners } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import { PlayerTopBar } from "@/components/player-top-bar";
 
 type WinnerRow = {
   id: string;
@@ -77,14 +78,7 @@ export default function WinnersPage() {
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background text-foreground">
-      <div className="flex items-center justify-between px-4 py-3">
-        <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center">
-          <span className="sr-only">Back</span>
-          <ChevronDown className="h-4 w-4 rotate-90" />
-        </Link>
-        <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-        <div className="h-10 w-10" />
-      </div>
+      <PlayerTopBar backTo="/app" title="Winners" />
 
       <div className="px-4 pb-6 space-y-4">
         <div className="relative overflow-hidden rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-2">

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck, Trophy } from "lucide-react";
 import { getKycStatus, getMyWinnerStatus, submitKycBankDetails, submitKycIdentity } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import { PlayerTopBar } from "@/components/player-top-bar";
 
 const BANKS = [
   { name: "Access Bank", code: "044" },
@@ -117,13 +118,7 @@ export default function KycClient({
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background text-foreground">
-      <div className="flex items-center justify-between px-4 py-3">
-        <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-        <div className="h-10 w-10" />
-      </div>
+      <PlayerTopBar backTo="/app" title="Claim Prize" />
 
       <div className="px-4 pb-8 space-y-4">
         {showConfirmation ? (
@@ -475,4 +470,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-

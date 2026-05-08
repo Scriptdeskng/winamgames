@@ -8,16 +8,15 @@ import {
   ChevronRight,
   Coins,
   Flame,
-  LogOut,
   Sparkles,
   Swords,
   Ticket,
   Trophy,
-  User,
   X,
 } from "lucide-react";
-import { clearSession, getSession } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import { getActiveBanners, getActiveMissions, getDashboard, getSubscriptionStatus, getWinnerStatus } from "@/lib/api";
+import { PlayerTopBar } from "@/components/player-top-bar";
 import type { WinamSession } from "@/lib/session";
 
 type DashboardState = {
@@ -90,11 +89,6 @@ export default function AppPage() {
       });
   }, [session]);
 
-  const handleLogout = () => {
-    clearSession();
-    router.push("/login");
-  };
-
   if (!ready) {
     return (
       <main className="min-h-[100dvh] bg-background flex items-center justify-center">
@@ -165,23 +159,7 @@ export default function AppPage() {
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link
-            href="/profile"
-            className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
-            aria-label="Profile"
-          >
-            <span className="text-sm font-bold text-primary">{(session.nickname ?? "W")[0].toUpperCase()}</span>
-          </Link>
-          <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-          <button
-            onClick={handleLogout}
-            className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
-            aria-label="Log out"
-          >
-            <LogOut className="h-4 w-4 text-foreground" />
-          </button>
-        </div>
+        <PlayerTopBar />
 
         <div className="px-4 pb-6 space-y-5">
           <DrawHeroCard

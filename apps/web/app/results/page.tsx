@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, Coins, Flame, Ticket, Trophy } from "lucide-react";
 import { getSession } from "@/lib/session";
+import { PlayerTopBar } from "@/components/player-top-bar";
 
 type StoredResult = {
   gameType: "checkmate" | "wisdomdrop";
@@ -96,14 +97,7 @@ export default function ResultsPage() {
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background text-foreground flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3">
-        <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center">
-          <span className="sr-only">Back</span>
-          <ArrowUp className="h-4 w-4 rotate-[-90deg]" />
-        </Link>
-        <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-        <div className="h-10 w-10" />
-      </div>
+      <PlayerTopBar backTo="/app" title="Results" />
 
       <div className="flex-1 flex flex-col justify-center px-6 pb-8 pt-8">
         {rankedUp && (

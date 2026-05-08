@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen, ChevronDown, Flame, Swords, Ticket } from "lucide-react";
+import { BookOpen, ChevronDown, Flame, Swords, Ticket } from "lucide-react";
 import { getMyWinnerStatus, getPlayerEntries } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import { PlayerTopBar } from "@/components/player-top-bar";
 
 type TicketSource = "game_session" | "mission" | "streak" | "streak_bonus";
 
@@ -74,13 +75,7 @@ export default function EntriesPage() {
   return (
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <img src="/winam-logo.png" alt="WinamGames" className="h-7 w-auto" />
-          <div className="h-10 w-10" aria-hidden />
-        </div>
+        <PlayerTopBar backTo="/app" title="My Tickets" />
 
         <div className="px-4 pb-6 space-y-5">
           {currentWeek ? (

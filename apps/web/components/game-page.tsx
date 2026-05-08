@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
@@ -26,6 +25,7 @@ import { AnswerFooter } from "./answer-footer";
 import { ChessBoard } from "./chess-board";
 import { DrawLockBanner } from "./draw-lock-banner";
 import { GameHeader } from "./game-header";
+import { PlayerTopBar } from "./player-top-bar";
 
 type GameType = "checkmate" | "wisdomdrop";
 
@@ -347,11 +347,9 @@ function GameIntro({
   const Icon = isCheckmate ? Swords : BookOpen;
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative overflow-hidden">
+      <PlayerTopBar backTo="/app" title={title} />
       <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0" />
-      <Link href="/app" className="absolute left-4 top-4 z-20 h-10 w-10 rounded-xl bg-surface-1/70 backdrop-blur border border-border flex items-center justify-center hover:border-primary/40 transition-colors">
-        <ArrowLeft className="h-5 w-5 text-foreground" />
-      </Link>
-      <div className="relative z-10 px-6 pt-24 pb-10 flex flex-col items-center min-h-[100dvh]">
+      <div className="relative z-10 px-6 pt-16 pb-10 flex flex-col items-center min-h-[100dvh]">
         <div className="relative mb-7">
           <div className="absolute inset-0 rounded-full bg-emerald/30 blur-2xl" aria-hidden />
           <div className="relative h-24 w-24 rounded-full border border-emerald/40 bg-gradient-to-br from-surface-2 to-surface-1 shadow-glow flex items-center justify-center">
@@ -473,7 +471,10 @@ function HintCard({
 function ResultScreen({ gameType, result, onBack }: { gameType: GameType; result: any; onBack: () => void }) {
   const title = gameType === "checkmate" ? "CheckMate complete" : "WisdomDrop complete";
   return (
-    <main className="min-h-[100dvh] bg-background text-foreground flex items-center justify-center px-4">
+    <main className="min-h-[100dvh] bg-background text-foreground flex items-center justify-center px-4 pt-16 pb-6">
+      <div className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2">
+        <PlayerTopBar backTo="/app" title="Results" />
+      </div>
       <div className="w-full max-w-sm rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-4">
         <div className="h-14 w-14 rounded-2xl bg-gold/20 flex items-center justify-center mx-auto">
           <Trophy className="h-7 w-7 text-gold" />
