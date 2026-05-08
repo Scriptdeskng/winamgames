@@ -51,15 +51,14 @@ def _latest_subscription(db: Session, player_id: str) -> WinamSubscription | Non
     ).scalar_one_or_none()
 
 
-def _plan_from_amount(amount: Any, fallback: SubscriptionPlan | None = None) -> SubscriptionPlan:
-    try:
-        numeric_amount = float(amount)
-    except (TypeError, ValueError):
-        return fallback or SubscriptionPlan.weekly
-
-    if numeric_amount <= 75:
+def _plan_from_dates(valid_from: datetime | None, valid_until: datetime | None) -> SubscriptionPlan:
+    if valid_from is None or valid_until is None:
         return SubscriptionPlan.daily
-    if numeric_amount < 150:
+
+    duration_days = (valid_until.date() - valid_from.date()).days
+    if duration_days <= 1:
+        return SubscriptionPlan.daily
+    if duration_days <= 7:
         return SubscriptionPlan.weekly
     return SubscriptionPlan.monthly
 
@@ -131,13 +130,10 @@ def sync_subscription_from_intelli(
     if has_active and subscription_data:
         valid_from = _parse_dt(subscription_data.get("starts_date")) or wat_now()
         valid_until = _parse_dt(subscription_data.get("ends_date")) or _parse_dt(subscription_data.get("expiry"))
+        plan = _plan_from_dates(valid_from, valid_until)
         if valid_until is None:
-            valid_until = wat_now().replace(hour=22, minute=59, second=59, microsecond=999999)
+            valid_until = valid_from.replace(hour=22, minute=59, second=59, microsecond=999999)
         carrier_ref = str(subscription_data.get("subscription_id") or subscription_data.get("telco_ref") or "")
-        plan = _plan_from_amount(
-            subscription_data.get("amount"),
-            fallback=current.plan if current else (SubscriptionPlan.weekly if subscription_data.get("auto_renewal") else SubscriptionPlan.daily),
-        )
         sub = current or WinamSubscription(player_id=player.id, plan=plan, status=SubscriptionStatus.active)
         sub.plan = plan
         sub.status = SubscriptionStatus.active
