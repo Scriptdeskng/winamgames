@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRight,
   Award,
   Check,
   ChevronDown,
@@ -153,6 +154,9 @@ export default function ProfilePage() {
   const xp = player.xpTotal ?? 0;
   const rankTier = (player.rankTier ?? "starter") as RankTier;
   const rankConfig = RANK_CONFIG[rankTier] ?? RANK_CONFIG.starter;
+  const streak = player.currentStreak ?? 0;
+  const streakNextMilestone = streak < 3 ? 3 : streak < 7 ? 7 : streak < 14 ? 14 : null;
+  const streakDaysToBonus = streakNextMilestone ? Math.max(0, streakNextMilestone - streak) : 0;
 
   const rankOrder: RankTier[] = ["starter", "recruit", "sergeant", "veteran", "champion", "icon", "legend", "immortal"];
   const rankIndex = rankOrder.indexOf(rankTier);
@@ -206,23 +210,23 @@ export default function ProfilePage() {
           <StreakBonusCard streak={player.currentStreak ?? 0} />
 
           <div className="grid grid-cols-2 gap-3">
-            <StatTile
-              icon={Coins}
-              label="Coins"
-              value={String(player.coinBalance ?? 0)}
-              tone="coin"
-              tooltip="Coins are earned when your weekly ticket cap is full, or through select mission rewards."
-              subtext="Available balance"
-            />
-            <StatTile
-              icon={Flame}
-              label="Streak"
-              value={player.currentStreak ? `Day ${player.currentStreak}` : "—"}
-              tone="streak"
-              tooltip="Daily streaks add bonus tickets to every round as you keep playing."
-              subtext="Keep your chain alive"
-            />
-          </div>
+          <StatTile
+            icon={Coins}
+            label="Coins"
+            value={String(player.coinBalance ?? 0)}
+            tone="coin"
+            tooltip="Coins are earned when your weekly ticket cap is full, or through select mission rewards."
+            subtext="Spendable balance"
+          />
+          <StatTile
+            icon={Flame}
+            label="Streak"
+            value={player.currentStreak ? `Day ${player.currentStreak}` : "—"}
+            tone="streak"
+            tooltip="Your streak counts consecutive days you've played. Reach Day 3 for +1 bonus ticket per round, Day 7 for +2, Day 14 for +3. Miss a day and it resets to zero."
+            subtext={streakNextMilestone ? `${streakDaysToBonus}d to bonus` : "Play daily to earn bonuses"}
+          />
+        </div>
 
           <VerificationSection
             kyc={safeProfile.kyc ?? kyc}
@@ -433,9 +437,9 @@ function WeeklyEntriesCard({
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
       </div>
 
-      <Link href="/entries" className="flex items-center justify-between gap-3 rounded-xl bg-surface-2/35 px-4 py-3 text-xs text-muted-foreground hover:bg-surface-2/60 transition-colors">
-        <span className="truncate">View tickets • {weekTotal}</span>
-        <ChevronDown className="h-4 w-4 shrink-0" />
+      <Link href="/app" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm">
+        Play to earn more
+        <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );

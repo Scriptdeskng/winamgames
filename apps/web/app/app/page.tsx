@@ -10,8 +10,12 @@ import {
   Check,
   Calendar,
   Flame,
+  Crown,
+  Gem,
   Shuffle,
+  ShieldHalf,
   Sparkles,
+  Sprout,
   Swords,
   Ticket,
   Trophy,
@@ -23,6 +27,19 @@ import { getActiveBanners, getActiveMissions, getDashboard, getSubscriptionStatu
 import { PlayerTopBar } from "@/components/player-top-bar";
 import type { WinamSession } from "@/lib/session";
 import { useReducer } from "react";
+
+type RankTier = "starter" | "recruit" | "sergeant" | "veteran" | "champion" | "icon" | "legend" | "immortal";
+
+const APP_RANK_CONFIG: Record<RankTier, { label: string; icon: LucideIcon; color: string }> = {
+  starter: { label: "Starter", icon: Sprout, color: "text-muted-foreground" },
+  recruit: { label: "Recruit", icon: Swords, color: "text-blue-400" },
+  sergeant: { label: "Sergeant", icon: ShieldHalf, color: "text-cyan-400" },
+  veteran: { label: "Veteran", icon: Flame, color: "text-orange-400" },
+  champion: { label: "Champion", icon: Trophy, color: "text-coin" },
+  icon: { label: "Icon", icon: Gem, color: "text-purple-400" },
+  legend: { label: "Legend", icon: Sparkles, color: "text-streak" },
+  immortal: { label: "Immortal", icon: Crown, color: "text-xp" },
+};
 
 type DashboardState = {
   player?: any;
@@ -250,6 +267,7 @@ function WinnerBanner({ winnerStatus, claimComplete }: { winnerStatus: any; clai
           <X className="h-4 w-4" />
         </button>
       )}
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold/20 blur-2xl" />
       {claimHref ? (
         <Link href={claimHref} className="relative flex gap-3 pr-8">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
@@ -298,52 +316,62 @@ function DrawHeroCard({
   }, []);
 
   const { days, hours, minutes, seconds } = getCountdownParts(targetMs);
+  const pct = Math.min(100, Math.round((weekTotal / weekCap) * 100));
 
   return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Weekly draw</p>
-          <p className="text-sm font-semibold text-foreground">{drawWeekStatus ? drawWeekStatus.toUpperCase() : "OPEN"}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">Current tickets</p>
-          <p className="text-lg font-bold tabular-nums text-primary">{weekTotal}/{weekCap}</p>
-        </div>
+    <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-5 shadow-card">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+        Weekly Draw
+      </p>
+
+      <div className="mt-3 flex items-end gap-1.5">
+        {days > 0 && (
+          <>
+            <CountdownUnit value={days} label="day" />
+            <CountdownColon />
+          </>
+        )}
+        <CountdownUnit value={hours} label="hr" />
+        <CountdownColon />
+        <CountdownUnit value={minutes} label="min" />
+        <CountdownColon />
+        <CountdownUnit value={seconds} label="sec" />
       </div>
 
-      <div className="mt-3 flex items-end gap-2 text-foreground">
-        <CountdownBlock value={days} label="day" />
-        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
-        <CountdownBlock value={hours} label="hr" />
-        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
-        <CountdownBlock value={minutes} label="min" />
-        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
-        <CountdownBlock value={seconds} label="sec" />
+      <p className="mt-3 text-sm text-foreground tabular-nums">
+        <span className="font-bold text-primary">{weekTotal}</span>
+        <span className="text-muted-foreground"> / {weekCap} tickets this week</span>
+      </p>
+
+      <div className="mt-2 h-2 rounded-full bg-black/10 overflow-hidden">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
       </div>
 
-      <div className="mt-3 h-1.5 rounded-full bg-surface-2 overflow-hidden">
-        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (weekTotal / weekCap) * 100)}%` }} />
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <span className="truncate">{drawWeekId ? `Draw week ${drawWeekId.slice(0, 8)}` : "Draw every Sunday at 20:00 WAT"}</span>
-        <Link href="/entries" className="flex items-center gap-1 font-medium text-primary whitespace-nowrap">
-          View my tickets
-          <ChevronRight className="h-3.5 w-3.5" />
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-[11px] text-muted-foreground">Draw every Sunday at 20:00 WAT</p>
+        <Link href="/entries" className="text-xs text-primary flex items-center gap-1 hover:underline">
+          View my tickets <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
     </div>
   );
 }
 
-function CountdownBlock({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="min-w-0">
-      <p className="text-3xl font-bold tabular-nums leading-none">{String(value).padStart(2, "0")}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground text-center">{label}</p>
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-4xl font-bold tabular-nums leading-none text-foreground">
+        {String(value).padStart(2, "0")}
+      </span>
+      <span className="text-[10px] text-muted-foreground lowercase mt-0.5 leading-none">
+        {label}
+      </span>
     </div>
   );
+}
+
+function CountdownColon() {
+  return <span className="font-mono text-4xl font-bold leading-none text-foreground pb-[14px]">:</span>;
 }
 
 function getNextSundayWAT(): Date {
@@ -371,31 +399,21 @@ function getCountdownParts(targetMs: number) {
   };
 }
 
-function StreakRankStrip({ streak, tier }: { streak: number; tier: string }) {
-  const displayTier = String(tier).charAt(0).toUpperCase() + String(tier).slice(1);
+function StreakRankStrip({ streak, tier }: { streak: number; tier: RankTier }) {
+  const config = APP_RANK_CONFIG[tier] ?? APP_RANK_CONFIG.starter;
+  const RankIcon = config.icon;
 
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3 shadow-card">
-      <div className="grid grid-cols-2 gap-3 items-center">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-8 w-8 rounded-lg bg-streak/12 flex items-center justify-center shrink-0">
-            <Flame className="h-4 w-4 text-streak" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Streak</p>
-            <p className="text-sm font-bold tabular-nums">{streak}d</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-2.5 min-w-0">
-          <div className="min-w-0 text-right">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Rank</p>
-            <p className="text-sm font-bold tabular-nums">{displayTier}</p>
-          </div>
-          <div className="h-8 w-8 rounded-lg bg-emerald/12 flex items-center justify-center shrink-0">
-            <Sparkles className="h-4 w-4 text-emerald" />
-          </div>
-        </div>
+    <div className="rounded-xl bg-surface-1/60 px-4 py-2.5 flex items-center">
+      <div className="flex items-center gap-2 flex-1">
+        <Flame className="h-4 w-4 text-streak" />
+        <span className="text-sm font-semibold tabular-nums">{streak}</span>
+        <span className="text-xs text-muted-foreground">day streak</span>
+      </div>
+      <div className="h-5 w-px bg-border mx-3" />
+      <div className="flex items-center gap-2">
+        <RankIcon className={`h-4 w-4 ${config.color}`} />
+        <span className={`text-sm font-semibold ${config.color}`}>{config.label}</span>
       </div>
     </div>
   );
