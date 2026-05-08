@@ -268,8 +268,15 @@ export function ChessBoard({
                     />
                   )}
                   {showBadge && (
-                    <span className={cn("absolute bottom-1 right-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase", feedback === "correct" ? "bg-success text-background" : "bg-live text-background")}>
-                      {feedback}
+                    <span
+                      className={cn(
+                        "absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full border shadow-card flex items-center justify-center",
+                        feedback === "correct"
+                          ? "bg-success text-background border-success/30"
+                          : "bg-live text-background border-live/30"
+                      )}
+                    >
+                      {feedback === "correct" ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
                     </span>
                   )}
                   {ci === 0 && (

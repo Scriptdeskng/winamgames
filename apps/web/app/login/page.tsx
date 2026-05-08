@@ -73,7 +73,7 @@ export default function LoginPage() {
                 onChange={(e) => setMsisdn(e.target.value)}
                 placeholder="08012345678"
                 autoFocus
-                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-[16px] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 

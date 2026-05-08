@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`light ${inter.variable} ${interBody.variable} ${jetBrainsMono.variable}`} suppressHydrationWarning>
+  <html lang="en" className={`dark ${inter.variable} ${interBody.variable} ${jetBrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -60,12 +60,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   if (stored === 'light') {
     root.classList.remove('dark');
     root.classList.add('light');
-  } else if (stored === 'dark') {
+  } else {
     root.classList.remove('light');
     root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-    root.classList.add('light');
   }
 })();`,
           }}

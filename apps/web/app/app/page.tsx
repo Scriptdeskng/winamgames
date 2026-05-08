@@ -7,12 +7,16 @@ import {
   BookOpen,
   ChevronRight,
   Coins,
+  Check,
+  Calendar,
   Flame,
+  Shuffle,
   Sparkles,
   Swords,
   Ticket,
   Trophy,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { getActiveBanners, getActiveMissions, getDashboard, getSubscriptionStatus, getWinnerStatus } from "@/lib/api";
@@ -197,8 +201,6 @@ export default function AppPage() {
             </div>
           </div>
 
-          <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">My activity</h2>
           <div className="space-y-2">
             <Link href="/entries" className="flex items-center justify-between rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
               <div>
@@ -232,97 +234,28 @@ export default function AppPage() {
             )}
           </div>
         </div>
-
-          <div>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Your snapshot</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={Ticket} label="Weekly tickets" value={String(weekTotal)} tone="primary" />
-              <StatCard icon={Coins} label="Coins" value={String(player.coinBalance ?? 0)} tone="coin" />
-              <StatCard icon={Flame} label="Streak" value={`${streak} days`} tone="streak" />
-              <StatCard icon={Sparkles} label="Rank" value={String(tier)} tone="emerald" />
-            </div>
-          </div>
-        </div>
       </div>
     </main>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: any;
-  label: string;
-  value: string;
-  tone: "primary" | "coin" | "streak" | "emerald";
-}) {
-  const toneClass =
-    tone === "primary"
-      ? "bg-primary/15 text-primary"
-      : tone === "coin"
-        ? "bg-coin/15 text-coin"
-        : tone === "streak"
-          ? "bg-streak/15 text-streak"
-          : "bg-emerald/15 text-emerald";
-
-  return (
-    <div className="rounded-2xl bg-surface-1 border border-border p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${toneClass}`}>
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-      </div>
-      <p className="text-lg font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted-foreground mt-1">{label}</p>
-    </div>
   );
 }
 
 function WinnerBanner({ winnerStatus, claimComplete }: { winnerStatus: any; claimComplete: boolean }) {
   const [dismiss, setDismiss] = useState(false);
   const kyc = winnerStatus?.kyc;
+  const claimHref =
+    winnerStatus?.won && winnerStatus?.prizeType === "cash" && !claimComplete
+      ? `/kyc?winnerId=${encodeURIComponent(String(winnerStatus.winnerId ?? ""))}${kyc?.identitySubmitted ? "&step=2" : "&step=1"}`
+      : null;
 
   useEffect(() => {
-    if (!winnerStatus?.won) {
-      setDismiss(false);
-      return;
-    }
-    if (winnerStatus.prizeType === "airtime") {
-      setDismiss(localStorage.getItem(`winner-airtime-dismissed-${winnerStatus.winnerId}`) === "1");
-      return;
-    }
-    if (claimComplete) {
+    if (!winnerStatus?.won || winnerStatus?.prizeType !== "cash" || claimComplete) {
       setDismiss(localStorage.getItem(`winner-claim-dismissed-${winnerStatus.winnerId}`) === "1");
       return;
     }
     setDismiss(false);
   }, [claimComplete, winnerStatus]);
 
-  if (!winnerStatus?.won || dismiss) return null;
-
-  if (winnerStatus.prizeType === "airtime") {
-    return (
-      <div className="relative overflow-hidden rounded-2xl border border-success/30 bg-success/10 p-4 shadow-card">
-        <button
-          onClick={() => {
-            localStorage.setItem(`winner-airtime-dismissed-${winnerStatus.winnerId}`, "1");
-            setDismiss(true);
-          }}
-          className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-          aria-label="Dismiss airtime winner notice"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="pr-8">
-          <p className="text-base font-bold text-success">🎉 You won ₦{winnerStatus.prizeAmount?.toLocaleString("en-NG")} airtime!</p>
-          <p className="mt-1 text-sm text-muted-foreground">It will be sent to your number within 24 hours.</p>
-        </div>
-      </div>
-    );
-  }
+  if (!winnerStatus?.won || winnerStatus?.prizeType !== "cash" || dismiss || claimComplete) return null;
 
   let title = `🏆 You won ₦${winnerStatus.prizeAmount?.toLocaleString("en-NG")}!`;
   let body = "Complete verification to claim your prize.";
@@ -349,15 +282,28 @@ function WinnerBanner({ winnerStatus, claimComplete }: { winnerStatus: any; clai
           <X className="h-4 w-4" />
         </button>
       )}
-      <div className="relative flex gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
-          <Trophy className="h-5 w-5 text-gold" />
+      {claimHref ? (
+        <Link href={claimHref} className="relative flex gap-3 pr-8">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
+            <Trophy className="h-5 w-5 text-gold" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-bold text-foreground">{title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+            <p className="mt-2 text-xs font-semibold text-primary">Tap to verify and claim</p>
+          </div>
+        </Link>
+      ) : (
+        <div className="relative flex gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/20">
+            <Trophy className="h-5 w-5 text-gold" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-bold text-foreground">{title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-bold text-foreground">{title}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -424,8 +370,46 @@ function StreakRankStrip({ streak, tier }: { streak: number; tier: string }) {
   );
 }
 
-function BannerStack({ banners }: { banners: any[] }) {
-  if (!banners.length) {
+type Banner = {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  iconUrl?: string | null;
+  displayOrder?: number;
+};
+
+const BANNER_ICON_MAP: Record<string, { icon: LucideIcon; bg: string; fg: string }> = {
+  trophy: { icon: Trophy, bg: "bg-coin/15", fg: "text-coin" },
+  flame: { icon: Flame, bg: "bg-streak/15", fg: "text-streak" },
+  book: { icon: BookOpen, bg: "bg-xp/15", fg: "text-xp" },
+  swords: { icon: Swords, bg: "bg-primary/15", fg: "text-primary" },
+  sparkle: { icon: Sparkles, bg: "bg-primary/15", fg: "text-primary" },
+};
+
+function pickBannerIcon(banner: Banner, index: number) {
+  const title = `${banner.title} ${banner.subtitle ?? ""}`.toLowerCase();
+  const iconKey =
+    (banner.iconUrl ?? "").toLowerCase() ||
+    (title.includes("win") || title.includes("draw") ? "trophy" : "") ||
+    (title.includes("checkmate") ? "swords" : "") ||
+    (title.includes("wisdom") || title.includes("proverb") ? "book" : "") ||
+    (index === 0 ? "trophy" : index === 1 ? "swords" : "book");
+  return BANNER_ICON_MAP[iconKey] ?? BANNER_ICON_MAP.sparkle;
+}
+
+function BannerStack({ banners }: { banners: Banner[] }) {
+  const visible = banners.slice(0, 3);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (visible.length <= 1) return;
+    const id = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % visible.length);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [visible.length]);
+
+  if (!visible.length) {
     return (
       <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
         <p className="text-sm font-semibold mb-1">Announcements</p>
@@ -435,57 +419,159 @@ function BannerStack({ banners }: { banners: any[] }) {
   }
 
   return (
-    <div className="space-y-2">
-      {banners.map((banner) => (
-        <div key={banner.id} className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-          <p className="text-sm font-semibold">{banner.title}</p>
-          {banner.subtitle && <p className="text-sm text-muted-foreground mt-1">{banner.subtitle}</p>}
-        </div>
-      ))}
+    <div className="relative h-[112px] pb-4 select-none">
+      {visible.map((banner, index) => {
+        const slot = (index - activeIndex + visible.length) % visible.length;
+        const meta = pickBannerIcon(banner, index);
+        const Icon = meta.icon;
+
+        return (
+          <div
+            key={banner.id}
+            className="absolute inset-x-0 top-0 transition-all duration-500 ease-out will-change-transform"
+            style={{
+              zIndex: visible.length - slot,
+              transform: `translateY(${slot * 10}px) scale(${1 - slot * 0.04})`,
+              opacity: slot < 3 ? 1 : 0,
+            }}
+          >
+            <div className="relative h-[92px] overflow-hidden rounded-2xl bg-surface-1 border border-border p-4 shadow-card flex items-start gap-3">
+              <div className={`h-12 w-12 rounded-xl ${meta.bg} flex items-center justify-center shrink-0`}>
+                <Icon className={`h-6 w-6 ${meta.fg}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-foreground leading-tight">{banner.title}</p>
+                {banner.subtitle && <p className="text-xs text-muted-foreground mt-1 leading-snug">{banner.subtitle}</p>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function MissionsSection({ missions }: { missions: any[] }) {
+type Mission = {
+  id: string;
+  title: string;
+  conditionType: string;
+  conditionValue: number;
+  progressCurrent: number;
+  rewardAmount: number;
+  rewardType: "coins" | "entries" | string;
+  status: string;
+  assignedDateWat?: string | null;
+  completedAt?: string | null;
+};
+
+const MISSION_META: Record<string, { icon: LucideIcon; tint: string }> = {
+  puzzles_solved: { icon: Swords, tint: "bg-primary/15 text-primary" },
+  no_hints: { icon: Sparkles, tint: "bg-xp/15 text-xp" },
+  streak_day: { icon: Flame, tint: "bg-streak/15 text-streak" },
+  game_type_mix: { icon: Shuffle, tint: "bg-primary/15 text-primary" },
+};
+
+function pluralizeRewards(amount: number, rewardType: string) {
+  if (rewardType === "coins") {
+    return `${amount} ${amount === 1 ? "coin" : "coins"}`;
+  }
+  return `${amount} ${amount === 1 ? "ticket" : "tickets"}`;
+}
+
+function getWatDateKey(value: Date | string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(typeof value === "string" ? new Date(value) : value);
+}
+
+function MissionsSection({ missions }: { missions: Mission[] }) {
+  const visibleMissions = missions.slice(0, 3);
+  const completedCount = visibleMissions.filter((mission) => mission.status === "completed").length;
+
   return (
-    <div className="space-y-2">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">Missions</h2>
-      <div className="space-y-2">
-        {missions.length ? (
-          missions.map((mission) => (
-            <div key={mission.id} className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{mission.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {mission.progressCurrent}/{mission.conditionValue}
-                    {" · "}
-                    reward {mission.rewardAmount} {mission.rewardType === "coins" ? "coins" : "tickets"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${
-                      mission.rewardType === "coins"
-                        ? "bg-coin/15 text-coin"
-                        : "bg-primary/15 text-primary"
-                    }`}
-                  >
-                    {mission.rewardType === "coins" ? (
-                      <Coins className="h-3 w-3" />
-                    ) : (
-                      <Ticket className="h-3 w-3" />
-                    )}
-                    {mission.rewardType === "coins" ? "Coins" : "Tickets"}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-          ))
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Missions
+          {completedCount > 0 && (
+            <span className="ml-2 text-muted-foreground/70 normal-case font-normal tracking-normal">
+              · {completedCount} of {visibleMissions.length} done
+            </span>
+          )}
+        </h2>
+      </div>
+
+      {visibleMissions.length === 0 ? (
+        <div className="rounded-2xl bg-surface-1 border border-border p-4 flex items-center gap-3 shadow-card">
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No mission for today</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {visibleMissions.map((mission) => (
+            <MissionRow key={mission.id} mission={mission} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MissionRow({ mission }: { mission: Mission }) {
+  const meta = MISSION_META[mission.conditionType] ?? MISSION_META.puzzles_solved;
+  const Icon = meta.icon;
+  const isCompleted = mission.status === "completed";
+  const progress = isCompleted ? mission.conditionValue : Math.min(mission.progressCurrent, mission.conditionValue);
+  const progressPct = Math.min(100, Math.round((progress / mission.conditionValue) * 100));
+  const carriedOver = !!mission.assignedDateWat && getWatDateKey(mission.assignedDateWat) !== getWatDateKey(new Date());
+
+  return (
+    <div
+      className={`rounded-xl border p-3 flex items-center gap-3 transition-colors ${
+        isCompleted ? "bg-surface-1/45 border-success/25 opacity-80" : "bg-surface-1 border-border"
+      }`}
+    >
+      <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${isCompleted ? "bg-success/10 text-success" : meta.tint}`}>
+        {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-medium line-clamp-1 ${isCompleted ? "text-muted-foreground line-through decoration-success/70" : "text-foreground"}`}>
+            {mission.title}
+          </p>
+          {isCompleted && <Check className="h-3.5 w-3.5 text-success shrink-0" />}
+        </div>
+
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/60">
+          <div
+            className={`h-full rounded-full ${isCompleted ? "bg-success" : "bg-primary"} transition-all`}
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+
+        {isCompleted ? (
+          <p className="text-xs text-success flex items-center gap-1 mt-1">
+            <Check className="h-3 w-3" /> Reward claimed
+          </p>
         ) : (
-          <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card text-sm text-muted-foreground">No active missions yet.</div>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {progress}/{mission.conditionValue}
+              {carriedOver && <span className="ml-2 text-muted-foreground/70">carried over</span>}
+            </p>
+          </div>
         )}
+      </div>
+      <div
+        className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+          mission.rewardType === "coins" ? "bg-coin/10 text-coin" : isCompleted ? "bg-muted/50 text-muted-foreground" : "bg-primary/10 text-primary"
+        }`}
+      >
+        {mission.rewardType === "coins" ? <Coins className="h-3 w-3" /> : <Ticket className="h-3 w-3" />}
+        {pluralizeRewards(mission.rewardAmount, mission.rewardType)}
       </div>
     </div>
   );

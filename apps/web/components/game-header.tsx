@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Heart, Timer, X } from "lucide-react";
 
 export function GameHeader({
-  title,
   lives,
   startTime,
   running,
@@ -12,7 +11,6 @@ export function GameHeader({
   totalPuzzles,
   onExit,
 }: {
-  title: string;
   lives: number;
   startTime: number;
   running: boolean;
@@ -43,21 +41,23 @@ export function GameHeader({
           <X className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <div className="flex flex-col items-center">
-          <span className="text-sm font-semibold tabular-nums text-foreground">{puzzleIndex + 1}<span className="text-muted-foreground font-normal"> / {totalPuzzles}</span></span>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{title}</span>
+        <div className="flex items-center gap-2 text-sm font-semibold tabular-nums text-foreground">
+          <span>{puzzleIndex + 1}</span>
+          <span className="text-muted-foreground font-normal">/ {totalPuzzles}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="rounded-full bg-surface-1 border border-border px-2.5 py-1 text-xs font-semibold tabular-nums text-foreground">
-            {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+          <div className="inline-flex items-center gap-1 text-sm font-semibold tabular-nums text-foreground">
+            <Timer className="h-4 w-4 text-muted-foreground" />
+            <span>{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}</span>
           </div>
-          <div className="rounded-full bg-surface-1 border border-border px-2.5 py-1 text-xs font-semibold tabular-nums text-foreground">
-            {"♥".repeat(Math.max(0, lives))}
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: Math.max(0, lives) }).map((_, index) => (
+              <Heart key={index} className="h-5 w-5 fill-red-500 text-red-500" />
+            ))}
           </div>
         </div>
       </div>
     </div>
   );
 }
-

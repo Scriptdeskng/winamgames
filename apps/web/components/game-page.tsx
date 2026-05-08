@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpen,
   Check,
@@ -16,6 +17,7 @@ import {
   Puzzle,
   Swords,
   Trophy,
+  X,
 } from "lucide-react";
 import { Chess, type Square } from "chess.js";
 import { getDashboard } from "@/lib/api";
@@ -25,7 +27,6 @@ import { AnswerFooter } from "./answer-footer";
 import { ChessBoard } from "./chess-board";
 import { DrawLockBanner } from "./draw-lock-banner";
 import { GameHeader } from "./game-header";
-import { PlayerTopBar } from "./player-top-bar";
 
 type GameType = "checkmate" | "wisdomdrop";
 
@@ -109,11 +110,27 @@ function CheckmateScreen() {
   const currentIndex = session.currentPuzzleIndex;
   const total = session.totalPuzzles;
   const isLast = currentIndex + 1 >= total;
+  const context = getCheckmateContext(puzzle?.theme ?? null, puzzle?.fen ?? null);
+  const pieceHintPurchased = session.currentHintTier >= 1;
+  const moveHintPurchased = session.currentHintTier >= 2;
+  const pieceHintCost = 25;
+  const moveHintCost = 75;
+  const liveCoinBalance = session.coinBalance;
+  const pieceHintAffordable = liveCoinBalance >= pieceHintCost || pieceHintPurchased;
+  const moveHintAffordable = liveCoinBalance >= moveHintCost || moveHintPurchased;
+  const statusBanner = getCheckmateStatusBanner({
+    feedback: session.feedback,
+    currentHintTier: session.currentHintTier,
+    hintData: session.hintData,
+  });
+  const arrowMove =
+    moveHintPurchased && session.hintData?.from && session.hintData?.destination
+      ? { from: session.hintData.from, to: session.hintData.destination }
+      : null;
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <GameHeader
-        title="CheckMate"
         lives={session.lives}
         startTime={session.startTime}
         running={session.running}
@@ -124,48 +141,48 @@ function CheckmateScreen() {
 
       <div className="px-3 pt-4 pb-8 space-y-3.5">
         <DrawLockBanner />
+        {statusBanner && <StatusBanner variant={statusBanner.variant} title={statusBanner.title} body={statusBanner.body} />}
+        <ContextCard title={context.title} body={context.body} />
 
-        <div className="rounded-2xl bg-surface-1 border border-border shadow-card p-3 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-[0.2em]">
-              <Swords className="h-4 w-4 text-primary" />
-              Tactical puzzle
-            </div>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{puzzle?.theme ?? "Find the best move"}</span>
-          </div>
+        {puzzle?.fen && (
+          <ChessBoard
+            fen={puzzle.fen}
+            selectedSquare={selectedSquare}
+            onSquareClick={handleSquareClick}
+            lastMove={lastMove}
+            hintFrom={session.hintData?.from ?? null}
+            hintTo={session.hintData?.destination ?? null}
+            disabled={session.loading || session.gameOver}
+            legalMoves={legalMoves}
+            committedMove={committedMove}
+            feedback={session.feedback}
+            arrowMove={arrowMove}
+          />
+        )}
 
-          {puzzle?.fen && (
-            <ChessBoard
-              fen={puzzle.fen}
-              selectedSquare={selectedSquare}
-              onSquareClick={handleSquareClick}
-              lastMove={lastMove}
-              hintFrom={session.hintData?.from ?? null}
-              hintTo={session.hintData?.destination ?? null}
-              disabled={session.loading || session.gameOver}
-              legalMoves={legalMoves}
-              committedMove={committedMove}
-              feedback={session.feedback}
-            />
-          )}
-
-          <p className="text-xs text-muted-foreground text-center">Tap a piece, then tap its destination.</p>
+        <div className="flex items-center justify-end gap-1.5 px-1">
+          <Coins className="h-3.5 w-3.5 text-coin" />
+          <span className="text-xs font-semibold text-coin tabular-nums">Coins: {liveCoinBalance}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <HintCard
             label="Piece"
-            cost="25 coins"
-            active={!!session.hintData?.piece}
+            cost={pieceHintCost}
+            active={pieceHintPurchased}
+            disabled={!pieceHintAffordable || session.loading || session.gameOver}
             onClick={() => session.requestHint(1)}
-            text={session.hintData?.piece ? `Piece: ${session.hintData.piece}` : "Reveal the critical piece"}
+            icon={<Lightbulb className="h-4 w-4" />}
+            text={pieceHintPurchased ? "Bought" : "Reveal the critical piece"}
           />
           <HintCard
             label="Move"
-            cost="75 coins"
-            active={!!session.hintData?.destination}
+            cost={moveHintCost}
+            active={moveHintPurchased}
+            disabled={!moveHintAffordable || session.loading || session.gameOver}
             onClick={() => session.requestHint(2)}
-            text={session.hintData?.destination ? `Target square: ${session.hintData.destination}` : "Reveal the target square"}
+            icon={<Lightbulb className="h-4 w-4" />}
+            text={moveHintPurchased ? "Bought" : "Reveal the target square"}
           />
         </div>
 
@@ -186,6 +203,109 @@ function CheckmateScreen() {
         />
       </div>
     </main>
+  );
+}
+
+function getCheckmateStatusBanner({
+  feedback,
+  currentHintTier,
+  hintData,
+}: {
+  feedback: "correct" | "incorrect" | null;
+  currentHintTier: number;
+  hintData: Record<string, string> | null;
+}) {
+  if (feedback) {
+    return feedback === "correct"
+      ? { variant: "success" as const, title: "Correct move!", body: "Nice read. Keep the streak going." }
+      : { variant: "error" as const, title: "Wrong move", body: "Take another look at the board and try again." };
+  }
+
+  if (currentHintTier >= 1 && hintData?.piece) {
+    return {
+      variant: "hint" as const,
+      title: currentHintTier >= 2 ? "MOVE HINT" : "PIECE HINT",
+      body: `Move the highlighted ${hintData.piece}`,
+    };
+  }
+
+  return null;
+}
+
+function getCheckmateContext(theme: string | null, fen: string | null) {
+  const sideToMove = fen?.split(" ")[1] === "b" ? "Black to move" : "White to move";
+  const body =
+    (theme && GOAL_BY_THEME[theme]) ||
+    "A tactical puzzle is waiting. Find the best move to earn your ticket.";
+  return { title: sideToMove, body };
+}
+
+function StatusBanner({
+  variant,
+  title,
+  body,
+}: {
+  variant: "hint" | "success" | "error";
+  title: string;
+  body: string;
+}) {
+  const tone =
+    variant === "success"
+      ? "border-emerald-500/25 bg-[#0a1714] text-emerald-300"
+      : variant === "error"
+        ? "border-live/35 bg-[#1a0f12] text-live"
+        : "border-[#4c4120] bg-[#16130c] text-[#e5b84d]";
+  const icon =
+    variant === "success" ? (
+      <Check className="h-4 w-4" />
+    ) : variant === "error" ? (
+      <X className="h-4 w-4" />
+    ) : (
+      <Lightbulb className="h-4 w-4" />
+    );
+
+  return (
+    <div className={`rounded-2xl border p-3.5 shadow-card ${tone}`}>
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 h-9 w-9 rounded-xl border border-current/15 bg-black/15 flex items-center justify-center shrink-0">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em]">{title}</p>
+          <p className="mt-1 text-[13px] leading-snug font-semibold text-foreground/90">{body}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const GOAL_BY_THEME: Record<string, string> = {
+  Fork: "Your piece can attack two opponent pieces at once. Find the fork.",
+  "Checkmate in 1": "You have an immediate checkmate. Can you find it?",
+  Pin: "You can pin a piece against a more valuable one behind it. Find the pin.",
+  "Attacking f2 or f7": "The f7 square is weak and under-defended. How do you exploit it?",
+  Clearance: "Find the move that develops your piece to its most active square.",
+  "Exposed king": "The king is exposed in the centre. Find the move that exploits it.",
+  "Advanced pawn": "A strong pawn push controls the centre and gains space. Find it.",
+  "Hanging piece": "An opponent piece is undefended or can be attacked with tempo. Find it.",
+  "Trapped piece": "An opponent piece has no safe escape. Find the move that proves it.",
+  "Capture the defender": "Capturing this piece removes a key defender. Find the winning exchange.",
+  "Discovered attack": "Moving one piece reveals a hidden attack from another. Find it.",
+  Skewer: "A high value piece is under attack - moving it will expose a less valuable piece behind it. Find the skewer.",
+  "Back rank mate": "Your opponent's king is trapped on the back rank with no escape. Find the checkmate.",
+};
+
+function ContextCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl bg-surface-1 border border-border shadow-card p-4 flex items-center gap-3">
+      <div className="h-12 w-12 rounded-xl bg-amber-200/60 border border-amber-200/60 flex items-center justify-center shrink-0">
+        <Swords className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
+      </div>
+    </div>
   );
 }
 
@@ -233,7 +353,6 @@ function WisdomDropScreen() {
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
       <GameHeader
-        title="WisdomDrop"
         lives={session.lives}
         startTime={session.startTime}
         running={session.running}
@@ -290,23 +409,29 @@ function WisdomDropScreen() {
         <div className="grid grid-cols-3 gap-2">
           <HintCard
             label="Eliminate 2"
-            cost="25 coins"
+            cost={25}
             active={!!session.hintData?.eliminate}
             onClick={() => session.requestHint(1)}
+            disabled={!session.hintData?.eliminate && session.coinBalance < 25}
+            icon={<Lightbulb className="h-4 w-4" />}
             text={session.hintData?.eliminate ? "Two wrong answers removed" : "Remove two wrong choices"}
           />
           <HintCard
             label="First letter"
-            cost="75 coins"
+            cost={75}
             active={!!session.hintData?.startsWidth}
             onClick={() => session.requestHint(2)}
+            disabled={!session.hintData?.startsWidth && session.coinBalance < 75}
+            icon={<Lightbulb className="h-4 w-4" />}
             text={session.hintData?.startsWidth ? `Starts with ${session.hintData.startsWidth}` : "Reveal the first letter"}
           />
           <HintCard
             label="Reveal"
-            cost="150 coins"
+            cost={150}
             active={!!session.hintData?.answer}
             onClick={() => session.requestHint(3)}
+            disabled={!session.hintData?.answer && session.coinBalance < 150}
+            icon={<Lightbulb className="h-4 w-4" />}
             text={session.hintData?.answer ? `Answer: ${session.hintData.answer}` : "Reveal the answer"}
           />
         </div>
@@ -343,11 +468,14 @@ function GameIntro({
   coinBalance: number;
 }) {
   const isCheckmate = gameType === "checkmate";
-  const title = isCheckmate ? "CheckMate" : "WisdomDrop";
   const Icon = isCheckmate ? Swords : BookOpen;
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative overflow-hidden">
-      <PlayerTopBar backTo="/app" title={title} />
+      <div className="absolute left-4 top-4 z-20 h-10 w-10 rounded-xl bg-surface-1/70 backdrop-blur border border-border flex items-center justify-center hover:border-primary/40 transition-colors">
+        <Link href="/app" aria-label="Back">
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </Link>
+      </div>
       <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0" />
       <div className="relative z-10 px-6 pt-16 pb-10 flex flex-col items-center min-h-[100dvh]">
         <div className="relative mb-7">
@@ -357,7 +485,6 @@ function GameIntro({
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight text-gradient-emerald">{title}</h1>
         <p className="mt-3 text-sm italic text-muted-foreground text-center max-w-[280px] leading-relaxed">
           {isCheckmate ? "Outthink the board, claim the crown." : "Finish the proverb. Inherit the wisdom."}
         </p>
@@ -378,27 +505,29 @@ function GameIntro({
         </div>
 
         <div className="flex-1 flex items-center justify-center w-full py-4">
-          <div className="w-full max-w-[280px] rounded-xl bg-surface-1 border border-border p-3 space-y-2 mx-4">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Example</p>
+          <div className="w-full max-w-[280px] rounded-2xl bg-surface-1 border border-border p-4 space-y-3 mx-4 shadow-card">
             {isCheckmate ? (
-              <div className="grid grid-cols-4 gap-0 rounded-lg overflow-hidden">
+              <>
+                <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden ring-1 ring-border/70">
                 {Array.from({ length: 16 }).map((_, i) => {
                   const row = Math.floor(i / 4);
                   const col = i % 4;
                   const isQueen = row === 2 && col === 2;
                   const isKing = row === 0 && col === 0;
                   const isHint = row === 0 && col === 2;
-                  return (
-                    <div key={i} className={`relative aspect-square flex items-center justify-center ${isHint ? "checkmate-preview-hint" : (row + col) % 2 === 0 ? "checkmate-preview-light" : "checkmate-preview-dark"}`}>
-                      {isQueen && <span aria-hidden className="text-3xl leading-none text-foreground/70">♕</span>}
-                      {isKing && <span aria-hidden className="text-3xl leading-none text-muted-foreground">♚</span>}
-                    </div>
-                  );
-                })}
-              </div>
+                    return (
+                      <div key={i} className={`relative aspect-square flex items-center justify-center ${isHint ? "checkmate-preview-hint" : (row + col) % 2 === 0 ? "checkmate-preview-light" : "checkmate-preview-dark"}`}>
+                        {isQueen && <span aria-hidden className="text-3xl leading-none text-foreground/70">♕</span>}
+                        {isKing && <span aria-hidden className="text-3xl leading-none text-muted-foreground">♚</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground/70 text-center">Tap a piece · tap its destination</p>
+              </>
             ) : (
               <>
-                <p className="text-xs text-muted-foreground leading-relaxed">"A child who is not taught at home will teach the village a ____"</p>
+                <p className="text-xs text-muted-foreground leading-relaxed text-center">Tap a piece · tap its destination</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {["lesson", "song", "dance", "game"].map((opt) => (
                     <div key={opt} className="h-7 rounded-lg border border-border bg-surface-2 flex items-center justify-center text-[11px] text-muted-foreground">
@@ -411,7 +540,7 @@ function GameIntro({
           </div>
         </div>
 
-        <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/70 backdrop-blur border border-border p-4 shadow-card">
+        <div className="w-full max-w-[320px] rounded-2xl bg-surface-1/80 backdrop-blur border border-border p-4 shadow-card">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-coin/15 border border-coin/20 flex items-center justify-center shrink-0">
               <Coins className="h-5 w-5 text-coin" />
@@ -420,7 +549,7 @@ function GameIntro({
               <p className="text-sm font-semibold text-foreground">
                 Earn up to <span className="text-coin tabular-nums">5 tickets</span> per round
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">Plus XP, streak bonuses & weekly draws</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Plus XP, streak bonuses and weekly draws</p>
             </div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">Coins available: {coinBalance}</p>
@@ -446,24 +575,41 @@ function HintCard({
   cost,
   text,
   active,
+  disabled,
+  icon,
   onClick,
 }: {
   label: string;
-  cost: string;
+  cost: number;
   text: string;
   active: boolean;
+  disabled: boolean;
+  icon: ReactNode;
   onClick: () => void;
 }) {
+  const iconNode = active ? <Check className="h-4 w-4" /> : icon;
   return (
-    <button onClick={onClick} className={`rounded-2xl border p-3 text-left transition-all shadow-card ${active ? "bg-primary/10 border-primary/30" : "bg-surface-1 border-border hover:border-primary/30"}`}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-2xl border p-3 text-left transition-all shadow-card ${
+        active
+          ? "bg-[#0b241d] border-emerald-500/30 text-emerald-300"
+          : disabled
+            ? "bg-surface-1/35 border-border/40 text-muted-foreground/35 opacity-60 cursor-not-allowed"
+            : "bg-surface-1 border-border hover:border-primary/30"
+      }`}
+    >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">{label}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{cost}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.12em]">{label}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{active ? "Bought" : `${cost} coins`}</p>
         </div>
-        <Lightbulb className="h-4 w-4 text-coin" />
+        <span className={active ? "text-emerald-300" : disabled ? "text-muted-foreground/40" : "text-coin"}>
+          {iconNode}
+        </span>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{text}</p>
+      <p className={`mt-2 text-xs leading-relaxed ${active ? "text-foreground/90" : "text-muted-foreground"}`}>{text}</p>
     </button>
   );
 }
@@ -472,9 +618,6 @@ function ResultScreen({ gameType, result, onBack }: { gameType: GameType; result
   const title = gameType === "checkmate" ? "CheckMate complete" : "WisdomDrop complete";
   return (
     <main className="min-h-[100dvh] bg-background text-foreground flex items-center justify-center px-4 pt-16 pb-6">
-      <div className="fixed top-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2">
-        <PlayerTopBar backTo="/app" title="Results" />
-      </div>
       <div className="w-full max-w-sm rounded-2xl bg-surface-1 border border-border p-5 shadow-card text-center space-y-4">
         <div className="h-14 w-14 rounded-2xl bg-gold/20 flex items-center justify-center mx-auto">
           <Trophy className="h-7 w-7 text-gold" />

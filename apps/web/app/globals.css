@@ -157,7 +157,7 @@ a {
   border: 1px solid var(--border);
   background: var(--surface-2);
   padding: 0 0.75rem;
-  font-size: 0.875rem;
+  font-size: 16px;
   color: var(--foreground);
   outline: none;
 }

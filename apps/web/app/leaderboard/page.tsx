@@ -67,6 +67,12 @@ export default function LeaderboardPage() {
   }, [router, session]);
 
   useEffect(() => {
+    if (weekly?.players?.length === 0 && daily?.players?.length === 0) {
+      setTab("today");
+    }
+  }, [weekly, daily]);
+
+  useEffect(() => {
     const id = setInterval(() => forceTick((value) => value + 1), 30_000);
     return () => clearInterval(id);
   }, []);

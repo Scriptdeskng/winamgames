@@ -86,7 +86,7 @@ export default function OnboardingPage() {
                 placeholder="e.g. NaijaChamp"
                 autoFocus
                 maxLength={16}
-                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full h-12 px-4 rounded-xl bg-input border border-border text-foreground text-[16px] placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
               {error ? (
                 <p className="text-xs text-destructive">{error}</p>
@@ -108,4 +108,3 @@ export default function OnboardingPage() {
     </main>
   );
 }
-
