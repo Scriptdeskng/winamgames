@@ -78,7 +78,9 @@ export default function LeaderboardPage() {
   const totalPlayers = current?.totalPlayers ?? 0;
   const currentPlayer = current?.currentPlayer ?? null;
   const currentScore = currentPlayer?.puzzles ?? 0;
-  const currentRank = currentPlayer?.rank ?? (session ? rows.findIndex((row) => row.id === session.playerId) + 1 : null);
+  const sessionPlayerIndex = session ? rows.findIndex((row) => row.id === session.playerId) : -1;
+  const inferredRank = sessionPlayerIndex >= 0 ? sessionPlayerIndex + 1 : null;
+  const currentRank = typeof currentPlayer?.rank === "number" && currentPlayer.rank > 0 ? currentPlayer.rank : inferredRank;
   const countdownTarget = tab === "week" && current?.drawExecutesAt ? new Date(current.drawExecutesAt).getTime() : null;
   const countdown = countdownTarget ? formatCountdown(countdownTarget) : null;
   const countdownParts = countdownTarget ? getCountdownParts(countdownTarget - Date.now()) : { days: 0, hours: 0, minutes: 0 };
@@ -228,7 +230,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {currentRank && (
+        {currentRank !== null && (
           <div className="fixed bottom-3 left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 px-4">
             <div className="rounded-2xl bg-gradient-to-br from-primary/20 via-surface-1/95 to-surface-1/95 backdrop-blur-md border border-primary/40 shadow-glow p-4">
               <div className="flex items-baseline justify-between">
