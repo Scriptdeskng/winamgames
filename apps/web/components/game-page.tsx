@@ -485,7 +485,7 @@ function GameIntro({
         <BackButton fallbackHref="/app" />
       </div>
       <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0" />
-      <div className="relative z-10 px-6 pt-16 pb-10 flex flex-col items-center min-h-[100dvh]">
+      <div className="relative z-10 px-6 pt-24 pb-10 flex flex-col items-center min-h-[100dvh]">
         <div className="relative mb-7">
           <div className="absolute inset-0 rounded-full bg-emerald/30 blur-2xl" aria-hidden />
           <div className="relative h-24 w-24 rounded-full border border-emerald/40 bg-gradient-to-br from-surface-2 to-surface-1 shadow-glow flex items-center justify-center">
@@ -493,6 +493,9 @@ function GameIntro({
           </div>
         </div>
 
+        <h1 className="text-3xl font-bold tracking-tight text-gradient-emerald">
+          {isCheckmate ? "CheckMate" : "WisdomDrop"}
+        </h1>
         <p className="mt-3 text-sm italic text-muted-foreground text-center max-w-[280px] leading-relaxed">
           {isCheckmate ? "Outthink the board, claim the crown." : "Finish the proverb. Inherit the wisdom."}
         </p>

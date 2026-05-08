@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  ArrowRight,
   Award,
   Check,
   ChevronDown,
@@ -424,7 +423,7 @@ function WeeklyEntriesCard({
             {weekTotal} <span className="text-lg text-muted-foreground font-medium">/ {weekCap} tickets</span>
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2 px-2.5 py-1.5 rounded-lg">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2 px-2.5 py-1.5 rounded-full">
           <Clock className="h-3.5 w-3.5" />
           <span className="tabular-nums">Draw in {countdown}</span>
         </div>
@@ -434,13 +433,10 @@ function WeeklyEntriesCard({
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
       </div>
 
-      <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <p>Draw every Sunday at 20:00 WAT</p>
-        <Link href="/entries" className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline">
-          View my tickets
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
+      <Link href="/entries" className="flex items-center justify-between gap-3 rounded-xl bg-surface-2/35 px-4 py-3 text-xs text-muted-foreground hover:bg-surface-2/60 transition-colors">
+        <span className="truncate">View tickets • {weekTotal}</span>
+        <ChevronDown className="h-4 w-4 shrink-0" />
+      </Link>
     </div>
   );
 }
@@ -549,61 +545,59 @@ function VerificationSection({
 }) {
   const identitySubmitted = !!kyc?.submitted_at;
   const bankSubmitted = !!kyc?.bank_details_submitted_at;
+  const verified = !!kyc?.verified;
 
   return (
     <div className="space-y-2">
       <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Verification</h3>
-      <div className="rounded-2xl border border-border bg-surface-1 p-4 shadow-card space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <ShieldCheck className="h-5 w-5 text-primary" />
+      <details className="group rounded-2xl border border-border bg-surface-1 p-4 shadow-card">
+        <summary className="flex cursor-pointer list-none items-start gap-3 [&::-webkit-details-marker]:hidden">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold">{fullName}</p>
+              {verified && (
+                <span className="shrink-0 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
+                  Verified
+                </span>
+              )}
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold truncate">{nickname}</p>
-              <p className="text-xs text-muted-foreground">***{msisdnLast4}</p>
-            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">{verified ? "✓ Verified" : identitySubmitted ? "In review" : "Not started"}</p>
+            {bankSubmitted && (
+              <p className="mt-1 truncate text-xs text-muted-foreground">
+                {kyc.bank_name ?? "—"} ••••{last4}
+              </p>
+            )}
           </div>
-          <div
-            className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-              kyc?.verified ? "border border-success/30 bg-success/10 text-success" : "border border-primary/30 bg-primary/10 text-primary"
-            }`}
-          >
-            {kyc?.verified && <Check className="h-3 w-3" />}
-            {kyc?.verified ? "Verified" : identitySubmitted ? "In review" : "Not started"}
-          </div>
-        </div>
-        <div className="flex justify-center -mt-1">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background ${(RANK_CONFIG[rankTier] ?? RANK_CONFIG.starter).color}`}>
-            {(() => {
-              const RankIcon = rankIconForTier(rankTier);
-              return <RankIcon className="h-4 w-4" />;
-            })()}
-          </div>
-        </div>
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
 
-        <div className="grid gap-3 rounded-2xl bg-surface-2/40 p-3">
-          <VerificationRow label="Bio" value={nickname} />
-          <VerificationRow label="Phone" value={`***${msisdnLast4}`} />
-          <VerificationRow label="Full name" value={fullName} />
-          <VerificationRow label="ID type" value={idType} />
-          <VerificationRow label="Date of birth" value={dob} />
-          <VerificationRow
-            label="Bank"
-            value={bankSubmitted ? `${kyc.bank_name ?? "—"} ${last4 ? `••••${last4}` : ""}`.trim() : "Add your bank details"}
-          />
-          <VerificationRow label="Status" value={hasBank ? "Bank details saved" : "Identity only"} />
-        </div>
+        <div className="mt-4 border-t border-border pt-4 text-sm">
+          <div className="grid gap-3">
+            <VerificationRow label="Bio" value={nickname} />
+            <VerificationRow label="Phone" value={`***${msisdnLast4}`} />
+            <VerificationRow label="Full name" value={fullName} />
+            <VerificationRow label="ID type" value={idType} />
+            <VerificationRow label="Date of birth" value={dob} />
+            <VerificationRow
+              label="Bank"
+              value={bankSubmitted ? `${kyc.bank_name ?? "—"} ${last4 ? `••••${last4}` : ""}`.trim() : "Add your bank details"}
+            />
+            <VerificationRow label="Status" value={hasBank ? "Bank details saved" : "Identity only"} />
+          </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/kyc?step=1" className="inline-flex flex-1 items-center justify-center rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 transition-colors">
-            Update other details
-          </Link>
-          <Link href="/kyc?step=2" className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/90 transition-colors">
-            {hasBank ? "Update bank details" : "Add bank details"}
-          </Link>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Link href="/kyc?step=1" className="inline-flex flex-1 items-center justify-center rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground hover:border-primary/30 transition-colors">
+              Update other details
+            </Link>
+            <Link href="/kyc?step=2" className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/90 transition-colors">
+              {hasBank ? "Update bank details" : "Add bank details"}
+            </Link>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 }
@@ -701,7 +695,7 @@ function AppearanceSection({ theme, onToggle }: { theme: "dark" | "light"; onTog
           </div>
           <button
             onClick={onToggle}
-            className="relative inline-flex h-7 w-12 items-center rounded-full border border-border bg-surface-2 px-0.5 transition-colors"
+            className={`relative inline-flex h-7 w-12 items-center rounded-full border border-border px-0.5 transition-colors ${theme === "dark" ? "bg-primary/20" : "bg-surface-2"}`}
             aria-label="Toggle dark mode"
           >
             <span className={`h-6 w-6 rounded-full bg-primary transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`} />
