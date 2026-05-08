@@ -22,6 +22,7 @@ import { getSession } from "@/lib/session";
 import { getActiveBanners, getActiveMissions, getDashboard, getSubscriptionStatus, getWinnerStatus } from "@/lib/api";
 import { PlayerTopBar } from "@/components/player-top-bar";
 import type { WinamSession } from "@/lib/session";
+import { useReducer } from "react";
 
 type DashboardState = {
   player?: any;
@@ -165,7 +166,7 @@ export default function AppPage() {
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
         <PlayerTopBar />
 
-        <div className="px-4 pb-6 space-y-5">
+        <div className="px-4 pb-6 space-y-4">
           <DrawHeroCard
             drawWeekId={data.dashboard?.drawWeek?.id}
             drawWeekStatus={data.dashboard?.drawWeek?.status}
@@ -198,40 +199,7 @@ export default function AppPage() {
                 <h3 className="text-sm font-bold">WisdomDrop</h3>
                 <p className="text-xs text-muted-foreground mt-1">African proverbs</p>
               </Link>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Link href="/entries" className="flex items-center justify-between rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-              <div>
-                <p className="text-sm font-semibold">My tickets</p>
-                <p className="text-xs text-muted-foreground mt-1">See your weekly entries</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-            <Link href="/winners" className="flex items-center justify-between rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-              <div>
-                <p className="text-sm font-semibold">Recent winners</p>
-                <p className="text-xs text-muted-foreground mt-1">Past weekly draw results</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-            <Link href="/leaderboard" className="flex items-center justify-between rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-              <div>
-                <p className="text-sm font-semibold">Leaderboard</p>
-                <p className="text-xs text-muted-foreground mt-1">Weekly and daily solvers</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-            {winnerStatus?.won && !winnerStatus?.kyc?.paymentProcessed && (
-              <Link href="/kyc" className="flex items-center justify-between rounded-2xl bg-surface-1 border border-gold/30 p-4 shadow-card">
-                <div>
-                  <p className="text-sm font-semibold">Claim prize</p>
-                  <p className="text-xs text-muted-foreground mt-1">Complete verification and payout details</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            )}
           </div>
         </div>
       </div>
@@ -321,50 +289,113 @@ function DrawHeroCard({
   weekTotal: number;
   weekCap: number;
 }) {
+  const targetMs = drawExecutesAt ? new Date(drawExecutesAt).getTime() : getNextSundayWAT().getTime();
+  const [, force] = useReducer((x: number) => x + 1, 0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => force(), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const { days, hours, minutes, seconds } = getCountdownParts(targetMs);
+
   return (
     <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-      <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Weekly draw</p>
-          <p className="text-sm font-semibold">{drawWeekStatus ? drawWeekStatus.toUpperCase() : "OPEN"}</p>
+          <p className="text-sm font-semibold text-foreground">{drawWeekStatus ? drawWeekStatus.toUpperCase() : "OPEN"}</p>
         </div>
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Current tickets</p>
           <p className="text-lg font-bold tabular-nums text-primary">{weekTotal}/{weekCap}</p>
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+
+      <div className="mt-3 flex items-end gap-2 text-foreground">
+        <CountdownBlock value={days} label="day" />
+        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
+        <CountdownBlock value={hours} label="hr" />
+        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
+        <CountdownBlock value={minutes} label="min" />
+        <span className="pb-2 text-3xl font-bold text-muted-foreground/60">:</span>
+        <CountdownBlock value={seconds} label="sec" />
+      </div>
+
+      <div className="mt-3 h-1.5 rounded-full bg-surface-2 overflow-hidden">
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (weekTotal / weekCap) * 100)}%` }} />
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-        <span className="truncate">{drawWeekId ? `Draw week ${drawWeekId.slice(0, 8)}` : "Draw week not loaded"}</span>
-        <span>{drawExecutesAt ? new Date(drawExecutesAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Sunday"}</span>
+
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span className="truncate">{drawWeekId ? `Draw week ${drawWeekId.slice(0, 8)}` : "Draw every Sunday at 20:00 WAT"}</span>
+        <Link href="/entries" className="flex items-center gap-1 font-medium text-primary whitespace-nowrap">
+          View my tickets
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </div>
   );
+}
+
+function CountdownBlock({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-3xl font-bold tabular-nums leading-none">{String(value).padStart(2, "0")}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground text-center">{label}</p>
+    </div>
+  );
+}
+
+function getNextSundayWAT(): Date {
+  const now = new Date();
+  const target = new Date(now);
+  const dayUTC = now.getUTCDay();
+  let daysUntil = (7 - dayUTC) % 7;
+  target.setUTCHours(19, 0, 0, 0);
+  if (daysUntil === 0 && now.getTime() >= target.getTime()) {
+    daysUntil = 7;
+  }
+  target.setUTCDate(now.getUTCDate() + daysUntil);
+  target.setUTCHours(19, 0, 0, 0);
+  return target;
+}
+
+function getCountdownParts(targetMs: number) {
+  const diff = Math.max(0, targetMs - Date.now());
+  const total = Math.floor(diff / 1000);
+  return {
+    days: Math.floor(total / 86400),
+    hours: Math.floor((total % 86400) / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+    seconds: total % 60,
+  };
 }
 
 function StreakRankStrip({ streak, tier }: { streak: number; tier: string }) {
   const displayTier = String(tier).charAt(0).toUpperCase() + String(tier).slice(1);
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-        <div className="flex items-center gap-2 mb-2">
-          <Flame className="h-4 w-4 text-streak" />
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Streak</span>
+    <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3 shadow-card">
+      <div className="grid grid-cols-2 gap-3 items-center">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="h-8 w-8 rounded-lg bg-streak/12 flex items-center justify-center shrink-0">
+            <Flame className="h-4 w-4 text-streak" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Streak</p>
+            <p className="text-sm font-bold tabular-nums">{streak}d</p>
+          </div>
         </div>
-        <p className="text-2xl font-bold tabular-nums">{streak}d</p>
-        <p className="text-xs text-muted-foreground mt-1">Keep the chain alive</p>
-      </div>
 
-      <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-4 w-4 text-emerald" />
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">Rank</span>
+        <div className="flex items-center justify-end gap-2.5 min-w-0">
+          <div className="min-w-0 text-right">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Rank</p>
+            <p className="text-sm font-bold tabular-nums">{displayTier}</p>
+          </div>
+          <div className="h-8 w-8 rounded-lg bg-emerald/12 flex items-center justify-center shrink-0">
+            <Sparkles className="h-4 w-4 text-emerald" />
+          </div>
         </div>
-        <p className="text-2xl font-bold tabular-nums">{displayTier}</p>
-        <p className="text-xs text-muted-foreground mt-1">Current tier</p>
       </div>
     </div>
   );

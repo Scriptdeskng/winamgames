@@ -23,10 +23,12 @@ import { Chess, type Square } from "chess.js";
 import { getDashboard } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { useGameSession } from "@/lib/use-game-session";
+import { BackButton } from "./back-button";
 import { AnswerFooter } from "./answer-footer";
 import { ChessBoard } from "./chess-board";
 import { DrawLockBanner } from "./draw-lock-banner";
 import { GameHeader } from "./game-header";
+import { useSmartBack } from "@/lib/nav-history";
 
 type GameType = "checkmate" | "wisdomdrop";
 
@@ -36,6 +38,7 @@ export function GamePage({ gameType }: { gameType: GameType }) {
 
 function CheckmateScreen() {
   const router = useRouter();
+  const goBack = useSmartBack("/app");
   const [ready, setReady] = useState(false);
   const [playerId, setPlayerId] = useState("");
   const [coinBalance, setCoinBalance] = useState(0);
@@ -79,7 +82,7 @@ function CheckmateScreen() {
   }
 
   if (session.result && session.gameOver) {
-    return <ResultScreen gameType="checkmate" result={session.result} onBack={() => router.push("/app")} />;
+    return <ResultScreen gameType="checkmate" result={session.result} onBack={goBack} />;
   }
 
   if (intro) {
@@ -136,7 +139,10 @@ function CheckmateScreen() {
         running={session.running}
         puzzleIndex={currentIndex}
         totalPuzzles={total}
-        onExit={session.exitEarly}
+        onExit={() => {
+          session.exitEarly();
+          goBack();
+        }}
       />
 
       <div className="px-3 pt-4 pb-8 space-y-3.5">
@@ -311,6 +317,7 @@ function ContextCard({ title, body }: { title: string; body: string }) {
 
 function WisdomDropScreen() {
   const router = useRouter();
+  const goBack = useSmartBack("/app");
   const [ready, setReady] = useState(false);
   const [playerId, setPlayerId] = useState("");
   const [coinBalance, setCoinBalance] = useState(0);
@@ -334,7 +341,7 @@ function WisdomDropScreen() {
   if (!ready) return <LoadingScreen />;
 
   if (session.result && session.gameOver) {
-    return <ResultScreen gameType="wisdomdrop" result={session.result} onBack={() => router.push("/app")} />;
+    return <ResultScreen gameType="wisdomdrop" result={session.result} onBack={goBack} />;
   }
 
   if (intro) {
@@ -358,7 +365,10 @@ function WisdomDropScreen() {
         running={session.running}
         puzzleIndex={currentIndex}
         totalPuzzles={total}
-        onExit={session.exitEarly}
+        onExit={() => {
+          session.exitEarly();
+          goBack();
+        }}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6 space-y-4">
@@ -472,9 +482,7 @@ function GameIntro({
   return (
     <main className="mx-auto min-h-[100dvh] max-w-[430px] bg-background relative overflow-hidden">
       <div className="absolute left-4 top-4 z-20 h-10 w-10 rounded-xl bg-surface-1/70 backdrop-blur border border-border flex items-center justify-center hover:border-primary/40 transition-colors">
-        <Link href="/app" aria-label="Back">
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </Link>
+        <BackButton fallbackHref="/app" />
       </div>
       <div aria-hidden className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-[420px] w-[420px] rounded-full bg-emerald/10 blur-3xl z-0" />
       <div className="relative z-10 px-6 pt-16 pb-10 flex flex-col items-center min-h-[100dvh]">
@@ -505,10 +513,10 @@ function GameIntro({
         </div>
 
         <div className="flex-1 flex items-center justify-center w-full py-4">
-          <div className="w-full max-w-[280px] rounded-2xl bg-surface-1 border border-border p-4 space-y-3 mx-4 shadow-card">
+          <div className="w-full max-w-[280px] space-y-3 mx-4">
             {isCheckmate ? (
               <>
-                <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden ring-1 ring-border/70">
+                <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden ring-1 ring-border/60 shadow-[0_10px_30px_rgba(0,0,0,0.28)]">
                 {Array.from({ length: 16 }).map((_, i) => {
                   const row = Math.floor(i / 4);
                   const col = i % 4;

@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { clearSession, getSession, updateSessionNickname } from "@/lib/session";
 import { getProfile, setNickname } from "@/lib/api";
+import { BackButton } from "@/components/back-button";
+import { useSmartBack } from "@/lib/nav-history";
 import type { WinamSession } from "@/lib/session";
 
 type RankTier = "starter" | "recruit" | "sergeant" | "veteran" | "champion" | "icon" | "legend" | "immortal";
@@ -97,6 +99,7 @@ function rankIconForTier(tier: RankTier) {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const goBack = useSmartBack("/app");
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<WinamSession | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -159,15 +162,6 @@ export default function ProfilePage() {
   const isMax = !nextConfig;
   const progress = isMax ? 100 : Math.min(100, Math.max(0, ((xp - rankConfig.minXp) / (nextConfig!.minXp - rankConfig.minXp)) * 100));
 
-  const countdownTarget = drawExecutesAt ? new Date(drawExecutesAt).getTime() : getNextSundayWAT().getTime();
-  const [, force] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => force((x) => x + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const countdown = formatCountdown(countdownTarget);
-  const bonus = streakBonus(player.currentStreak ?? 0);
   const hasBank = !!kyc?.bank_details_submitted_at;
   const last4 = kyc?.account_number ? String(kyc.account_number).slice(-4) : "";
   const fullName = [kyc?.first_name, kyc?.last_name].filter(Boolean).join(" ").trim() || "Verified player";
@@ -177,7 +171,7 @@ export default function ProfilePage() {
   if (!ready || !session) return null;
 
   if (loadingData && !profile) {
-    return <ProfileSkeleton onBack={() => router.push("/app")} />;
+    return <ProfileSkeleton onBack={goBack} />;
   }
 
   const safeProfile = profile ?? {};
@@ -185,9 +179,7 @@ export default function ProfilePage() {
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <Link href="/app" className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+          <BackButton fallbackHref="/app" />
           <span className="flex-1 px-2 text-center text-base font-bold text-foreground truncate">Profile</span>
           <div className="h-10 w-10" aria-hidden />
         </div>
@@ -211,7 +203,8 @@ export default function ProfilePage() {
             }}
           />
 
-          <WeeklyEntriesCard weekTotal={weekTotal} weekCap={weekCap} drawExecutesAt={drawExecutesAt} bonus={bonus} />
+          <WeeklyEntriesCard weekTotal={weekTotal} weekCap={weekCap} drawExecutesAt={drawExecutesAt} />
+          <StreakBonusCard streak={player.currentStreak ?? 0} />
 
           <div className="grid grid-cols-2 gap-3">
             <StatTile
@@ -268,9 +261,7 @@ function ProfileSkeleton({ onBack }: { onBack: () => void }) {
     <main className="min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto min-h-[100dvh] max-w-[430px] bg-background">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <button onClick={onBack} className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors" aria-label="Back">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+          <BackButton fallbackHref="/app" />
           <span className="flex-1 px-2 text-center text-base font-bold text-foreground truncate">Profile</span>
           <div className="h-10 w-10" aria-hidden />
         </div>
@@ -415,42 +406,27 @@ function WeeklyEntriesCard({
   weekTotal,
   weekCap,
   drawExecutesAt,
-  bonus,
 }: {
   weekTotal: number;
   weekCap: number;
   drawExecutesAt?: string;
-  bonus: number;
 }) {
   const targetMs = drawExecutesAt ? new Date(drawExecutesAt).getTime() : getNextSundayWAT().getTime();
   const countdown = formatCountdown(targetMs);
-  const countdownParts = getCountdownParts(targetMs);
   const progress = Math.min(100, (weekTotal / weekCap) * 100);
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-primary/12 via-surface-1 to-surface-1 border border-primary/20 p-4 shadow-card space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Weekly draw</p>
-          <p className="mt-1 text-3xl font-black tabular-nums text-foreground leading-none">
-            {String(countdownParts.days).padStart(2, "0")}<span className="px-1 text-muted-foreground">:</span>
-            {String(countdownParts.hours).padStart(2, "0")}<span className="px-1 text-muted-foreground">:</span>
-            {String(countdownParts.minutes).padStart(2, "0")}<span className="px-1 text-muted-foreground">:</span>
-            {String(countdownParts.seconds).padStart(2, "0")}
+    <div className="rounded-2xl bg-gradient-to-br from-primary/10 via-surface-1 to-surface-1 border border-primary/20 p-5 shadow-card space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">This week</p>
+          <p className="text-3xl font-bold tabular-nums mt-1">
+            {weekTotal} <span className="text-lg text-muted-foreground font-medium">/ {weekCap} tickets</span>
           </p>
-          <div className="mt-1 flex items-center gap-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
-            <span>day</span>
-            <span>hr</span>
-            <span>min</span>
-            <span>sec</span>
-          </div>
         </div>
-        <div className="shrink-0 text-right">
-          <p className="text-xs text-muted-foreground">This week</p>
-          <p className="text-foreground">
-            <span className="text-primary text-2xl font-black tabular-nums">{weekTotal}</span>
-            <span className="text-sm text-muted-foreground font-medium"> / {weekCap} tickets</span>
-          </p>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-2 px-2.5 py-1.5 rounded-lg">
+          <Clock className="h-3.5 w-3.5" />
+          <span className="tabular-nums">Draw in {countdown}</span>
         </div>
       </div>
 
@@ -459,27 +435,42 @@ function WeeklyEntriesCard({
       </div>
 
       <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-        <div className="space-y-0.5">
-          <p>Draw every Sunday at 20:00 WAT</p>
-          <p className="tabular-nums">{countdown}</p>
-        </div>
+        <p>Draw every Sunday at 20:00 WAT</p>
         <Link href="/entries" className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline">
           View my tickets
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
+    </div>
+  );
+}
 
-      <div className="rounded-xl border border-border bg-surface-1/70 p-3 shadow-sm">
-        <div className="flex items-start gap-3">
+function StreakBonusCard({ streak }: { streak: number }) {
+  const bonus = streakBonus(streak);
+  const nextMilestone = streak < 3 ? 3 : streak < 7 ? 7 : streak < 14 ? 14 : null;
+  const title = nextMilestone ? `${nextMilestone}-day streak bonus` : "Streak bonus";
+  const rewardLabel =
+    bonus > 0
+      ? `${bonus} extra ticket${bonus > 1 ? "s" : ""} per round`
+      : nextMilestone === 3
+        ? "1 extra ticket per round"
+        : nextMilestone === 7
+          ? "2 extra tickets per round"
+          : nextMilestone === 14
+            ? "3 extra tickets per round"
+            : "Bonus tickets per round";
+
+  return (
+    <div className="rounded-2xl bg-surface-1 border border-border p-4 shadow-card">
+      <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-streak/10">
-            <Flame className="h-4.5 w-4.5 text-streak" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">7-day streak bonus</p>
-            <p className="text-xs text-muted-foreground">
-              Play 7 days in a row to earn {bonus > 0 ? `${bonus} extra ticket${bonus > 1 ? "s" : ""}` : "2 extra tickets"} per round
-            </p>
-          </div>
+          <Flame className="h-4.5 w-4.5 text-streak" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-xs text-muted-foreground">
+            Play {nextMilestone ?? 3} days in a row to earn {rewardLabel}
+          </p>
         </div>
       </div>
     </div>

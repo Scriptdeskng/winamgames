@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUp, Coins, Flame, Ticket, Trophy } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { PlayerTopBar } from "@/components/player-top-bar";
+import { useSmartBack } from "@/lib/nav-history";
 
 type StoredResult = {
   gameType: "checkmate" | "wisdomdrop";
@@ -35,6 +36,7 @@ function rankLabel(rank: string) {
 
 export default function ResultsPage() {
   const router = useRouter();
+  const goBack = useSmartBack("/app");
   const session = getSession();
   const [ready, setReady] = useState(false);
   const [result, setResult] = useState<StoredResult | null>(null);
@@ -71,9 +73,13 @@ export default function ResultsPage() {
             <Trophy className="h-10 w-10 text-primary mx-auto" />
             <h1 className="text-xl font-bold">No recent results</h1>
             <p className="text-sm text-muted-foreground">Finish a round to see your ticket breakdown here.</p>
-            <Link href="/app" className="mt-2 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-glow">
+            <button
+              type="button"
+              onClick={goBack}
+              className="mt-2 inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-glow"
+            >
               Back to dashboard
-            </Link>
+            </button>
           </div>
         </div>
       </main>
@@ -190,12 +196,13 @@ export default function ResultsPage() {
           >
             Play again
           </Link>
-          <Link
-            href="/app"
+          <button
+            type="button"
+            onClick={goBack}
             className="w-full h-10 text-muted-foreground font-semibold text-sm flex items-center justify-center hover:text-foreground transition-colors"
           >
             Back to Home
-          </Link>
+          </button>
         </div>
       </div>
     </main>

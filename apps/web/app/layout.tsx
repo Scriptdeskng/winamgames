@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { NavHistoryTracker } from "@/components/nav-history-tracker";
 import "./globals.css";
 
 const inter = Inter({
@@ -68,7 +69,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <NavHistoryTracker />
+        {children}
+      </body>
     </html>
   );
 }

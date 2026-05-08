@@ -7,6 +7,7 @@ import { ArrowLeft, Check, ChevronRight, Loader2, ShieldCheck, Trophy } from "lu
 import { getKycStatus, getMyWinnerStatus, submitKycBankDetails, submitKycIdentity } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { PlayerTopBar } from "@/components/player-top-bar";
+import { useSmartBack } from "@/lib/nav-history";
 
 const BANKS = [
   { name: "Access Bank", code: "044" },
@@ -67,6 +68,7 @@ export default function KycClient({
   initialStep: 1 | 2;
 }) {
   const router = useRouter();
+  const goBack = useSmartBack("/app");
   const session = getSession();
   const [loading, setLoading] = useState(true);
   const [kyc, setKyc] = useState<KycRecord>(null);
@@ -85,7 +87,7 @@ export default function KycClient({
       .then(([winner, kycRes]) => {
         if (cancelled) return;
         if (!winner?.won) {
-          router.replace("/app");
+          goBack();
           return;
         }
         setWinnerStatus(winner);
@@ -96,12 +98,12 @@ export default function KycClient({
         }
         setLoading(false);
       })
-      .catch(() => router.replace("/app"));
+      .catch(() => goBack());
 
     return () => {
       cancelled = true;
     };
-  }, [router, session]);
+  }, [goBack, router, session]);
 
   const identityLocked = !!kyc?.submitted_at;
   const bankSubmitted = !!kyc?.bank_details_submitted_at;
@@ -134,7 +136,7 @@ export default function KycClient({
               kyc={kyc}
               winnerStatus={winnerStatus}
               onUpdateBank={() => setStep(2)}
-              onDone={() => router.push("/app")}
+              onDone={goBack}
             />
           ) : currentStep === 1 ? (
             <IdentityStep
@@ -147,7 +149,7 @@ export default function KycClient({
               identityLocked={identityLocked}
               existing={kyc}
               onBack={() => setStep(1)}
-              onDone={() => router.push("/app")}
+              onDone={goBack}
             />
           )}
         </div>

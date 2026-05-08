@@ -29,9 +29,12 @@ export function MenuSheet() {
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <SheetHeader className="pb-2">
-            <SheetTitle className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+        <SheetContent
+          side="bottom"
+          className="rounded-t-[28px] border border-border/70 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        >
+          <SheetHeader className="pb-2 pt-2">
+            <SheetTitle className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-[0.22em]">
               Menu
             </SheetTitle>
           </SheetHeader>
@@ -46,7 +49,9 @@ export function MenuSheet() {
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
-                    active ? "bg-primary/10 text-primary" : "text-foreground hover:bg-surface-1",
+                    active
+                      ? "bg-primary/12 text-primary"
+                      : "text-foreground hover:bg-surface-1/80",
                   )}
                 >
                   <Icon className="h-5 w-5" />

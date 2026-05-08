@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { MenuSheet } from "@/components/menu-sheet";
 import { getSession } from "@/lib/session";
 
@@ -18,13 +18,7 @@ export function PlayerTopBar({ backTo, title }: PlayerTopBarProps) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
       {isSubPage ? (
-        <Link
-          href={backTo!}
-          className="h-10 w-10 rounded-xl bg-surface-1 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </Link>
+        <BackButton fallbackHref={backTo!} />
       ) : (
         <Link
           href="/profile"
