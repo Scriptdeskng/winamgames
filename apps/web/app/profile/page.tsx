@@ -514,7 +514,7 @@ function StatTile({
             <Info className="h-3.5 w-3.5" />
           </button>
           {showTip && (
-            <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 text-left text-[11px] leading-snug text-popover-foreground shadow-lg">
+            <div className="absolute right-0 bottom-full z-20 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 text-left text-[11px] leading-snug text-popover-foreground shadow-lg">
               {tooltip}
             </div>
           )}
