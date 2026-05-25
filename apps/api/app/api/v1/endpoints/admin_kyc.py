@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.domain.models import WinamKyc
-from app.services.admin_auth import verify_admin_session
 from app.services.kyc import verify_kyc
+from app.services.admin_auth import verify_admin_session
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
@@ -40,7 +41,13 @@ def _serialize_kyc(kyc: WinamKyc | None) -> dict[str, object] | None:
 
 
 @router.get("")
-def get_kyc_for_player(admin_id: str, player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+def get_kyc_for_player(admin_id: str, player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     if not verify_admin_session(db, admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
     kyc = db.execute(select(WinamKyc).where(WinamKyc.player_id == player_id)).scalar_one_or_none()
@@ -48,7 +55,13 @@ def get_kyc_for_player(admin_id: str, player_id: str, db: Session = Depends(get_
 
 
 @router.post("/verify")
-def verify_kyc_route(payload: VerifyKycPayload, db: Session = Depends(get_db)) -> dict[str, object]:
+def verify_kyc_route(payload: VerifyKycPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=payload.admin_id,
+    )
     if not verify_admin_session(db, payload.admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:

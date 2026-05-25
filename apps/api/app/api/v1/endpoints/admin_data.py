@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,13 +19,20 @@ from app.domain.models import (
     WinamSubscription,
     WinamWinner,
 )
-from app.services.admin_auth import verify_admin_session
 from app.services.draws import get_current_draw_week, wat_date
+from app.services.admin_auth import verify_admin_session
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
 
-def _assert_admin(db: Session, admin_id: str) -> None:
+def _assert_admin(request: Request, db: Session, admin_id: str) -> None:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     result = verify_admin_session(db, admin_id)
     if not result.get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -92,8 +99,8 @@ def _serialize_intelli_event(event: WinamIntelliEvent) -> dict[str, object]:
 
 
 @router.get("/dashboard/stats")
-def dashboard_stats(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def dashboard_stats(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     today = wat_date()
     current_week = get_current_draw_week(db)
 
@@ -192,12 +199,13 @@ def dashboard_stats(admin_id: str, db: Session = Depends(get_db)) -> dict[str, o
 @router.get("/players")
 def list_players(
     admin_id: str,
+    request: Request,
     search: str | None = None,
     page: int = 1,
     limit: int = 25,
     db: Session = Depends(get_db),
 ) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+    _assert_admin(request, db, admin_id)
     page = max(1, page)
     limit = min(max(1, limit), 100)
     query = select(WinamPlayer).order_by(WinamPlayer.created_at.desc())
@@ -239,8 +247,8 @@ def list_players(
 
 
 @router.get("/players/{player_id}")
-def player_detail(admin_id: str, player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def player_detail(admin_id: str, player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     player = db.execute(select(WinamPlayer).where(WinamPlayer.id == player_id)).scalar_one_or_none()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -320,8 +328,8 @@ def player_detail(admin_id: str, player_id: str, db: Session = Depends(get_db)) 
 
 
 @router.get("/banners")
-def banners(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def banners(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(db.execute(select(WinamBanner).order_by(WinamBanner.display_order.asc())).scalars())
     return {
         "banners": [
@@ -342,12 +350,13 @@ def banners(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
 @router.get("/intelli/events")
 def intelli_events(
     admin_id: str,
+    request: Request,
     event_type: str | None = None,
     page: int = 1,
     limit: int = 25,
     db: Session = Depends(get_db),
 ) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+    _assert_admin(request, db, admin_id)
     page = max(1, page)
     limit = min(max(1, limit), 100)
     query = select(WinamIntelliEvent).order_by(WinamIntelliEvent.created_at.desc())
@@ -364,8 +373,8 @@ def intelli_events(
 
 
 @router.get("/missions")
-def missions(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def missions(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(db.execute(select(WinamMission).order_by(WinamMission.title.asc())).scalars())
     return {
         "missions": [
@@ -385,8 +394,8 @@ def missions(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
 
 
 @router.get("/config")
-def platform_config(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def platform_config(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(db.execute(select(WinamPlatformConfig).order_by(WinamPlatformConfig.key.asc())).scalars())
     return {
         "config": [
@@ -402,15 +411,15 @@ def platform_config(admin_id: str, db: Session = Depends(get_db)) -> dict[str, o
 
 
 @router.get("/players/{player_id}/kyc")
-def player_kyc(admin_id: str, player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def player_kyc(admin_id: str, player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     kyc = db.execute(select(WinamKyc).where(WinamKyc.player_id == player_id)).scalar_one_or_none()
     return {"kyc": _serialize_kyc(kyc)}
 
 
 @router.get("/players/{player_id}/payments")
-def player_payments(admin_id: str, player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def player_payments(admin_id: str, player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(
         db.execute(
             select(WinamPayment)
@@ -422,8 +431,8 @@ def player_payments(admin_id: str, player_id: str, db: Session = Depends(get_db)
 
 
 @router.get("/draws")
-def draws(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def draws(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(db.execute(select(WinamDrawWeek).order_by(WinamDrawWeek.week_start_wat.desc())).scalars())
     weeks: list[dict[str, object]] = []
     for week in rows:
@@ -454,8 +463,8 @@ def draws(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
 
 
 @router.get("/draws/{draw_week_id}/winners")
-def draw_winners(admin_id: str, draw_week_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def draw_winners(admin_id: str, draw_week_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(
         db.execute(
             select(WinamWinner)

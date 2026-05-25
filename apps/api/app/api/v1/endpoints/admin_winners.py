@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.domain.models import WinamWinner
 from app.services.admin_auth import verify_admin_session
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
@@ -16,14 +17,20 @@ class FlagWinnerPayload(BaseModel):
     flagged: bool
 
 
-def _assert_admin(db: Session, admin_id: str) -> None:
+def _assert_admin(request: Request, db: Session, admin_id: str) -> None:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     if not verify_admin_session(db, admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 @router.get("")
-def list_winners(admin_id: str, draw_week_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def list_winners(admin_id: str, draw_week_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(
         db.execute(
             select(WinamWinner)
@@ -49,8 +56,8 @@ def list_winners(admin_id: str, draw_week_id: str, db: Session = Depends(get_db)
 
 
 @router.post("/flag")
-def flag_winner(payload: FlagWinnerPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def flag_winner(payload: FlagWinnerPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     winner = db.execute(select(WinamWinner).where(WinamWinner.id == payload.winner_id)).scalar_one_or_none()
     if not winner:
         raise HTTPException(status_code=404, detail="Winner not found")

@@ -24,16 +24,16 @@ Use this checklist before switching traffic fully to the Next.js + FastAPI stack
   - `/kyc`
   - `/profile`
 - [ ] Admin routes are live:
-  - `/admin/login`
-  - `/admin`
-  - `/admin/draw`
-  - `/admin/players`
-  - `/admin/players/[playerId]`
-  - `/admin/winners`
-  - `/admin/banners`
-  - `/admin/missions`
-  - `/admin/config`
-  - `/admin/help`
+  - `admin.winam.gg/admin/login`
+  - `admin.winam.gg/admin`
+  - `admin.winam.gg/admin/draw`
+  - `admin.winam.gg/admin/players`
+  - `admin.winam.gg/admin/players/[playerId]`
+  - `admin.winam.gg/admin/winners`
+  - `admin.winam.gg/admin/banners`
+  - `admin.winam.gg/admin/missions`
+  - `admin.winam.gg/admin/config`
+  - `admin.winam.gg/admin/help`
 
 ## Data And Behavior
 

@@ -23,6 +23,22 @@ class Settings(BaseSettings):
         default=True,
         validation_alias=AliasChoices("WINAM_INTELLI_MOCK", "INTELLI_MOCK"),
     )
+    frontend_origin: str = Field(
+        default="http://localhost:3000",
+        validation_alias=AliasChoices("WINAM_FRONTEND_ORIGIN", "FRONTEND_ORIGIN"),
+    )
+    admin_origin: str = Field(
+        default="http://localhost:3001",
+        validation_alias=AliasChoices("WINAM_ADMIN_ORIGIN", "ADMIN_ORIGIN"),
+    )
+    session_secret: str = Field(
+        default="dev-session-secret",
+        validation_alias=AliasChoices("WINAM_SESSION_SECRET", "SESSION_SECRET"),
+    )
+    cookie_secure: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("WINAM_COOKIE_SECURE", "COOKIE_SECURE"),
+    )
 
 
 settings = Settings()

@@ -1,28 +1,25 @@
-export type AdminSession = {
+export interface AdminSession {
   adminId: string;
   email: string;
-  role: string;
-};
+  expires_at: string;
+}
 
-const SESSION_KEY = "winam_admin_session";
+const ADMIN_SESSION_KEY = "winam_admin_session";
 
-export function getAdminSession(): AdminSession | null {
-  if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(SESSION_KEY);
-  if (!raw) return null;
+export function setAdminSession(session: AdminSession): void {
+  if (typeof window === "undefined") return;
   try {
-    return JSON.parse(raw) as AdminSession;
+    window.sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
   } catch {
-    return null;
+    // fail silently
   }
 }
 
-export function setAdminSession(session: AdminSession) {
+export function clearAdminSession(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-}
-
-export function clearAdminSession() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(SESSION_KEY);
+  try {
+    window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  } catch {
+    // fail silently
+  }
 }

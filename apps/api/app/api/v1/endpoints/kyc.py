@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.services.kyc import get_kyc_status, submit_bank_details, submit_identity
+from app.services.session_tokens import PLAYER_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
@@ -26,7 +27,13 @@ class BankPayload(BaseModel):
 
 
 @router.get("/status")
-def kyc_status(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+def kyc_status(player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=PLAYER_SESSION_COOKIE,
+        expected_kind="player",
+        provided_subject=player_id,
+    )
     result = get_kyc_status(db, player_id)
     kyc = result.get("kyc")
     if not kyc:
@@ -52,8 +59,14 @@ def kyc_status(player_id: str, db: Session = Depends(get_db)) -> dict[str, objec
 
 
 @router.post("/identity")
-def submit_identity_route(payload: IdentityPayload, db: Session = Depends(get_db)) -> dict[str, object]:
+def submit_identity_route(payload: IdentityPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
     try:
+        require_session_subject(
+            request,
+            cookie_name=PLAYER_SESSION_COOKIE,
+            expected_kind="player",
+            provided_subject=payload.player_id,
+        )
         return submit_identity(
             db,
             payload.player_id,
@@ -68,8 +81,14 @@ def submit_identity_route(payload: IdentityPayload, db: Session = Depends(get_db
 
 
 @router.post("/bank")
-def submit_bank_route(payload: BankPayload, db: Session = Depends(get_db)) -> dict[str, object]:
+def submit_bank_route(payload: BankPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
     try:
+        require_session_subject(
+            request,
+            cookie_name=PLAYER_SESSION_COOKIE,
+            expected_kind="player",
+            provided_subject=payload.player_id,
+        )
         return submit_bank_details(
             db,
             payload.player_id,

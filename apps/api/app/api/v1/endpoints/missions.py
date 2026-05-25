@@ -1,14 +1,21 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.services.missions import ensure_active_missions
+from app.services.session_tokens import PLAYER_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
 
 @router.get("/active")
-def active_missions(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+def active_missions(player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=PLAYER_SESSION_COOKIE,
+        expected_kind="player",
+        provided_subject=player_id,
+    )
     missions = ensure_active_missions(db, player_id)
     return {
         "success": True,

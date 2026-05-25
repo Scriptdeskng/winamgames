@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 import bcrypt
+from sqlalchemy import text
 
 from app.db.session import SessionLocal
 from app.domain.enums import MissionConditionType, RewardType
@@ -25,6 +26,7 @@ from app.services.draws import get_or_create_current_draw_week
 ROOT = Path(__file__).resolve().parents[1]
 SEED_DATA_DIR = ROOT / "seed-data"
 LEGACY_SEED_DATA_DIR = ROOT.parent.parent / "src" / "data"
+PUZZLE_EXPORT_PATH = ROOT / "winam_puzzles_prod_export.sql"
 
 def _stable_uuid(name: str) -> str:
     return str(uuid5(NAMESPACE_URL, f"winam:{name}"))
@@ -127,12 +129,20 @@ def _upsert_platform_config(db) -> None:
 def _seed_admin_user(db) -> None:
     admin_email = os.getenv("WINAM_SEED_ADMIN_EMAIL", "admin@winam.games")
     admin_password = os.getenv("WINAM_SEED_ADMIN_PASSWORD", "Admin123!")
-    existing = db.query(WinamAdminUser).filter(WinamAdminUser.email == admin_email).one_or_none()
+    admin_id = _stable_uuid("admin-user")
+    existing = db.get(WinamAdminUser, admin_id)
+    if not existing:
+        existing = db.query(WinamAdminUser).filter(WinamAdminUser.email == admin_email).one_or_none()
     if existing:
+        existing.id = admin_id
+        existing.email = admin_email
+        existing.password_hash = _hash_password(admin_password)
+        existing.role = "admin"
+        db.flush()
         return
     db.add(
         WinamAdminUser(
-            id=_stable_uuid("admin-user"),
+            id=admin_id,
             email=admin_email,
             password_hash=_hash_password(admin_password),
             role="admin",
@@ -222,7 +232,48 @@ def _seed_draw_week(db) -> None:
     get_or_create_current_draw_week(db)
 
 
+def _seed_puzzles_from_export(db, export_path: Path) -> None:
+    db.execute(
+        text(
+            "TRUNCATE TABLE winam_checkmate_puzzles, winam_wisdom_puzzles "
+            "RESTART IDENTITY CASCADE"
+        )
+    )
+
+    lines = export_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    copy_tables = {
+        "COPY public.winam_checkmate_puzzles (id, fen, solution_move, theme, difficulty, rating, hint_piece, hint_destination, times_served, created_at, opponent_from, opponent_to) FROM stdin;",
+        "COPY public.winam_wisdom_puzzles (id, region, display_text, blank, options, correct_index, original_proverb, difficulty, explanation, created_at) FROM stdin;",
+    }
+
+    raw_connection = db.connection().connection
+    with raw_connection.cursor() as cursor:
+        idx = 0
+        while idx < len(lines):
+            line = lines[idx]
+            stripped = line.strip()
+            if stripped in copy_tables:
+                copy_sql = stripped[:-1] if stripped.endswith(";") else stripped
+                with cursor.copy(copy_sql) as copy:
+                    idx += 1
+                    while idx < len(lines):
+                        data_line = lines[idx]
+                        if data_line.strip() == r"\.":
+                            break
+                        copy.write(data_line.encode("utf-8"))
+                        idx += 1
+                while idx < len(lines) and lines[idx].strip() != r"\.":
+                    idx += 1
+                idx += 1
+                continue
+            idx += 1
+
+
 def _seed_puzzles(db) -> None:
+    if PUZZLE_EXPORT_PATH.exists():
+        _seed_puzzles_from_export(db, PUZZLE_EXPORT_PATH)
+        return
+
     data_dir = SEED_DATA_DIR if SEED_DATA_DIR.exists() else LEGACY_SEED_DATA_DIR
     checkmate_path = data_dir / "checkmate-puzzles.ts"
     wisdom_path = data_dir / "wisdomdrop-puzzles.ts"

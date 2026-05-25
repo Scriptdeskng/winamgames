@@ -1,14 +1,18 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "winam-games",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
-    "preview": "vite preview",
-    "lint": "eslint .",
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "compose:up": "docker compose up --build api web",
+    "compose:down": "docker compose down",
+    "compose:logs": "docker compose logs -f api web",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -49,15 +52,32 @@ def _request(method: str, path: str, payload: dict[str, Any] | None = None) -> I
             raw = json.loads(error.read().decode("utf-8"))
         except Exception:
             raw = {"success": False, "message": str(error)}
+        logger.warning(
+            "Intelli %s %s failed with HTTP %s: %s",
+            method.upper(),
+            path,
+            getattr(error, "code", "unknown"),
+            raw,
+        )
     except URLError as error:
+        logger.exception("Failed to reach Intelli for %s %s: %s", method.upper(), path, error.reason)
         raise RuntimeError(f"Failed to reach Intelli: {error.reason}") from error
 
-    return IntelliResponse(
+    response = IntelliResponse(
         success=bool(raw.get("success")),
         message=raw.get("message"),
         data=raw.get("data") if isinstance(raw.get("data"), dict) else None,
         raw=raw if isinstance(raw, dict) else None,
     )
+    logger.warning(
+        "Intelli %s %s response: success=%s message=%s raw=%s",
+        method.upper(),
+        path,
+        response.success,
+        response.message,
+        response.raw,
+    )
+    return response
 
 
 def send_otp(msisdn: str) -> IntelliResponse:

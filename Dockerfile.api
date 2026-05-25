@@ -12,7 +12,7 @@ COPY apps/api/app ./app
 COPY apps/api/alembic ./alembic
 COPY apps/api/alembic.ini ./
 COPY apps/api/scripts ./scripts
-COPY src/data ./seed-data
+COPY apps/api/winam_puzzles_prod_export.sql ./
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

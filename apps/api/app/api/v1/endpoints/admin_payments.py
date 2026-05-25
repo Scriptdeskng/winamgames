@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.domain.models import WinamPayment
-from app.services.admin_auth import verify_admin_session
 from app.services.kyc import create_payment_record, get_payments_for_player, mark_payment_paid
+from app.services.admin_auth import verify_admin_session
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
@@ -43,14 +44,26 @@ def _serialize_payment(payment: WinamPayment) -> dict[str, object]:
 
 
 @router.get("")
-def list_payments(admin_id: str, player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+def list_payments(admin_id: str, player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     if not verify_admin_session(db, admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return {"payments": [_serialize_payment(payment) for payment in get_payments_for_player(db, player_id)]}
 
 
 @router.post("/create")
-def create_payment(payload: CreatePaymentPayload, db: Session = Depends(get_db)) -> dict[str, object]:
+def create_payment(payload: CreatePaymentPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=payload.admin_id,
+    )
     if not verify_admin_session(db, payload.admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
@@ -68,7 +81,13 @@ def create_payment(payload: CreatePaymentPayload, db: Session = Depends(get_db))
 
 
 @router.post("/mark-paid")
-def mark_paid(payload: MarkPaidPayload, db: Session = Depends(get_db)) -> dict[str, object]:
+def mark_paid(payload: MarkPaidPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=payload.admin_id,
+    )
     if not verify_admin_session(db, payload.admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:

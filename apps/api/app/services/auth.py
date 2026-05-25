@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from datetime import timedelta
 from sqlalchemy import select
@@ -12,6 +13,8 @@ from app.domain.models import WinamOtpSession, WinamPlayer, WinamSubscription
 from app.services.draws import wat_now
 from app.services.intelli import is_mock_mode, normalize_msisdn_for_intelli, send_otp as intelli_send_otp, subscription_status as intelli_subscription_status, verify_otp as intelli_verify_otp
 from app.services.subscriptions import sync_subscription_from_intelli
+
+logger = logging.getLogger(__name__)
 
 
 def sha256(value: str) -> str:
@@ -40,10 +43,11 @@ def _local_mock_send_otp(db: Session, msisdn: str) -> dict[str, object]:
             msisdn_hash=sha256(normalized),
             code_hash=sha256(otp),
             expires_at=wat_now() + timedelta(minutes=10),
-            used=False,
+        used=False,
         )
     )
     db.commit()
+    logger.warning("Intelli mock mode active; OTP send bypassed for msisdn_last4=%s", last4)
     return {"success": True, "message": f"OTP sent successfully to {normalized}", "msisdnLast4": last4}
 
 
@@ -179,6 +183,13 @@ def send_otp(db: Session, msisdn: str) -> dict:
 
     normalized = normalize_msisdn_for_intelli(msisdn)
     response = intelli_send_otp(normalized)
+    logger.warning(
+        "Intelli OTP send completed for msisdn_last4=%s success=%s message=%s raw=%s",
+        normalized[-4:],
+        response.success,
+        response.message,
+        response.raw,
+    )
     if not response.success:
         return {"success": False, "message": response.message or "Failed to send OTP"}
     return {

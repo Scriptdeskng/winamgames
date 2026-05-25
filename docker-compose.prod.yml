@@ -51,6 +51,7 @@ services:
       - .env.production
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+      API_INTERNAL_BASE_URL: ${API_INTERNAL_BASE_URL:-http://api:8000/api/v1}
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:

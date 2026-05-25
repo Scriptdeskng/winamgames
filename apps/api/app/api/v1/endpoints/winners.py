@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.domain.enums import DrawWeekStatus
 from app.domain.models import WinamDrawWeek, WinamKyc, WinamPayment, WinamPlayer, WinamWinner
-from app.services.auth import sha256
+from app.services.session_tokens import PLAYER_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
@@ -72,7 +72,13 @@ def published_winners(db: Session = Depends(get_db)) -> dict[str, object]:
 
 
 @router.get("/me")
-def my_winner_status(player_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
+def my_winner_status(player_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    require_session_subject(
+        request,
+        cookie_name=PLAYER_SESSION_COOKIE,
+        expected_kind="player",
+        provided_subject=player_id,
+    )
     winner = db.execute(
         select(WinamWinner)
         .join(WinamDrawWeek, WinamWinner.draw_week_id == WinamDrawWeek.id)

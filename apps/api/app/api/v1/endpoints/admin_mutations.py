@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,11 +21,18 @@ from app.domain.models import (
 )
 from app.services.admin_auth import verify_admin_session
 from app.services.draws import wat_now
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 
 router = APIRouter()
 
 
-def _assert_admin(db: Session, admin_id: str) -> None:
+def _assert_admin(request: Request, db: Session, admin_id: str) -> None:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     if not verify_admin_session(db, admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -148,8 +155,8 @@ class PaymentMarkPayload(BaseModel):
 
 
 @router.post("/players/flag")
-def flag_player(payload: FlagPlayerPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def flag_player(payload: FlagPlayerPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     player = db.execute(select(WinamPlayer).where(WinamPlayer.id == payload.player_id)).scalar_one_or_none()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -161,8 +168,8 @@ def flag_player(payload: FlagPlayerPayload, db: Session = Depends(get_db)) -> di
 
 
 @router.post("/players/coins")
-def adjust_coins(payload: AdjustCoinsPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def adjust_coins(payload: AdjustCoinsPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     player = db.execute(select(WinamPlayer).where(WinamPlayer.id == payload.player_id)).scalar_one_or_none()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -174,8 +181,8 @@ def adjust_coins(payload: AdjustCoinsPayload, db: Session = Depends(get_db)) -> 
 
 
 @router.post("/players/xp")
-def adjust_xp(payload: AdjustXpPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def adjust_xp(payload: AdjustXpPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     player = db.execute(select(WinamPlayer).where(WinamPlayer.id == payload.player_id)).scalar_one_or_none()
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -204,8 +211,8 @@ def adjust_xp(payload: AdjustXpPayload, db: Session = Depends(get_db)) -> dict[s
 
 
 @router.post("/subscriptions/update")
-def update_subscription(payload: UpdateSubscriptionPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def update_subscription(payload: UpdateSubscriptionPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     sub = db.execute(
         select(WinamSubscription)
         .where(WinamSubscription.player_id == payload.player_id)
@@ -230,8 +237,8 @@ def update_subscription(payload: UpdateSubscriptionPayload, db: Session = Depend
 
 
 @router.get("/banners")
-def banners(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, admin_id)
+def banners(admin_id: str, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, admin_id)
     rows = list(db.execute(select(WinamBanner).order_by(WinamBanner.display_order.asc())).scalars())
     return {
         "banners": [
@@ -249,8 +256,8 @@ def banners(admin_id: str, db: Session = Depends(get_db)) -> dict[str, object]:
 
 
 @router.post("/banners/create")
-def create_banner(payload: BannerPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def create_banner(payload: BannerPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = WinamBanner(title=payload.title, subtitle=payload.subtitle, icon_url=payload.icon_url, is_active=payload.is_active, display_order=payload.display_order)
     db.add(row)
     db.commit()
@@ -260,8 +267,8 @@ def create_banner(payload: BannerPayload, db: Session = Depends(get_db)) -> dict
 
 
 @router.post("/banners/update")
-def update_banner(payload: BannerUpdatePayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def update_banner(payload: BannerUpdatePayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = db.execute(select(WinamBanner).where(WinamBanner.id == payload.banner_id)).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="Banner not found")
@@ -281,8 +288,8 @@ def update_banner(payload: BannerUpdatePayload, db: Session = Depends(get_db)) -
 
 
 @router.post("/banners/delete")
-def delete_banner(payload: DeleteBannerPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def delete_banner(payload: DeleteBannerPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = db.execute(select(WinamBanner).where(WinamBanner.id == payload.banner_id)).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="Banner not found")
@@ -293,8 +300,8 @@ def delete_banner(payload: DeleteBannerPayload, db: Session = Depends(get_db)) -
 
 
 @router.post("/missions/create")
-def create_mission(payload: MissionPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def create_mission(payload: MissionPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = WinamMission(
         title=payload.title,
         game_type=payload.game_type,
@@ -312,8 +319,8 @@ def create_mission(payload: MissionPayload, db: Session = Depends(get_db)) -> di
 
 
 @router.post("/missions/update")
-def update_mission(payload: MissionUpdatePayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def update_mission(payload: MissionUpdatePayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = db.execute(select(WinamMission).where(WinamMission.id == payload.mission_id)).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="Mission not found")
@@ -327,8 +334,8 @@ def update_mission(payload: MissionUpdatePayload, db: Session = Depends(get_db))
 
 
 @router.post("/config/update")
-def update_config(payload: ConfigPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def update_config(payload: ConfigPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     from app.domain.models import WinamPlatformConfig
 
     row = db.execute(select(WinamPlatformConfig).where(WinamPlatformConfig.key == payload.key)).scalar_one_or_none()
@@ -345,8 +352,8 @@ def update_config(payload: ConfigPayload, db: Session = Depends(get_db)) -> dict
 
 
 @router.post("/kyc/verify")
-def verify_kyc(payload: KycVerifyPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def verify_kyc(payload: KycVerifyPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = db.execute(select(WinamKyc).where(WinamKyc.player_id == payload.player_id)).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="KYC not found")
@@ -359,8 +366,8 @@ def verify_kyc(payload: KycVerifyPayload, db: Session = Depends(get_db)) -> dict
 
 
 @router.post("/payments/create")
-def create_payment(payload: PaymentCreatePayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def create_payment(payload: PaymentCreatePayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = WinamPayment(
         player_id=payload.player_id,
         winner_id=payload.winner_id,
@@ -377,8 +384,8 @@ def create_payment(payload: PaymentCreatePayload, db: Session = Depends(get_db))
 
 
 @router.post("/payments/mark-paid")
-def mark_paid(payload: PaymentMarkPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def mark_paid(payload: PaymentMarkPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     row = db.execute(select(WinamPayment).where(WinamPayment.id == payload.payment_id)).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="Payment not found")

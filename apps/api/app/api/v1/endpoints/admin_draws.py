@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from app.domain.enums import DrawWeekStatus
 from app.domain.models import WinamDrawWeek, WinamEntryLedger, WinamPlayer, WinamPlatformConfig, WinamWinner
 from app.services.draw_engine import AirtimeTier, CashTier, LedgerRow, expand_tickets, select_winners
 from app.services.admin_auth import verify_admin_session
+from app.services.session_tokens import ADMIN_SESSION_COOKIE, require_session_subject
 from app.services.draws import wat_now
 
 router = APIRouter()
@@ -18,7 +19,13 @@ class AdminDrawPayload(BaseModel):
     draw_week_id: str
 
 
-def _assert_admin(db: Session, admin_id: str) -> None:
+def _assert_admin(request: Request, db: Session, admin_id: str) -> None:
+    require_session_subject(
+        request,
+        cookie_name=ADMIN_SESSION_COOKIE,
+        expected_kind="admin",
+        provided_subject=admin_id,
+    )
     if not verify_admin_session(db, admin_id).get("valid"):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -31,8 +38,8 @@ def _get_week(db: Session, draw_week_id: str) -> WinamDrawWeek:
 
 
 @router.post("/lock")
-def lock_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def lock_draw(payload: AdminDrawPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     week = _get_week(db, payload.draw_week_id)
     if week.status != DrawWeekStatus.open:
         raise HTTPException(status_code=400, detail=f"Cannot lock draw — status is {week.status.value}")
@@ -48,8 +55,8 @@ def lock_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> dict[
 
 
 @router.post("/execute")
-def execute_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def execute_draw(payload: AdminDrawPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     week = _get_week(db, payload.draw_week_id)
     if week.status != DrawWeekStatus.locked:
         raise HTTPException(status_code=400, detail=f"Cannot execute — status is {week.status.value}")
@@ -95,8 +102,8 @@ def execute_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> di
 
 
 @router.post("/publish")
-def publish_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def publish_draw(payload: AdminDrawPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     week = _get_week(db, payload.draw_week_id)
     if week.status != DrawWeekStatus.drawn:
         raise HTTPException(status_code=400, detail=f"Cannot publish — status is {week.status.value}")
@@ -112,8 +119,8 @@ def publish_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> di
 
 
 @router.post("/settle")
-def settle_draw(payload: AdminDrawPayload, db: Session = Depends(get_db)) -> dict[str, object]:
-    _assert_admin(db, payload.admin_id)
+def settle_draw(payload: AdminDrawPayload, request: Request, db: Session = Depends(get_db)) -> dict[str, object]:
+    _assert_admin(request, db, payload.admin_id)
     week = _get_week(db, payload.draw_week_id)
     if week.status != DrawWeekStatus.drawn:
         raise HTTPException(status_code=400, detail=f"Cannot settle — status is {week.status.value}")
